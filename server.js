@@ -1,4 +1,5 @@
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -10,7 +11,12 @@ const dataDir = path.join(root, "data");
 const uploadDir = path.join(root, "uploads");
 const apkDir = path.join(uploadDir, "apks");
 const dbPath = path.join(dataDir, "db.json");
+const mailOutboxPath = path.join(dataDir, "mail-outbox.json");
 const weatherCache = new Map();
+const adminSessionHours = Number(process.env.ADMIN_SESSION_HOURS || 8);
+const defaultAdminLogin = process.env.ADMIN_LOGIN || "admin";
+const defaultAdminPassword = process.env.ADMIN_PASSWORD || "Fabrize2026!";
+const defaultAdminEmail = process.env.ADMIN_EMAIL || "admin@fabrize.uz";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -56,6 +62,41 @@ server.listen(port, "0.0.0.0", () => {
 });
 
 async function handleApi(request, response, url) {
+  if (request.method === "POST" && url.pathname === "/api/admin-login") {
+    await handleAdminLogin(request, response);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/admin-logout") {
+    await handleAdminLogout(request, response);
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/admin-session") {
+    const db = readDb();
+    const admin = currentAdmin(db, request);
+    sendJson(response, admin ? 200 : 401, admin ? { user: publicAdmin(admin) } : { error: "Login kerak." });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/admin-register-request") {
+    await handleAdminRegisterRequest(request, response);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/admin-forgot-password") {
+    await handleAdminForgotPassword(request, response);
+    return;
+  }
+
+  if (!isPublicApi(url)) {
+    const db = readDb();
+    if (!currentAdmin(db, request)) {
+      sendJson(response, 401, { error: "Admin panelga kirish uchun login/parol kerak." });
+      return;
+    }
+  }
+
   if (request.method === "GET" && url.pathname === "/api/state") {
     sendJson(response, 200, readDb());
     return;
@@ -693,7 +734,7 @@ function serveStatic(request, url, response) {
   const requestedPath = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.slice(1));
   const filePath = path.resolve(root, requestedPath);
 
-  if (!filePath.startsWith(root)) {
+  if (!filePath.startsWith(root) || isBlockedStaticPath(url.pathname, filePath)) {
     response.writeHead(403);
     response.end("Forbidden");
     return;
@@ -723,6 +764,17 @@ function serveStatic(request, url, response) {
   });
 }
 
+function isBlockedStaticPath(pathname, filePath) {
+  const normalized = pathname.replace(/\\/g, "/").toLowerCase();
+  const lowerFile = filePath.toLowerCase();
+  return normalized.startsWith("/data/")
+    || normalized.startsWith("/.git")
+    || normalized.includes("/.git/")
+    || lowerFile.endsWith(".env")
+    || lowerFile.endsWith(".log")
+    || lowerFile.endsWith("local.properties");
+}
+
 function serveRange(filePath, stats, range, headers, response) {
   const [startText, endText] = range.replace(/bytes=/, "").split("-");
   const start = Number(startText);
@@ -743,12 +795,196 @@ function serveRange(filePath, stats, range, headers, response) {
   fs.createReadStream(filePath, { start, end }).pipe(response);
 }
 
+function isPublicApi(url) {
+  return url.pathname === "/api/admin-login"
+    || url.pathname === "/api/admin-logout"
+    || url.pathname === "/api/admin-session"
+    || url.pathname === "/api/admin-register-request"
+    || url.pathname === "/api/admin-forgot-password"
+    || url.pathname === "/api/client-login"
+    || url.pathname === "/api/client-state"
+    || url.pathname === "/api/client-device"
+    || url.pathname === "/api/client-media"
+    || url.pathname === "/api/device-command-status"
+    || url.pathname === "/api/tv-now-playing"
+    || url.pathname.startsWith("/api/tv-code/")
+    || url.pathname.startsWith("/api/tv/");
+}
+
 function requestBaseUrl(request) {
   if (process.env.PUBLIC_BASE_URL) return configuredBaseUrl;
   const forwardedHost = request.headers["x-forwarded-host"];
   const host = String(forwardedHost || request.headers.host || `127.0.0.1:${port}`).split(",")[0].trim();
   const forwardedProto = String(request.headers["x-forwarded-proto"] || "http").split(",")[0].trim();
   return `${forwardedProto}://${host}`.replace(/\/$/, "");
+}
+
+async function handleAdminLogin(request, response) {
+  const body = await readJsonBody(request);
+  const db = readDb();
+  const login = String(body.login || "").trim();
+  const password = String(body.password || "");
+  const admin = db.admins.find((item) => item.login === login || item.email === login);
+
+  if (!admin || !verifyPassword(password, admin.passwordHash)) {
+    sendJson(response, 401, { error: "Login yoki parol noto'g'ri." });
+    return;
+  }
+
+  const token = createToken();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + adminSessionHours * 60 * 60 * 1000);
+  db.adminSessions.push({
+    token,
+    adminId: admin.id,
+    createdAt: now.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+    userAgent: request.headers["user-agent"] || "",
+  });
+  admin.lastLoginAt = formatDateTime(now);
+  writeDb(db);
+
+  sendJson(response, 200, { user: publicAdmin(admin) }, {
+    "Set-Cookie": adminCookie(token, Math.round((expiresAt - now) / 1000)),
+  });
+}
+
+async function handleAdminLogout(request, response) {
+  const db = readDb();
+  const token = cookieValue(request, "admin_session");
+  db.adminSessions = db.adminSessions.filter((item) => item.token !== token);
+  writeDb(db);
+  sendJson(response, 200, { ok: true }, { "Set-Cookie": adminCookie("", 0) });
+}
+
+async function handleAdminRegisterRequest(request, response) {
+  const body = await readJsonBody(request);
+  const db = readDb();
+  const item = {
+    id: Date.now(),
+    type: "registration",
+    name: String(body.name || "").trim(),
+    email: String(body.email || "").trim(),
+    phone: String(body.phone || "").trim(),
+    message: String(body.message || "").trim(),
+    status: "Yangi so'rov",
+    createdAt: formatDateTime(new Date()),
+  };
+  if (!item.name || !item.email) {
+    sendJson(response, 400, { error: "Ism va email kerak." });
+    return;
+  }
+
+  db.emailRequests.unshift(item);
+  writeDb(db);
+  await sendSystemEmail({
+    subject: "FABRIZE admin registratsiya so'rovi",
+    text: `Yangi registratsiya so'rovi\n\nIsm: ${item.name}\nEmail: ${item.email}\nTelefon: ${item.phone || "-"}\nXabar: ${item.message || "-"}`,
+    replyTo: item.email,
+  });
+  sendJson(response, 201, { ok: true, message: "So'rov emailingiz orqali adminga yuborildi." });
+}
+
+async function handleAdminForgotPassword(request, response) {
+  const body = await readJsonBody(request);
+  const db = readDb();
+  const loginOrEmail = String(body.loginOrEmail || "").trim();
+  if (!loginOrEmail) {
+    sendJson(response, 400, { error: "Login yoki email kiriting." });
+    return;
+  }
+
+  const admin = db.admins.find((item) => item.login === loginOrEmail || item.email === loginOrEmail);
+  const item = {
+    id: Date.now(),
+    type: "forgot-password",
+    loginOrEmail,
+    matchedAdmin: admin ? admin.login : "",
+    status: "Yangi so'rov",
+    createdAt: formatDateTime(new Date()),
+  };
+  db.emailRequests.unshift(item);
+  writeDb(db);
+  await sendSystemEmail({
+    subject: "FABRIZE admin parolni tiklash so'rovi",
+    text: `Parolni tiklash so'rovi\n\nKiritilgan login/email: ${loginOrEmail}\nTopilgan admin: ${admin ? `${admin.login} (${admin.email})` : "Topilmadi"}\nVaqt: ${item.createdAt}`,
+    replyTo: admin?.email || defaultAdminEmail,
+  });
+  sendJson(response, 201, { ok: true, message: "Parolni tiklash so'rovi email orqali yuborildi." });
+}
+
+function currentAdmin(db, request) {
+  const token = cookieValue(request, "admin_session");
+  if (!token) return null;
+  const now = Date.now();
+  db.adminSessions = (db.adminSessions || []).filter((item) => new Date(item.expiresAt).getTime() > now);
+  const session = db.adminSessions.find((item) => item.token === token);
+  if (!session) return null;
+  return db.admins.find((item) => Number(item.id) === Number(session.adminId)) || null;
+}
+
+function publicAdmin(admin) {
+  return {
+    id: admin.id,
+    name: admin.name,
+    login: admin.login,
+    email: admin.email,
+    lastLoginAt: admin.lastLoginAt || "",
+  };
+}
+
+function cookieValue(request, name) {
+  const cookies = String(request.headers.cookie || "").split(";").map((item) => item.trim());
+  const prefix = `${name}=`;
+  const found = cookies.find((item) => item.startsWith(prefix));
+  return found ? decodeURIComponent(found.slice(prefix.length)) : "";
+}
+
+function adminCookie(token, maxAge) {
+  return `admin_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.max(0, Number(maxAge) || 0)}`;
+}
+
+async function sendSystemEmail(message) {
+  const mail = {
+    id: Date.now(),
+    to: defaultAdminEmail,
+    from: process.env.MAIL_FROM || defaultAdminEmail,
+    replyTo: message.replyTo || "",
+    subject: message.subject,
+    text: message.text,
+    createdAt: formatDateTime(new Date()),
+    status: "outbox",
+  };
+  appendMailOutbox(mail);
+
+  if (process.env.EMAIL_WEBHOOK_URL) {
+    try {
+      await fetch(process.env.EMAIL_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mail),
+      });
+      mail.status = "sent-webhook";
+      appendMailOutbox(mail);
+    } catch (error) {
+      mail.status = `webhook-error: ${error.message}`;
+      appendMailOutbox(mail);
+    }
+  }
+
+  console.log(`[MAIL] ${mail.subject} -> ${mail.to}`);
+}
+
+function appendMailOutbox(mail) {
+  let items = [];
+  try {
+    items = JSON.parse(fs.readFileSync(mailOutboxPath, "utf8"));
+    if (!Array.isArray(items)) items = [];
+  } catch (error) {
+    items = [];
+  }
+  items.unshift(mail);
+  fs.writeFileSync(mailOutboxPath, JSON.stringify(items.slice(0, 200), null, 2));
 }
 
 function getLocalAddresses() {
@@ -888,6 +1124,10 @@ function readDb() {
   db.deviceCommands ||= [];
   db.apkFiles ||= [];
   db.sales ||= [];
+  db.admins ||= [];
+  db.adminSessions ||= [];
+  db.emailRequests ||= [];
+  normalizeAdmins(db);
   normalizeDevices(db);
   refreshDeviceStatuses(db);
   return db;
@@ -895,6 +1135,33 @@ function readDb() {
 
 function writeDb(db) {
   fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+}
+
+function normalizeAdmins(db) {
+  if (!db.admins.length) {
+    db.admins.push({
+      id: 1,
+      name: "FABRIZE Admin",
+      login: defaultAdminLogin,
+      email: defaultAdminEmail,
+      passwordHash: hashPassword(defaultAdminPassword),
+      createdAt: formatDateTime(new Date()),
+    });
+  }
+  const now = Date.now();
+  db.adminSessions = (db.adminSessions || []).filter((item) => new Date(item.expiresAt).getTime() > now);
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const hash = crypto.createHash("sha256").update(`${salt}:${password}`).digest("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored || "").split(":");
+  if (!salt || !hash) return false;
+  const next = crypto.createHash("sha256").update(`${salt}:${password}`).digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(next));
 }
 
 function readJsonBody(request, limit = 5 * 1024 * 1024) {
@@ -918,8 +1185,8 @@ function readJsonBody(request, limit = 5 * 1024 * 1024) {
   });
 }
 
-function sendJson(response, status, payload) {
-  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
+function sendJson(response, status, payload, headers = {}) {
+  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", ...headers });
   response.end(JSON.stringify(payload));
 }
 

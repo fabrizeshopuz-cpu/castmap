@@ -3,12 +3,14 @@ const menu = document.querySelector("#menu");
 const modalBackdrop = document.querySelector("#modalBackdrop");
 const modal = document.querySelector("#modal");
 const toast = document.querySelector("#toast");
+const appShell = document.querySelector(".app-shell");
 
 let devices = [];
 let groups = [];
 let files = [];
 let activityLogs = [];
 let sales = [];
+let adminUser = null;
 let currentPage = "dashboard";
 let selectedUploadDeviceId = 50043;
 
@@ -30,6 +32,10 @@ const pages = {
   settings: renderSettings,
 };
 
+window.addEventListener("unhandledrejection", (event) => {
+  showToast(event.reason?.message || "Amal bajarilmadi.");
+});
+
 menu.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-page]");
   if (!button) return;
@@ -37,6 +43,17 @@ menu.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", (event) => {
+  const authModeButton = event.target.closest("[data-auth-mode]");
+  if (authModeButton) {
+    renderAdminAuth(authModeButton.dataset.authMode);
+    return;
+  }
+
+  if (event.target.closest("[data-admin-logout]")) {
+    adminLogout().catch((error) => showToast(error.message));
+    return;
+  }
+
   const pageButton = event.target.closest("button[data-page]");
   if (pageButton && !menu.contains(pageButton)) {
     render(pageButton.dataset.page);
@@ -146,6 +163,36 @@ document.addEventListener("change", async (event) => {
 });
 
 document.addEventListener("submit", async (event) => {
+  if (event.target.id === "adminLoginForm") {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    await adminLogin(String(form.get("login") || "").trim(), String(form.get("password") || ""));
+    return;
+  }
+
+  if (event.target.id === "adminRegisterForm") {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    await sendAdminRegisterRequest({
+      name: String(form.get("name") || "").trim(),
+      email: String(form.get("email") || "").trim(),
+      phone: String(form.get("phone") || "").trim(),
+      message: String(form.get("message") || "").trim(),
+    });
+    event.target.reset();
+    renderAdminAuth("login", "Registratsiya so'rovi email orqali yuborildi.");
+    return;
+  }
+
+  if (event.target.id === "adminForgotForm") {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    await sendAdminForgotRequest(String(form.get("loginOrEmail") || "").trim());
+    event.target.reset();
+    renderAdminAuth("login", "Parolni tiklash so'rovi email orqali yuborildi.");
+    return;
+  }
+
   if (event.target.id === "addLocationForm") {
     event.preventDefault();
     const form = new FormData(event.target);
@@ -239,11 +286,86 @@ document.addEventListener("submit", async (event) => {
 });
 
 function render(name) {
+  if (!adminUser) {
+    renderAdminAuth("login");
+    return;
+  }
   currentPage = name;
   page.innerHTML = (pages[name] || renderDashboard)();
   menu.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("active", button.dataset.page === name);
   });
+}
+
+function renderAdminAuth(mode = "login", message = "") {
+  document.body.classList.add("auth-mode");
+  appShell.setAttribute("aria-hidden", "true");
+  let auth = document.querySelector("#adminAuth");
+  if (!auth) {
+    auth = document.createElement("section");
+    auth.id = "adminAuth";
+    document.body.prepend(auth);
+  }
+
+  const titles = {
+    login: ["Admin panelga kirish", "Login va parol kiriting."],
+    register: ["Registratsiya so'rovi", "Yangi admin ochish so'rovi emailingiz orqali yuboriladi."],
+    forgot: ["Parol esdan chiqdi", "Parolni tiklash so'rovi email orqali yuboriladi."],
+  };
+  const [title, subtitle] = titles[mode] || titles.login;
+
+  auth.innerHTML = `
+    <div class="auth-card">
+      <img src="assets/fabrize-logo.png" alt="FABRIZE" />
+      <h1>${title}</h1>
+      <p>${subtitle}</p>
+      ${message ? `<div class="auth-message">${message}</div>` : ""}
+      ${mode === "register" ? adminRegisterForm() : mode === "forgot" ? adminForgotForm() : adminLoginForm()}
+      <div class="auth-links">
+        ${mode !== "login" ? `<button type="button" data-auth-mode="login">Login sahifasi</button>` : ""}
+        ${mode !== "register" ? `<button type="button" data-auth-mode="register">Registratsiya</button>` : ""}
+        ${mode !== "forgot" ? `<button type="button" data-auth-mode="forgot">Parol esdan chiqdimi?</button>` : ""}
+      </div>
+      <small>Login/parol faqat admin egasiga beriladi. Yangi admin uchun registratsiya so'rovi email orqali ketadi.</small>
+    </div>
+  `;
+}
+
+function hideAdminAuth() {
+  document.body.classList.remove("auth-mode");
+  appShell.removeAttribute("aria-hidden");
+  document.querySelector("#adminAuth")?.remove();
+}
+
+function adminLoginForm() {
+  return `
+    <form id="adminLoginForm" class="auth-form">
+      <input name="login" placeholder="Login yoki email" autocomplete="username" required />
+      <input name="password" type="password" placeholder="Parol" autocomplete="current-password" required />
+      <button class="gold-button" type="submit">Kirish</button>
+    </form>
+  `;
+}
+
+function adminRegisterForm() {
+  return `
+    <form id="adminRegisterForm" class="auth-form">
+      <input name="name" placeholder="Ism / kompaniya nomi" required />
+      <input name="email" type="email" placeholder="Email" required />
+      <input name="phone" placeholder="Telefon" />
+      <textarea name="message" placeholder="Izoh"></textarea>
+      <button class="gold-button" type="submit">So'rov yuborish</button>
+    </form>
+  `;
+}
+
+function adminForgotForm() {
+  return `
+    <form id="adminForgotForm" class="auth-form">
+      <input name="loginOrEmail" placeholder="Login yoki email" required />
+      <button class="gold-button" type="submit">Email orqali so'rov yuborish</button>
+    </form>
+  `;
 }
 
 function pageTitle(title, subtitle, action = "") {
@@ -1133,6 +1255,11 @@ async function loadState() {
   try {
     const response = await fetch("/api/state", { cache: "no-store" });
     const state = await response.json();
+    if (response.status === 401) {
+      adminUser = null;
+      renderAdminAuth("login", state.error || "Login kerak.");
+      return;
+    }
     if (!response.ok) throw new Error(state.error || "Ma'lumot kelmadi.");
     devices = state.devices || [];
     groups = state.groups || [];
@@ -1146,6 +1273,66 @@ async function loadState() {
   } catch (error) {
     showToast(error.message);
   }
+}
+
+async function initAdmin() {
+  try {
+    const response = await fetch("/api/admin-session", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) {
+      adminUser = null;
+      renderAdminAuth("login");
+      return;
+    }
+    adminUser = payload.user;
+    hideAdminAuth();
+    await loadState();
+  } catch (error) {
+    renderAdminAuth("login", error.message);
+  }
+}
+
+async function adminLogin(login, password) {
+  const response = await fetch("/api/admin-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ login, password }),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    renderAdminAuth("login", payload.error || "Login xato.");
+    return;
+  }
+  adminUser = payload.user;
+  hideAdminAuth();
+  await loadState();
+  showToast("Admin panelga kirildi.");
+}
+
+async function adminLogout() {
+  await fetch("/api/admin-logout", { method: "POST" });
+  adminUser = null;
+  renderAdminAuth("login", "Sessiya yopildi.");
+}
+
+async function sendAdminRegisterRequest(data) {
+  const response = await fetch("/api/admin-register-request", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || "Registratsiya so'rovi yuborilmadi.");
+}
+
+async function sendAdminForgotRequest(loginOrEmail) {
+  const response = await fetch("/api/admin-forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ loginOrEmail }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || "Parol so'rovi yuborilmadi.");
 }
 
 async function uploadMedia(file) {
@@ -1410,7 +1597,7 @@ function formatClock() {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}<small>${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}</small>`;
 }
 
-loadState();
+initAdmin();
 setInterval(() => {
-  if (currentPage === "live" || currentPage === "stats") loadState();
+  if (adminUser && (currentPage === "live" || currentPage === "stats")) loadState();
 }, 15000);

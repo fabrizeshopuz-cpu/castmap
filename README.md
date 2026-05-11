@@ -40,6 +40,27 @@ PUBLIC_BASE_URL=https://sizning-domain.uz npm start
 
 Shunda sotuv bo'limida mijozga beriladigan cabinet linklari to'g'ri domain bilan chiqadi.
 
+## Admin login
+
+Default admin:
+
+```text
+Login: admin
+Parol: Fabrize2026!
+```
+
+Ishga tushirishdan oldin o'zingizga mos login/parol berish tavsiya qilinadi:
+
+```bash
+ADMIN_LOGIN=admin ADMIN_PASSWORD=YangiKuchliParol ADMIN_EMAIL=owner@example.com npm start
+```
+
+Registratsiya va parol esdan chiqish so'rovlari `data/mail-outbox.json` fayliga yoziladi. Tashqi email servisga yuborish uchun `EMAIL_WEBHOOK_URL` beriladi:
+
+```bash
+EMAIL_WEBHOOK_URL=https://example.com/email-webhook npm start
+```
+
 ## Sahifalar
 
 - `/` - General admin panel

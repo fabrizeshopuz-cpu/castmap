@@ -27,6 +27,96 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+body.auth-mode {
+  overflow: hidden;
+}
+
+body.auth-mode .app-shell {
+  display: none;
+}
+
+#adminAuth {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  display: grid;
+  width: min(460px, 100%);
+  gap: 14px;
+  padding: 28px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.auth-card img {
+  width: 240px;
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+.auth-card h1 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 30px;
+  letter-spacing: 0;
+}
+
+.auth-card p,
+.auth-card small {
+  margin: 0;
+  color: var(--muted);
+}
+
+.auth-card small b {
+  color: var(--gold);
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-form textarea {
+  min-height: 92px;
+  padding: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.auth-message {
+  padding: 12px;
+  color: #111;
+  background: linear-gradient(135deg, #fff1b8, var(--gold-2));
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.auth-links button {
+  min-height: 34px;
+  color: var(--gold);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(245, 210, 123, 0.18);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
 button,
 input,
 select {
