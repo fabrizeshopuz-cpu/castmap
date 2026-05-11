@@ -1,0 +1,13 @@
+{
+  "name": "fabrize-cloud-tv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FABRIZE markaziy boshqaruvli TV kontent tizimi",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check app.js && node --check client.js && node --check tv.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

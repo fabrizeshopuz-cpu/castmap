@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FABRIZE Cloud TV</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="assets/fabrize-logo.png" alt="FABRIZE" />
+          <span>SOTUV - NATIJA - RIVOJLANISH</span>
+        </div>
+
+        <nav class="menu" id="menu" aria-label="Admin bo'limlari">
+          <button class="active" type="button" data-page="dashboard"><span>DB</span>Dashboard</button>
+          <button type="button" data-page="content"><span>CT</span>Kontentlar</button>
+          <button type="button" data-page="devices"><span>TV</span>Qurilmalar / TVlar</button>
+          <button type="button" data-page="live"><span>LV</span>Jonli ko'rish</button>
+          <button type="button" data-page="stats"><span>ST</span>Statistika</button>
+          <button type="button" data-page="sales"><span>SO</span>Sotuv</button>
+          <button type="button" data-page="pairing"><span>APK</span>APK paneli</button>
+          <button type="button" data-page="settings"><span>SO</span>Sozlamalar</button>
+        </nav>
+
+        <button class="logout" type="button">Chiqish</button>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p>FABRIZE CLOUD SERVER</p>
+            <h1>Markaziy boshqaruvli TV kontent tizimi</h1>
+          </div>
+          <div class="top-actions">
+            <label class="gold-button">Kontent yuklash<input class="media-upload-input" type="file" accept="image/*,video/*,audio/*" multiple /></label>
+            <button class="ghost-button" type="button" data-open-tv>TV player</button>
+          </div>
+        </header>
+
+        <section class="page" id="page"></section>
+      </section>
+    </main>
+
+    <div class="modal-backdrop hidden" id="modalBackdrop">
+      <section class="modal" id="modal"></section>
+    </div>
+
+    <div class="toast hidden" id="toast"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

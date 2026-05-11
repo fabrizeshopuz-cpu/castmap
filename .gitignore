@@ -1,0 +1,21 @@
+.env
+*.log
+
+# Runtime data and uploaded customer files
+data/*
+!data/.gitkeep
+uploads/*
+!uploads/.gitkeep
+!uploads/apks/
+uploads/apks/*
+!uploads/apks/.gitkeep
+
+# Android local/build files
+android-tv/.gradle/
+android-tv/build/
+android-tv/app/build/
+android-tv/local.properties
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

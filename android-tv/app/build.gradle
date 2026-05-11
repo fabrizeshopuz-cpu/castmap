@@ -1,0 +1,24 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "uz.fabrize.tv"
+    compileSdk 36
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    defaultConfig {
+        applicationId "uz.fabrize.tv"
+        minSdk 23
+        targetSdk 36
+        versionCode 8
+        versionName "1.6.1"
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core:1.17.0"
+}
