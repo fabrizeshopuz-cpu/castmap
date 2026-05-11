@@ -11,4 +11,10 @@ services:
       - key: ADMIN_LOGIN
         value: admin
       - key: ADMIN_EMAIL
-        value: admin@fabrize.uz
+        value: your-gmail@gmail.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false

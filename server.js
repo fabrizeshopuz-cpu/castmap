@@ -3,6 +3,12 @@ const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+let nodemailer = null;
+try {
+  nodemailer = require("nodemailer");
+} catch (error) {
+  nodemailer = null;
+}
 
 const root = __dirname;
 const port = Number(process.env.PORT || 5173);
@@ -957,6 +963,35 @@ async function sendSystemEmail(message) {
   };
   appendMailOutbox(mail);
 
+  if (nodemailer && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: String(process.env.SMTP_SECURE || "false") === "true",
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+      await transporter.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: defaultAdminEmail,
+        replyTo: mail.replyTo || undefined,
+        subject: mail.subject,
+        text: mail.text,
+      });
+      mail.status = "sent-smtp";
+      appendMailOutbox(mail);
+      console.log(`[MAIL] SMTP yuborildi: ${mail.subject} -> ${mail.to}`);
+      return;
+    } catch (error) {
+      mail.status = `smtp-error: ${error.message}`;
+      appendMailOutbox(mail);
+      console.error(`[MAIL] SMTP xato: ${error.message}`);
+    }
+  }
+
   if (process.env.EMAIL_WEBHOOK_URL) {
     try {
       await fetch(process.env.EMAIL_WEBHOOK_URL, {
@@ -972,7 +1007,7 @@ async function sendSystemEmail(message) {
     }
   }
 
-  console.log(`[MAIL] ${mail.subject} -> ${mail.to}`);
+  console.log(`[MAIL] outbox: ${mail.subject} -> ${mail.to}`);
 }
 
 function appendMailOutbox(mail) {

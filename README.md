@@ -61,7 +61,21 @@ Ishga tushirishdan oldin o'zingizga mos login/parol berish tavsiya qilinadi:
 ADMIN_LOGIN=admin ADMIN_PASSWORD=YangiKuchliParol ADMIN_EMAIL=owner@example.com npm start
 ```
 
-Registratsiya va parol esdan chiqish so'rovlari `data/mail-outbox.json` fayliga yoziladi. Tashqi email servisga yuborish uchun `EMAIL_WEBHOOK_URL` beriladi:
+Registratsiya va parol esdan chiqish so'rovlari `data/mail-outbox.json` fayliga yoziladi. Gmail orqali yuborish uchun Render Environment Variables:
+
+```text
+ADMIN_EMAIL=sizning-gmail@gmail.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=sizning-gmail@gmail.com
+SMTP_PASS=GOOGLE_APP_PASSWORD
+MAIL_FROM=sizning-gmail@gmail.com
+```
+
+Gmail parolini emas, Google App Password ishlatiladi. Google hisobida 2-Step Verification yoqilgan bo'lishi kerak.
+
+Tashqi email webhook ishlatmoqchi bo'lsangiz:
 
 ```bash
 EMAIL_WEBHOOK_URL=https://example.com/email-webhook npm start
