@@ -1,6 +1,15 @@
 .env
 *.log
 
+# Node / Next.js build output
+node_modules/
+.next/
+out/
+.vercel/
+dist/
+coverage/
+.tools/
+
 # Runtime data and uploaded customer files
 data/*
 !data/.gitkeep
@@ -15,6 +24,12 @@ android-tv/.gradle/
 android-tv/build/
 android-tv/app/build/
 android-tv/local.properties
+
+# Android APK local build output
+castmap-player-apk/.gradle/
+castmap-player-apk/build/
+castmap-player-apk/app/build/
+castmap-player-apk/local.properties
 
 # OS/editor noise
 .DS_Store

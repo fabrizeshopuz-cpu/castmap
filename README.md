@@ -1,6 +1,6 @@
-# FABRIZE Cloud TV
+# CASTMAP Admin Panel
 
-FABRIZE uchun markaziy boshqaruvli TV kontent tizimi.
+CASTMAP uchun markaziy boshqaruvli retail media va TV kontent tizimi.
 
 ## Ishga tushirish
 
@@ -14,7 +14,19 @@ Windowsda `npm` bo'lmasa:
 start-server.bat
 ```
 
-Server `0.0.0.0:5173` da ishlaydi.
+Eski Node server `0.0.0.0:5173` da ishlaydi.
+
+Yangi CASTMAP admin panel:
+
+```bash
+npm run dev:next
+```
+
+Local:
+
+```text
+http://localhost:3000/dashboard
+```
 
 Shu kompyuterda:
 
@@ -86,6 +98,24 @@ EMAIL_WEBHOOK_URL=https://example.com/email-webhook npm start
 - `/` - General admin panel
 - `/client.html` - Mijoz cabinet
 - `/tv.html?device=TV_ID` - Web TV player
+
+## Ma'lumot saqlanishi
+
+Next admin panel ma'lumotlarni ikki joyga yozadi:
+
+- brauzer `localStorage`
+- serverdagi `data/castmap-state.json`
+
+Shu sabab bir xil server URL orqali telefon yoki boshqa kompyuterdan kirganda ma'lumotlar umumiy ko'rinadi. Render free instance restart yoki redeploy bo'lsa diskdagi JSON yo'qolishi mumkin. To'liq production uchun PostgreSQL + Prisma ulanishi kerak.
+
+## Render deploy
+
+`render.yaml` yangi Next admin panelni deploy qiladi:
+
+```text
+buildCommand: npm install && npm run build:next
+startCommand: npm run start:next
+```
 
 ## GitHub haqida
 

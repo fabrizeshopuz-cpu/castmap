@@ -1,0 +1,150 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Upload, X } from "lucide-react";
+import { defaultTags, mediaFolders } from "@/data/mediaMockData";
+import type { MediaAsset, MediaType, UploadDraft } from "@/types/media";
+
+const initialDraft: UploadDraft = {
+  name: "",
+  folder: "Promo",
+  tags: ["Promo"],
+  category: "video",
+  expireDate: "",
+  approvalRequired: true,
+  addToPlaylist: false,
+};
+
+export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; onClose: () => void; onUpload: (draft: UploadDraft) => Promise<MediaAsset> }) {
+  const [draft, setDraft] = useState<UploadDraft>(initialDraft);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<"idle" | "uploading" | "complete" | "failed">("idle");
+  const [selectedTag, setSelectedTag] = useState("Promo");
+
+  useEffect(() => {
+    if (!open) {
+      setDraft(initialDraft);
+      setProgress(0);
+      setStatus("idle");
+    }
+  }, [open]);
+
+  const statusText = useMemo(() => ({
+    idle: "Fayl tanlang yoki drag & drop qiling",
+    uploading: `Yuklanmoqda: ${progress}%`,
+    complete: "Upload complete",
+    failed: "Upload failed",
+  }[status]), [progress, status]);
+
+  if (!open) return null;
+
+  const submit = async () => {
+    setStatus("uploading");
+    setProgress(0);
+    const timer = window.setInterval(() => setProgress((value) => Math.min(92, value + 8)), 120);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1400));
+      await onUpload({ ...draft, name: draft.name || `castmap_${draft.category}_asset.${draft.category === "image" ? "jpg" : draft.category}` });
+      window.clearInterval(timer);
+      setProgress(100);
+      setStatus("complete");
+      setTimeout(onClose, 500);
+    } catch {
+      window.clearInterval(timer);
+      setStatus("failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5 backdrop-blur">
+      <section className="w-full max-w-3xl rounded-2xl border border-white/10 bg-castCard p-5 shadow-2xl max-sm:h-full max-sm:overflow-y-auto">
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black text-white">Media yuklash</h2>
+            <p className="text-sm text-castMuted">Video, rasm, PDF, HTML package yoki web URL qo'shing.</p>
+          </div>
+          <button className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-castMuted hover:text-white" type="button" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </button>
+        </header>
+
+        <div className="mt-5 grid gap-4">
+          <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-castGold/45 bg-castGold/10 p-6 text-center">
+            <Upload className="h-10 w-10 text-castGold" />
+            <b className="mt-3 text-white">{statusText}</b>
+            <span className="mt-1 text-sm text-castMuted">Supported: MP4, MOV, WEBM, JPG, PNG, WEBP, SVG, GIF, PDF, URL, HTML</span>
+            <button className="mt-4 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-2 font-black text-black" type="button">
+              Fayl tanlash
+            </button>
+            {status !== "idle" ? (
+              <div className="mt-4 h-2 w-full max-w-md overflow-hidden rounded-full bg-black/40">
+                <div className="h-full rounded-full bg-castGold" style={{ width: `${progress}%` }} />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field label="Media nomi" value={draft.name} onChange={(value) => setDraft({ ...draft, name: value })} placeholder="burger_menu_may.mp4" />
+            <label className="grid gap-1 text-sm text-castMuted">Papka tanlash
+              <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.folder} onChange={(event) => setDraft({ ...draft, folder: event.target.value })}>
+                {mediaFolders.filter((folder) => folder.name !== "Barcha fayllar").map((folder) => <option key={folder.name}>{folder.name}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm text-castMuted">Kategoriya
+              <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value as MediaType })}>
+                {["video", "image", "web", "html", "pdf", "template"].map((type) => <option key={type}>{type}</option>)}
+              </select>
+            </label>
+            <Field label="Expire date" value={draft.expireDate} onChange={(value) => setDraft({ ...draft, expireDate: value })} placeholder="2026-06-01" />
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm text-castMuted">Taglar</span>
+            <div className="flex flex-wrap gap-2">
+              {draft.tags.map((tag) => (
+                <button key={tag} className="rounded-full border border-castGold/25 bg-castGold/10 px-3 py-1 text-sm font-bold text-castGold" type="button" onClick={() => setDraft({ ...draft, tags: draft.tags.filter((item) => item !== tag) })}>
+                  {tag} ×
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <select className="h-10 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={selectedTag} onChange={(event) => setSelectedTag(event.target.value)}>
+                {defaultTags.map((tag) => <option key={tag}>{tag}</option>)}
+              </select>
+              <button className="rounded-xl border border-castGold/25 px-4 text-sm font-bold text-castGold" type="button" onClick={() => setDraft({ ...draft, tags: [...new Set([...draft.tags, selectedTag])] })}>Tag qo'shish</button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <CheckLabel label="Approval kerak" checked={draft.approvalRequired} onChange={(checked) => setDraft({ ...draft, approvalRequired: checked })} />
+            <CheckLabel label="Playlistga darhol qo'shish" checked={draft.addToPlaylist} onChange={(checked) => setDraft({ ...draft, addToPlaylist: checked })} />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button className="rounded-xl border border-white/10 px-5 py-3 font-bold text-white" type="button" onClick={onClose}>Bekor qilish</button>
+            <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-3 font-black text-black disabled:opacity-60" type="button" disabled={status === "uploading"} onClick={submit}>
+              Yuklash
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Field({ label, value, placeholder, onChange }: { label: string; value: string; placeholder: string; onChange: (value: string) => void }) {
+  return (
+    <label className="grid gap-1 text-sm text-castMuted">{label}
+      <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none placeholder:text-castMuted" value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function CheckLabel({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="flex min-h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white">
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      {label}
+    </label>
+  );
+}

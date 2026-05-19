@@ -2,15 +2,33 @@
   "name": "fabrize-cloud-tv",
   "version": "1.0.0",
   "private": true,
-  "description": "FABRIZE markaziy boshqaruvli TV kontent tizimi",
+  "description": "CASTMAP retail media infrastructure platform",
   "scripts": {
     "start": "node server.js",
+    "start:next": "next start -p $PORT",
+    "dev:next": "next dev -p 3000",
+    "build:next": "next build",
     "check": "node --check server.js && node --check app.js && node --check client.js && node --check tv.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "nodemailer": "^6.9.16"
+    "lucide-react": "^0.468.0",
+    "next": "^15.0.0",
+    "nodemailer": "^6.9.16",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.76.0",
+    "recharts": "^3.8.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "@types/react": "19.2.14",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
   }
 }

@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  branches  Branch[]
+  users     User[]
+  media     MediaAsset[]
+  billing   BillingPlan? @relation(fields: [billingPlanId], references: [id])
+  billingPlanId String?
+}
+
+model Branch {
+  id             String     @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  city           String
+  address        String?
+  workStart      String     @default("09:00")
+  workEnd        String     @default("22:00")
+  devices        Device[]
+  schedules      Schedule[]
+  campaigns      Campaign[] @relation("CampaignBranches")
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  email          String       @unique
+  passwordHash   String?
+  role           String
+  status         String       @default("active")
+  createdAt      DateTime     @default(now())
+}
+
+model Device {
+  id          String            @id @default(cuid())
+  branchId    String
+  branch      Branch            @relation(fields: [branchId], references: [id])
+  name        String
+  deviceCode  String            @unique
+  deviceType  String
+  status      String            @default("inactive")
+  apkVersion  String?
+  ipAddress   String?
+  macAddress  String?
+  lastSeen    DateTime?
+  playlistId  String?
+  playlist    Playlist?         @relation(fields: [playlistId], references: [id])
+  heartbeats  DeviceHeartbeat[]
+  commands    DeviceCommand[]
+  logs        PlaybackLog[]
+  alerts      Alert[]
+}
+
+model MediaAsset {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  name           String
+  type           String
+  status         String
+  fileUrl        String
+  thumbnailUrl   String?
+  sizeBytes      Int
+  duration       Int?
+  resolution     String?
+  folder         String?
+  tags           String[]
+  createdAt      DateTime       @default(now())
+  playlistItems  PlaylistItem[]
+  playbackLogs   PlaybackLog[]
+}
+
+model Playlist {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  status      String         @default("draft")
+  loop        Boolean        @default(true)
+  items       PlaylistItem[]
+  schedules   Schedule[]
+  devices     Device[]
+  campaigns   Campaign[]     @relation("CampaignPlaylists")
+  playbackLogs PlaybackLog[]
+}
+
+model PlaylistItem {
+  id         String     @id @default(cuid())
+  playlistId String
+  playlist   Playlist   @relation(fields: [playlistId], references: [id])
+  mediaId    String
+  media      MediaAsset @relation(fields: [mediaId], references: [id])
+  duration   Int
+  order      Int
+  priority   Int        @default(1)
+}
+
+model Schedule {
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  type       String
+  startTime  String
+  endTime    String
+  days       String[]
+  priority   Int      @default(1)
+  status     String   @default("active")
+}
+
+model Campaign {
+  id          String     @id @default(cuid())
+  name        String
+  status      String
+  startDate   DateTime
+  endDate     DateTime
+  budget      Decimal?
+  target      Int?
+  branches    Branch[]   @relation("CampaignBranches")
+  playlists   Playlist[] @relation("CampaignPlaylists")
+}
+
+model PlaybackLog {
+  id         String     @id @default(cuid())
+  deviceId   String
+  device     Device     @relation(fields: [deviceId], references: [id])
+  mediaId    String
+  media      MediaAsset @relation(fields: [mediaId], references: [id])
+  playlistId String
+  playlist   Playlist   @relation(fields: [playlistId], references: [id])
+  eventType  String
+  timestamp  DateTime   @default(now())
+  duration   Int?
+}
+
+model DeviceHeartbeat {
+  id               String   @id @default(cuid())
+  deviceId          String
+  device            Device   @relation(fields: [deviceId], references: [id])
+  status            String
+  currentPlaylistId String?
+  currentMediaId    String?
+  playbackPosition  Int?
+  internetStatus    String?
+  storageUsed       Int?
+  storageTotal      Int?
+  ramUsage          Int?
+  cpuUsage          Int?
+  appVersion        String?
+  lastError         String?
+  createdAt         DateTime @default(now())
+}
+
+model DeviceCommand {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    Device   @relation(fields: [deviceId], references: [id])
+  type      String
+  payload   Json?
+  status    String   @default("queued")
+  result    Json?
+  createdAt DateTime @default(now())
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  deviceId  String
+  device    Device   @relation(fields: [deviceId], references: [id])
+  type      String
+  severity  String
+  status    String   @default("open")
+  title     String
+  createdAt DateTime @default(now())
+}
+
+model ApkVersion {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  fileUrl   String
+  changelog String
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model BillingPlan {
+  id            String         @id @default(cuid())
+  name          String
+  deviceLimit   Int
+  storageLimitGb Int
+  priceMonthly  Decimal
+  organizations Organization[]
+  invoices      Invoice[]
+}
+
+model Invoice {
+  id        String      @id @default(cuid())
+  planId    String
+  plan      BillingPlan @relation(fields: [planId], references: [id])
+  amount    Decimal
+  status    String
+  issuedAt  DateTime    @default(now())
+}
+
+model Widget {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  settings  Json?
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+}

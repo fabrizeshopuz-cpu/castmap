@@ -23,6 +23,7 @@ const adminSessionHours = Number(process.env.ADMIN_SESSION_HOURS || 8);
 const defaultAdminLogin = process.env.ADMIN_LOGIN || "admin";
 const defaultAdminPassword = process.env.ADMIN_PASSWORD || "Fabrize2026!";
 const defaultAdminEmail = process.env.ADMIN_EMAIL || "admin@fabrize.uz";
+const adminAuthDisabled = String(process.env.DISABLE_ADMIN_AUTH || "true") === "true";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -62,7 +63,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(port, "0.0.0.0", () => {
-  console.log(`FABRIZE Cloud TV: http://127.0.0.1:${port}`);
+  console.log(`CASTMAP Admin Panel: http://127.0.0.1:${port}`);
   getLocalAddresses().forEach((address) => console.log(`LAN browser: http://${address}:${port}`));
   console.log(`TV player demo: http://127.0.0.1:${port}/tv.html?device=50043`);
 });
@@ -81,7 +82,7 @@ async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/admin-session") {
     const db = readDb();
     const admin = currentAdmin(db, request);
-    sendJson(response, admin ? 200 : 401, admin ? { user: publicAdmin(admin) } : { error: "Login kerak." });
+    sendJson(response, admin ? 200 : 401, admin ? { user: { ...publicAdmin(admin), authDisabled: adminAuthDisabled } } : { error: "Login kerak." });
     return;
   }
 
@@ -920,6 +921,8 @@ async function handleAdminForgotPassword(request, response) {
 }
 
 function currentAdmin(db, request) {
+  if (adminAuthDisabled) return db.admins?.[0] || null;
+
   const token = cookieValue(request, "admin_session");
   if (!token) return null;
   const now = Date.now();

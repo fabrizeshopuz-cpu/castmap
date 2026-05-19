@@ -11,8 +11,14 @@ let files = [];
 let activityLogs = [];
 let sales = [];
 let adminUser = null;
-let currentPage = "dashboard";
+let currentPage = new URLSearchParams(window.location.search).get("page") || "dashboard";
 let selectedUploadDeviceId = 50043;
+let deviceSearchTerm = "";
+let deviceStatusFilter = "all";
+let selectedManagedDeviceId = "samsung-makro-andijon-02";
+let openDeviceActionId = "";
+let isPairingModalOpen = false;
+let pairingStep = 1;
 
 const schedules = [
   { name: "Ertalabki kontent", time: "06:00-12:00", target: "Savdo zali", type: "Motivatsiya + mahsulot" },
@@ -21,12 +27,191 @@ const schedules = [
   { name: "Tungi kontent", time: "22:00-06:00", target: "Demo ekranlar", type: "Brend banner + MP3" },
 ];
 
+const castmapMetrics = [
+  { title: "Jami ekranlar", value: "1,248", detail: "+12.5% vs oldingi 7 kun", tone: "violet", icon: "TV" },
+  { title: "Onlayn ekranlar", value: "1,087", detail: "87.1% jami ekranlardan", tone: "green", icon: "ON" },
+  { title: "Joriy kampaniyalar", value: "24", detail: "+3 yangi kampaniya", tone: "gold", icon: "KP" },
+  { title: "Jami ko'rsatishlar", value: "2.45M", detail: "+18.7% vs oldingi 7 kun", tone: "blue", icon: "PL" },
+  { title: "Ogohlantirishlar", value: "12", detail: "6 ta muhim", tone: "red", icon: "!" },
+];
+
+const impressionStats = [
+  { day: "11 May", value: 220 },
+  { day: "12 May", value: 400 },
+  { day: "13 May", value: 530 },
+  { day: "14 May", value: 360 },
+  { day: "15 May", value: 490 },
+  { day: "16 May", value: 400 },
+  { day: "17 May", value: 624 },
+];
+
+const deviceStatusStats = [
+  { label: "Onlayn", value: 1087, color: "#56C66B" },
+  { label: "Offline", value: 98, color: "#FF645A" },
+  { label: "Nofaol", value: 40, color: "#94A3B8" },
+  { label: "Xatolik", value: 23, color: "#D4AF37" },
+];
+
+const topBranches = [
+  { name: "Makro Samarqand", value: 134 },
+  { name: "Korzinka Chilonzor", value: 98 },
+  { name: "Makro Toshkent", value: 87 },
+  { name: "Korzinka Yakkasaroy", value: 76 },
+  { name: "Makro Andijon", value: 65 },
+];
+
+const activityFeed = [
+  { title: "Yangi media yuklandi", text: "promo_video_17may.mp4", time: "2 daqiqa oldin", role: "Operator", icon: "UP", tone: "green" },
+  { title: "Playlist yangilandi", text: "BURGER_MENU_MAY", time: "15 daqiqa oldin", role: "Admin", icon: "PL", tone: "blue" },
+  { title: "Ekran onlayn bo'ldi", text: "Samsung TV Makro Andijon 02", time: "18 daqiqa oldin", role: "Tizim", icon: "TV", tone: "violet" },
+  { title: "Ekran offline bo'ldi", text: "LG WebOS Korzinka 15", time: "25 daqiqa oldin", role: "Tizim", icon: "!", tone: "red" },
+];
+
+const mapMarkers = [
+  { city: "Toshkent", value: 324, tone: "green", x: 73, y: 35 },
+  { city: "Samarqand", value: 186, tone: "gold", x: 55, y: 57 },
+  { city: "Andijon", value: 152, tone: "green", x: 86, y: 50 },
+  { city: "Namangan", value: 87, tone: "green", x: 78, y: 73 },
+  { city: "Buxoro", value: 98, tone: "red", x: 34, y: 68 },
+];
+
+const managedDevices = [
+  {
+    id: "samsung-makro-andijon-02",
+    name: "Samsung TV - Makro Andijon 02",
+    deviceId: "CM-TV-1024",
+    branch: "Makro Andijon",
+    location: "Andijon savdo zali",
+    type: "Samsung Tizen",
+    status: "online",
+    signal: 92,
+    storage: 64,
+    ram: 58,
+    cpu: 31,
+    playlist: "Burger Menu May",
+    lastSeen: "Hozir",
+    apkVersion: "v1.0.4",
+    ipAddress: "192.168.1.101",
+    macAddress: "A4:5E:60:12:9B:02",
+    uptime: "12 kun 4 soat",
+    thumbnail: "burger",
+    updated: false,
+  },
+  {
+    id: "lg-korzinka-chilonzor-15",
+    name: "LG WebOS - Korzinka Chilonzor 15",
+    deviceId: "CM-TV-1041",
+    branch: "Korzinka Chilonzor",
+    location: "Chilonzor kassa zonasi",
+    type: "LG WebOS",
+    status: "offline",
+    signal: 0,
+    storage: 78,
+    ram: 44,
+    cpu: 0,
+    playlist: "Promo Week",
+    lastSeen: "25 daqiqa oldin",
+    apkVersion: "v1.0.3",
+    ipAddress: "192.168.1.141",
+    macAddress: "BC:92:6B:21:10:15",
+    uptime: "-",
+    thumbnail: "promo",
+    updated: true,
+  },
+  {
+    id: "android-box-samarqand-07",
+    name: "Android Box - Samarqand 07",
+    deviceId: "CM-BOX-2210",
+    branch: "Makro Samarqand",
+    location: "Samarqand 1-qavat",
+    type: "CASTMAP Box",
+    status: "online",
+    signal: 88,
+    storage: 42,
+    ram: 52,
+    cpu: 27,
+    playlist: "Main Retail Ads",
+    lastSeen: "Hozir",
+    apkVersion: "v1.0.5",
+    ipAddress: "192.168.1.210",
+    macAddress: "70:3A:CB:88:21:10",
+    uptime: "7 kun 18 soat",
+    thumbnail: "orange",
+    updated: false,
+  },
+  {
+    id: "mi-tv-stick-buxoro-03",
+    name: "Mi TV Stick - Buxoro 03",
+    deviceId: "CM-BOX-3012",
+    branch: "Buxoro Mall",
+    location: "Buxoro kirish zonasi",
+    type: "Android TV",
+    status: "error",
+    signal: 56,
+    storage: 91,
+    ram: 76,
+    cpu: 68,
+    playlist: "Summer Campaign",
+    lastSeen: "4 daqiqa oldin",
+    apkVersion: "v1.0.2",
+    ipAddress: "192.168.1.112",
+    macAddress: "B8:27:EB:91:30:12",
+    uptime: "5 kun 12 soat",
+    thumbnail: "sale",
+    updated: true,
+  },
+  {
+    id: "smart-tv-toshkent-18",
+    name: "Smart TV - Toshkent 18",
+    deviceId: "CM-TV-1871",
+    branch: "Toshkent City",
+    location: "Toshkent premium zona",
+    type: "Android TV",
+    status: "online",
+    signal: 97,
+    storage: 35,
+    ram: 34,
+    cpu: 18,
+    playlist: "Premium Ads",
+    lastSeen: "Hozir",
+    apkVersion: "v1.0.5",
+    ipAddress: "192.168.1.187",
+    macAddress: "AC:83:F3:18:71:00",
+    uptime: "18 kun 2 soat",
+    thumbnail: "premium",
+    updated: false,
+  },
+];
+
+const deviceTabs = [
+  { id: "all", label: "Barchasi" },
+  { id: "online", label: "Onlayn" },
+  { id: "offline", label: "Offline" },
+  { id: "error", label: "Xatolik" },
+  { id: "update", label: "Yangilanish kerak" },
+  { id: "new", label: "Yangi ulangan" },
+];
+
+const statusMeta = {
+  online: { label: "Onlayn", tone: "green" },
+  offline: { label: "Offline", tone: "red" },
+  error: { label: "Xatolik", tone: "orange" },
+  inactive: { label: "Nofaol", tone: "gray" },
+};
+
 const pages = {
   dashboard: renderDashboard,
   content: renderContent,
   devices: renderDevices,
+  screens: () => renderPlaceholderPage("Ekranlar", "Barcha ekranlar ro'yxati, model, orientatsiya va joylashuv monitoringi uchun tayyor bo'lim."),
+  playlists: () => renderPlaceholderPage("Playlistlar", "Filial, vaqt va kampaniya bo'yicha kontent oqimlarini boshqarish bo'limi."),
+  schedule: () => renderPlaceholderPage("Jadval", "Kunlik, haftalik va filial kesimidagi namoyish jadvali uchun tayyor bo'lim."),
+  campaigns: () => renderPlaceholderPage("Kampaniyalar", "Retail reklama kampaniyalari, muddat, auditoriya va ijro nazorati."),
   live: renderLive,
   stats: renderStats,
+  alerts: () => renderPlaceholderPage("Ogohlantirishlar", "Offline ekranlar, xatoliklar, sinxronlash muammolari va muhim signal tarixi."),
+  apps: () => renderPlaceholderPage("Ilovalar va Widgetlar", "Ob-havo, valyuta, yangiliklar va tashqi integratsiyalar uchun modul."),
+  users: () => renderPlaceholderPage("Foydalanuvchilar", "Rollar, ruxsatlar va operatorlar boshqaruvi uchun tayyor bo'lim."),
   sales: renderSales,
   pairing: renderPairing,
   settings: renderSettings,
@@ -63,6 +248,72 @@ document.addEventListener("click", (event) => {
   const tvButton = event.target.closest("[data-open-tv]");
   if (tvButton) {
     window.open(`/tv.html?device=${tvButton.dataset.openTv || getSelectedDeviceId()}`, "_blank");
+    return;
+  }
+
+  const deviceFilterButton = event.target.closest("[data-managed-device-filter]");
+  if (deviceFilterButton) {
+    deviceStatusFilter = deviceFilterButton.dataset.managedDeviceFilter;
+    openDeviceActionId = "";
+    render("devices");
+    return;
+  }
+
+  const deviceDetailButton = event.target.closest("[data-managed-device-detail]");
+  if (deviceDetailButton) {
+    selectedManagedDeviceId = deviceDetailButton.dataset.managedDeviceDetail;
+    openDeviceActionId = "";
+    render("devices");
+    return;
+  }
+
+  if (event.target.closest("[data-close-device-drawer]")) {
+    selectedManagedDeviceId = "";
+    render("devices");
+    return;
+  }
+
+  const deviceActionButton = event.target.closest("[data-toggle-managed-device-actions]");
+  if (deviceActionButton) {
+    openDeviceActionId = openDeviceActionId === deviceActionButton.dataset.toggleManagedDeviceActions ? "" : deviceActionButton.dataset.toggleManagedDeviceActions;
+    render("devices");
+    return;
+  }
+
+  const managedActionButton = event.target.closest("[data-managed-device-action]");
+  if (managedActionButton) {
+    const device = managedDevices.find((item) => item.id === managedActionButton.dataset.deviceId);
+    const action = managedActionButton.dataset.managedDeviceAction;
+    openDeviceActionId = "";
+    render("devices");
+    showToast(`${device?.name || "Qurilma"}: ${managedDeviceActionText(action)} buyrug'i yuborildi.`);
+    return;
+  }
+
+  if (event.target.closest("[data-open-pair-device]")) {
+    isPairingModalOpen = true;
+    pairingStep = 1;
+    render("devices");
+    return;
+  }
+
+  if (event.target.closest("[data-close-pair-device]")) {
+    isPairingModalOpen = false;
+    pairingStep = 1;
+    render("devices");
+    return;
+  }
+
+  if (event.target.closest("[data-pair-next]")) {
+    pairingStep = Math.min(4, pairingStep + 1);
+    render("devices");
+    if (pairingStep === 4) showToast("Qurilma muvaffaqiyatli ulandi.");
+    return;
+  }
+
+  if (event.target.closest("[data-pair-prev]")) {
+    pairingStep = Math.max(1, pairingStep - 1);
+    render("devices");
     return;
   }
 
@@ -160,6 +411,18 @@ document.addEventListener("change", async (event) => {
   await loadState();
   render("content");
   showToast("Kontent yuklandi va tanlangan TV playlistiga qo'shildi.");
+});
+
+document.addEventListener("input", (event) => {
+  if (event.target.id !== "managedDeviceSearch") return;
+  deviceSearchTerm = event.target.value;
+  openDeviceActionId = "";
+  render("devices");
+  requestAnimationFrame(() => {
+    const input = document.querySelector("#managedDeviceSearch");
+    input?.focus();
+    input?.setSelectionRange(input.value.length, input.value.length);
+  });
 });
 
 document.addEventListener("submit", async (event) => {
@@ -292,6 +555,8 @@ function render(name) {
   }
   currentPage = name;
   page.innerHTML = (pages[name] || renderDashboard)();
+  enhanceResponsiveTables();
+  syncLocationSelects();
   menu.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("active", button.dataset.page === name);
   });
@@ -372,7 +637,7 @@ function pageTitle(title, subtitle, action = "") {
   return `
     <div class="page-title">
       <div>
-        <p>SOTUV - NATIJA - RIVOJLANISH</p>
+        <p>CASTMAP RETAIL MEDIA</p>
         <h2>${title}</h2>
         <span>${subtitle}</span>
       </div>
@@ -383,27 +648,175 @@ function pageTitle(title, subtitle, action = "") {
 
 function renderDashboard() {
   return `
-    ${pageTitle("Boshqaruv markazi", "Barcha TV ekranlar va kontent bitta panelda boshqariladi.", `<button class="gold-button" data-open-tv>TV playerni ko'rish</button>`)}
-    <section class="hero-grid">
-      ${renderTvMock()}
-      <article class="glass-panel cloud-panel">
-        <h3>Bulut orqali boshqaruv</h3>
-        <div class="cloud">FABRIZE<br><small>CLOUD SERVER</small></div>
-        <ul>
-          <li>Barcha kontent markaziy serverda saqlanadi</li>
-          <li>Har bir TV uchun alohida kontent oqimi</li>
-          <li>Filial bo'yicha kontent ajratish</li>
-          <li>Internet bo'lmasa offline cache aylantiriladi</li>
-          <li>24/7 monitoring va masofadan boshqaruv</li>
-        </ul>
-      </article>
+    <section class="dashboard-head">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Platforma holati va umumiy statistika</p>
+      </div>
+      <button class="ghost-button" data-open-tv>TV playerni ko'rish</button>
     </section>
 
-    <section class="metric-grid">
-      <article><span>Online TV</span><strong>${devices.filter((device) => device.status === "Online").length}</strong><small>Real vaqt monitoring</small></article>
-      <article><span>Kontentlar</span><strong>${files.length}</strong><small>Video, rasm, YouTube, MP3</small></article>
-      <article><span>TV kontenti</span><strong>${files.length}</strong><small>Filiallar bo'yicha ajratilgan</small></article>
-      <article><span>Filiallar</span><strong>${devices.length}</strong><small>Alohida kontent oqimi</small></article>
+    <section class="castmap-metric-grid">
+      ${castmapMetrics.map(renderCastmapMetric).join("")}
+    </section>
+
+    <section class="dashboard-main-grid">
+      ${renderStatsChart()}
+      ${renderDeviceStatusChart()}
+      ${renderTopBranches()}
+      ${renderActivityFeed()}
+      ${renderMapOverview()}
+    </section>
+  `;
+}
+
+function renderCastmapMetric(item) {
+  return `
+    <article class="castmap-card metric-card ${item.tone}">
+      <span class="metric-icon">${item.icon}</span>
+      <div>
+        <small>${item.title}</small>
+        <strong>${item.value}</strong>
+        <em>${item.detail}</em>
+      </div>
+    </article>
+  `;
+}
+
+function renderStatsChart() {
+  const maxValue = 800;
+  const width = 720;
+  const height = 245;
+  const padX = 42;
+  const padY = 28;
+  const chartWidth = width - padX * 2;
+  const chartHeight = height - padY * 2;
+  const points = impressionStats.map((item, index) => {
+    const x = padX + (chartWidth / (impressionStats.length - 1)) * index;
+    const y = padY + chartHeight - (item.value / maxValue) * chartHeight;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  const areaPoints = `${padX},${height - padY} ${points} ${width - padX},${height - padY}`;
+
+  return `
+    <article class="castmap-card stats-chart-card">
+      <div class="card-head">
+        <h3>Ko'rsatishlar statistikasi</h3>
+        <button type="button">7 kunlik</button>
+      </div>
+      <svg class="area-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="7 kunlik ko'rsatishlar statistikasi">
+        ${[0, 200, 400, 600, 800].map((value) => {
+          const y = padY + chartHeight - (value / maxValue) * chartHeight;
+          return `<line x1="${padX}" y1="${y}" x2="${width - padX}" y2="${y}" />`;
+        }).join("")}
+        <polygon points="${areaPoints}" />
+        <polyline points="${points}" />
+        ${impressionStats.map((item, index) => {
+          const x = padX + (chartWidth / (impressionStats.length - 1)) * index;
+          const y = padY + chartHeight - (item.value / maxValue) * chartHeight;
+          return `<circle cx="${x}" cy="${y}" r="4" /><text x="${x}" y="${height - 6}">${item.day}</text>`;
+        }).join("")}
+        <text x="8" y="${padY + 4}">800K</text>
+        <text x="8" y="${padY + chartHeight / 2 + 4}">400K</text>
+        <text x="20" y="${height - padY + 4}">0</text>
+      </svg>
+    </article>
+  `;
+}
+
+function renderDeviceStatusChart() {
+  const total = deviceStatusStats.reduce((sum, item) => sum + item.value, 0);
+  return `
+    <article class="castmap-card status-card">
+      <div class="card-head">
+        <h3>Ekranlar holati</h3>
+      </div>
+      <div class="status-layout">
+        <div class="donut-chart">
+          <div><strong>${total.toLocaleString("en-US")}</strong><span>Jami</span></div>
+        </div>
+        <div class="status-list">
+          ${deviceStatusStats.map((item) => `
+            <div>
+              <span style="--dot:${item.color}"></span>
+              <b>${item.label}</b>
+              <strong>${item.value.toLocaleString("en-US")} (${((item.value / total) * 100).toFixed(1)}%)</strong>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderTopBranches() {
+  const max = Math.max(...topBranches.map((item) => item.value));
+  return `
+    <article class="castmap-card top-branches-card">
+      <h3>Top 5 filiallar</h3>
+      ${topBranches.map((item) => `
+        <div class="branch-row">
+          <div><span>${item.name}</span><b>${item.value}</b></div>
+          <i><em style="width:${Math.round((item.value / max) * 100)}%"></em></i>
+        </div>
+      `).join("")}
+      <button class="card-link" type="button">Barcha filiallar</button>
+    </article>
+  `;
+}
+
+function renderActivityFeed() {
+  return `
+    <article class="castmap-card activity-card">
+      <h3>So'nggi faoliyatlar</h3>
+      ${activityFeed.map((item) => `
+        <div class="activity-row">
+          <span class="${item.tone}">${item.icon}</span>
+          <div>
+            <b>${item.title}</b>
+            <small>${item.text}</small>
+          </div>
+          <time>${item.time}<small>${item.role}</small></time>
+        </div>
+      `).join("")}
+      <button class="card-link" type="button">Barcha faoliyatlar</button>
+    </article>
+  `;
+}
+
+function renderMapOverview() {
+  return `
+    <article class="castmap-card map-card">
+      <div class="card-head">
+        <h3>O'zbekiston bo'yicha ekranlar</h3>
+        <button type="button">O'zbekiston</button>
+      </div>
+      <div class="map-canvas">
+        <svg viewBox="0 0 620 280" aria-hidden="true">
+          <path d="M70 92 L155 54 L235 112 L305 104 L336 132 L402 126 L450 102 L500 126 L552 152 L526 202 L430 222 L346 206 L280 226 L220 202 L152 212 L86 178 Z" />
+          <path d="M158 72 L226 128 L306 118 L356 150 L434 146" />
+          <path d="M220 202 L240 132 M344 206 L350 146 M430 222 L432 148" />
+        </svg>
+        ${mapMarkers.map((item) => `
+          <div class="map-marker ${item.tone}" style="left:${item.x}%;top:${item.y}%">
+            <b>${item.value}</b>
+            <span>${item.city}</span>
+          </div>
+        `).join("")}
+      </div>
+      <button class="card-link" type="button">Xaritada to'liq ko'rish</button>
+    </article>
+  `;
+}
+
+function renderPlaceholderPage(title, text) {
+  return `
+    ${pageTitle(title, text)}
+    <section class="empty-state-panel">
+      <div class="empty-state-icon">CM</div>
+      <h3>${title} bo'limi tayyor</h3>
+      <p>${text}</p>
+      <button class="ghost-button" type="button" data-page="dashboard">Dashboardga qaytish</button>
     </section>
   `;
 }
@@ -541,6 +954,7 @@ function renderContent() {
 }
 
 function renderDevices() {
+  return renderDeviceManagement();
   return `
     ${pageTitle("Qurilmalar / TVlar", "TV holati, lokatsiya, APK versiyasi va masofadan boshqaruv.", `<button class="gold-button" data-open-tv>Tanlangan TV</button>`)}
     <section class="device-control-grid">
@@ -590,6 +1004,290 @@ function renderDevices() {
         `).join("")}
       </tbody>
     </table>
+  `;
+}
+
+function renderDeviceManagement() {
+  const filteredDevices = filteredManagedDevices();
+  const selectedDevice = managedDevices.find((item) => item.id === selectedManagedDeviceId) || filteredDevices[0] || null;
+
+  return `
+    <section class="device-management-page">
+      <header class="device-page-head">
+        <div>
+          <p>DEVICE MANAGEMENT</p>
+          <h2>TV Qurilmalar</h2>
+          <span>Barcha ekran va player qurilmalarni boshqarish</span>
+        </div>
+        <div class="device-head-actions">
+          <label class="device-search">
+            <span>Qidirish</span>
+            <input id="managedDeviceSearch" value="${escapeHtml(deviceSearchTerm)}" placeholder="Qurilma nomi, filial yoki ID bo'yicha qidirish" />
+          </label>
+          <button class="ghost-button" type="button">Filtr</button>
+          <select aria-label="Sana va status">
+            <option>17 May, 2026 - Barcha statuslar</option>
+            <option>Faqat onlayn qurilmalar</option>
+            <option>Yangilanish kerak</option>
+          </select>
+          <button class="gold-button" type="button" data-open-pair-device>+ Yangi qurilma ulash</button>
+        </div>
+      </header>
+
+      <section class="device-metric-grid">
+        ${renderDeviceMetric("Jami qurilmalar", "1,248", "Barcha ro'yxatdan o'tgan ekranlar", "gold")}
+        ${renderDeviceMetric("Onlayn", "1,087", "87.1% faol", "green")}
+        ${renderDeviceMetric("Offline", "98", "So'nggi 24 soatda uzilgan", "red")}
+        ${renderDeviceMetric("Xatoliklar", "23", "Tezkor e'tibor kerak", "orange")}
+      </section>
+
+      <section class="device-filter-tabs">
+        ${deviceTabs.map((tab) => `<button class="${deviceStatusFilter === tab.id ? "active" : ""}" type="button" data-managed-device-filter="${tab.id}">${tab.label}</button>`).join("")}
+      </section>
+
+      <section class="device-layout-grid ${selectedDevice ? "has-drawer" : ""}">
+        <article class="device-table-panel">
+          <div class="device-table-head">
+            <div>
+              <h3>Qurilmalar ro'yxati</h3>
+              <span>${filteredDevices.length} ta qurilma ko'rsatilmoqda</span>
+            </div>
+            <button type="button">Ustunlar</button>
+          </div>
+          ${filteredDevices.length ? renderManagedDeviceTable(filteredDevices) : renderManagedDeviceEmpty()}
+        </article>
+        ${selectedDevice ? renderDeviceDrawer(selectedDevice) : ""}
+      </section>
+
+      <section class="device-monitoring-grid">
+        ${renderMonitoringCard("Eng ko'p offline bo'layotgan filiallar", ["Korzinka Chilonzor - 14 marta", "Buxoro Mall - 8 marta", "Makro Toshkent - 5 marta"])}
+        ${renderMonitoringCard("APK yangilanishi kerak bo'lgan qurilmalar", ["CM-TV-1041 - v1.0.3", "CM-BOX-3012 - v1.0.2", "CM-TV-1024 - v1.0.4"])}
+        ${renderMonitoringCard("Storage 80% dan oshgan qurilmalar", ["Buxoro Mall - 91%", "Korzinka Chilonzor - 78%", "Makro Andijon - 64%"])}
+        ${renderMonitoringCard("So'nggi ulanishlar", ["Smart TV Toshkent 18 - hozir", "Android Box Samarqand 07 - hozir", "Samsung TV Makro Andijon 02 - hozir"])}
+      </section>
+
+      ${isPairingModalOpen ? renderPairDeviceModal() : ""}
+    </section>
+  `;
+}
+
+function renderDeviceMetric(title, value, subtext, tone) {
+  return `
+    <article class="device-metric-card ${tone}">
+      <span>${tone === "green" ? "ON" : tone === "red" ? "OFF" : tone === "orange" ? "!" : "TV"}</span>
+      <div>
+        <small>${title}</small>
+        <strong>${value}</strong>
+        <em>${subtext}</em>
+      </div>
+    </article>
+  `;
+}
+
+function filteredManagedDevices() {
+  const search = deviceSearchTerm.trim().toLowerCase();
+  return managedDevices.filter((device) => {
+    const matchesSearch = !search
+      || device.name.toLowerCase().includes(search)
+      || device.deviceId.toLowerCase().includes(search)
+      || device.branch.toLowerCase().includes(search)
+      || device.location.toLowerCase().includes(search);
+    const matchesFilter = deviceStatusFilter === "all"
+      || device.status === deviceStatusFilter
+      || (deviceStatusFilter === "update" && device.updated)
+      || (deviceStatusFilter === "new" && ["android-box-samarqand-07", "smart-tv-toshkent-18"].includes(device.id));
+    return matchesSearch && matchesFilter;
+  });
+}
+
+function renderManagedDeviceTable(items) {
+  return `
+    <div class="managed-device-table">
+      <div class="managed-device-row table-head">
+        <span>Qurilma</span>
+        <span>Filial / location</span>
+        <span>Turi</span>
+        <span>Holat</span>
+        <span>Signal</span>
+        <span>Storage</span>
+        <span>Playlist</span>
+        <span>Oxirgi signal</span>
+        <span>APK</span>
+        <span>Amallar</span>
+      </div>
+      ${items.map(renderManagedDeviceRow).join("")}
+    </div>
+  `;
+}
+
+function renderManagedDeviceRow(device) {
+  return `
+    <div class="managed-device-row ${selectedManagedDeviceId === device.id ? "selected" : ""}">
+      <button class="device-main-cell" type="button" data-managed-device-detail="${device.id}">
+        ${renderDeviceThumbnail(device)}
+        <span>
+          <b>${device.name}</b>
+          <small>${device.deviceId}</small>
+        </span>
+      </button>
+      <div><b>${device.branch}</b><small>${device.location}</small></div>
+      <div>${device.type}</div>
+      <div>${renderDeviceStatusBadge(device.status)}</div>
+      <div>${renderDeviceHealthBar(device.signal, "signal")}</div>
+      <div>${renderDeviceHealthBar(device.storage, device.storage > 80 ? "danger" : "storage")}</div>
+      <div><b>${device.playlist}</b></div>
+      <div>${device.lastSeen}</div>
+      <div><b>${device.apkVersion}</b>${device.updated ? "<small>Update kerak</small>" : ""}</div>
+      <div class="managed-device-actions">
+        <button type="button" data-managed-device-detail="${device.id}">Batafsil</button>
+        <button type="button" data-toggle-managed-device-actions="${device.id}">...</button>
+        ${openDeviceActionId === device.id ? renderManagedDeviceActions(device) : ""}
+      </div>
+    </div>
+  `;
+}
+
+function renderDeviceStatusBadge(status) {
+  const meta = statusMeta[status] || statusMeta.inactive;
+  return `<span class="device-status-badge ${meta.tone}"><i></i>${meta.label}</span>`;
+}
+
+function renderDeviceHealthBar(value, tone = "signal") {
+  const label = Number(value) ? `${value}%` : "--";
+  return `<span class="device-health ${tone}"><i><em style="width:${Math.max(0, Math.min(100, Number(value) || 0))}%"></em></i><b>${label}</b></span>`;
+}
+
+function renderManagedDeviceActions(device) {
+  const actions = [
+    ["view", "Batafsil ko'rish"],
+    ["screenshot", "Screenshot olish"],
+    ["sync", "Sync qilish"],
+    ["restart", "Restart"],
+    ["cache", "Cache tozalash"],
+    ["apk", "APK yangilash"],
+    ["delete", "Qurilmani o'chirish"],
+  ];
+  return `
+    <div class="device-action-menu">
+      ${actions.map(([id, label]) => `<button class="${id === "delete" ? "danger" : ""}" type="button" data-device-id="${device.id}" data-managed-device-action="${id}">${label}</button>`).join("")}
+    </div>
+  `;
+}
+
+function managedDeviceActionText(action) {
+  return ({
+    view: "Batafsil ko'rish",
+    screenshot: "Screenshot olish",
+    sync: "Sync qilish",
+    restart: "Restart",
+    cache: "Cache tozalash",
+    apk: "APK yangilash",
+    delete: "Qurilmani o'chirish",
+    forceSync: "Force Sync",
+    updateApk: "Update APK",
+  })[action] || "Buyruq";
+}
+
+function renderDeviceDrawer(device) {
+  return `
+    <aside class="device-detail-drawer">
+      <header>
+        <div>
+          <h3>${device.name}</h3>
+          ${renderDeviceStatusBadge(device.status)}
+        </div>
+        <button type="button" data-close-device-drawer>×</button>
+      </header>
+      ${renderDeviceThumbnail(device, "large")}
+      <div class="drawer-info-grid">
+        ${drawerInfo("Device ID", device.deviceId)}
+        ${drawerInfo("Filial", device.branch)}
+        ${drawerInfo("IP address", device.ipAddress)}
+        ${drawerInfo("MAC address", device.macAddress)}
+        ${drawerInfo("Device type", device.type)}
+        ${drawerInfo("APK version", device.apkVersion)}
+        ${drawerInfo("Last heartbeat", device.lastSeen)}
+        ${drawerInfo("Current playlist", device.playlist)}
+        ${drawerInfo("Uptime", device.uptime)}
+      </div>
+      <div class="drawer-health-grid">
+        <div><span>Storage usage</span>${renderDeviceHealthBar(device.storage, device.storage > 80 ? "danger" : "storage")}</div>
+        <div><span>RAM usage</span>${renderDeviceHealthBar(device.ram, "ram")}</div>
+        <div><span>CPU usage</span>${renderDeviceHealthBar(device.cpu, "cpu")}</div>
+        <div><span>Internet signal</span>${renderDeviceHealthBar(device.signal, "signal")}</div>
+      </div>
+      <div class="drawer-action-grid">
+        <button type="button" data-device-id="${device.id}" data-managed-device-action="forceSync">Force Sync</button>
+        <button type="button" data-device-id="${device.id}" data-managed-device-action="restart">Restart Device</button>
+        <button type="button" data-device-id="${device.id}" data-managed-device-action="screenshot">Take Screenshot</button>
+        <button type="button" data-device-id="${device.id}" data-managed-device-action="cache">Clear Cache</button>
+        <button type="button" data-device-id="${device.id}" data-managed-device-action="updateApk">Update APK</button>
+      </div>
+    </aside>
+  `;
+}
+
+function drawerInfo(label, value) {
+  return `<div><span>${label}</span><b>${value}</b></div>`;
+}
+
+function renderDeviceThumbnail(device, size = "") {
+  return `
+    <div class="device-thumbnail ${device.thumbnail} ${size}">
+      <small>${device.type}</small>
+      <b>${device.playlist}</b>
+      <span>${device.branch}</span>
+    </div>
+  `;
+}
+
+function renderManagedDeviceEmpty() {
+  return `
+    <div class="device-empty-state">
+      <div>TV</div>
+      <h3>Hali qurilma ulanmagan</h3>
+      <p>Birinchi TV yoki TV Box qurilmangizni ulashdan boshlang.</p>
+      <button class="gold-button" type="button" data-open-pair-device>Qurilma ulash</button>
+    </div>
+  `;
+}
+
+function renderMonitoringCard(title, items) {
+  return `
+    <article class="device-monitor-card">
+      <h3>${title}</h3>
+      ${items.map((item) => `<span>${item}</span>`).join("")}
+    </article>
+  `;
+}
+
+function renderPairDeviceModal() {
+  const steps = [
+    { title: "TV qurilmani ulash", text: "CASTMAP Player APK ni TV yoki TV Box qurilmaga o'rnating.", content: `<div class="pair-device-box">APK o'rnatish</div>` },
+    { title: "Pairing code", text: "TV ekranida ko'rsatilgan kodni kiriting.", content: `<input placeholder="Masalan: 482-913" value="482-913" />` },
+    { title: "Qurilma ma'lumotlari", text: "Qurilmani kompaniya, filial va guruhga bog'lang.", content: `<select><option>CASTMAP Demo Company</option></select><select><option>Makro Andijon</option><option>Korzinka Chilonzor</option></select><select><option>Savdo zali</option><option>Kassa zonasi</option></select><input value="Samsung TV - Makro Andijon 02" />` },
+    { title: "Qurilma muvaffaqiyatli ulandi", text: "Endi qurilma cloud paneldan boshqariladi.", content: `<div class="pair-success">Ulandi</div>` },
+  ];
+  const current = steps[pairingStep - 1];
+  return `
+    <div class="pair-modal-backdrop">
+      <section class="pair-modal">
+        <header>
+          <div>
+            <p>Step ${pairingStep} / 4</p>
+            <h3>${current.title}</h3>
+            <span>${current.text}</span>
+          </div>
+          <button type="button" data-close-pair-device>×</button>
+        </header>
+        <div class="pair-steps">${steps.map((_, index) => `<i class="${index + 1 <= pairingStep ? "active" : ""}"></i>`).join("")}</div>
+        <div class="pair-content">${current.content}</div>
+        <footer>
+          <button type="button" data-pair-prev ${pairingStep === 1 ? "disabled" : ""}>Orqaga</button>
+          ${pairingStep < 4 ? `<button class="gold-button" type="button" data-pair-next>Davom etish</button>` : `<button class="gold-button" type="button" data-close-pair-device>Yakunlash</button>`}
+        </footer>
+      </section>
+    </div>
   `;
 }
 
@@ -1311,6 +2009,11 @@ async function adminLogin(login, password) {
 
 async function adminLogout() {
   await fetch("/api/admin-logout", { method: "POST" });
+  if (adminUser?.authDisabled) {
+    await initAdmin();
+    showToast("Kirish kodi vaqtincha o'chirilgan.");
+    return;
+  }
   adminUser = null;
   renderAdminAuth("login", "Sessiya yopildi.");
 }
@@ -1534,6 +2237,21 @@ function currentContentName(device) {
 function syncLocationSelects() {
   document.querySelectorAll(".location-select").forEach((select) => {
     select.value = String(getSelectedDeviceId());
+  });
+}
+
+function enhanceResponsiveTables() {
+  page.querySelectorAll(".premium-table").forEach((table) => {
+    table.classList.add("responsive-card-table");
+    const labels = [...table.querySelectorAll("thead th")].map((header) => header.textContent.trim());
+
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      [...row.children].forEach((cell, index) => {
+        if (cell.tagName === "TD" && labels[index]) {
+          cell.dataset.label = labels[index];
+        }
+      });
+    });
   });
 }
 

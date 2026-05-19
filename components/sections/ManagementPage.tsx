@@ -1,0 +1,623 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  CalendarClock,
+  CheckCircle2,
+  CreditCard,
+  Eye,
+  FilePlus2,
+  GalleryVerticalEnd,
+  LayoutGrid,
+  Monitor,
+  Radio,
+  RefreshCw,
+  Rocket,
+  Search,
+  Settings,
+  Smartphone,
+  Trash2,
+  UsersRound,
+  Wrench,
+} from "lucide-react";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Topbar } from "@/components/layout/Topbar";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Drawer } from "@/components/ui/Drawer";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
+import { Table } from "@/components/ui/Table";
+import { Tabs } from "@/components/ui/Tabs";
+import { useCastmapStore } from "@/lib/store";
+import type { Alert, ApkVersion, Campaign, CommandType, Device, Playlist, Schedule } from "@/types";
+
+type SectionKey =
+  | "screens"
+  | "playlists"
+  | "schedules"
+  | "campaigns"
+  | "analytics"
+  | "live-monitoring"
+  | "apk-management"
+  | "alerts"
+  | "widgets"
+  | "users"
+  | "billing"
+  | "settings";
+
+const sectionConfig: Record<SectionKey, { active: string; kicker: string; title: string; subtitle: string; action: string; icon: typeof LayoutGrid }> = {
+  screens: { active: "Ekranlar", kicker: "SCREEN INVENTORY", title: "Ekranlar", subtitle: "Filiallar bo'yicha ekran joylashuvi va holatini boshqarish", action: "Ekran qo'shish", icon: Monitor },
+  playlists: { active: "Playlistlar", kicker: "PLAYLIST BUILDER", title: "Playlistlar", subtitle: "Media fayllarni tartiblash, publish qilish va targetlash", action: "Playlist yaratish", icon: GalleryVerticalEnd },
+  schedules: { active: "Jadval", kicker: "SCHEDULING ENGINE", title: "Jadval", subtitle: "Playlistlarni kun, vaqt va filial bo'yicha rejalashtirish", action: "Jadval qo'shish", icon: CalendarClock },
+  campaigns: { active: "Kampaniyalar", kicker: "CAMPAIGN OPS", title: "Kampaniyalar", subtitle: "Retail media kampaniyalarini yaratish va natijani kuzatish", action: "Kampaniya yaratish", icon: Radio },
+  analytics: { active: "Analitika", kicker: "ANALYTICS", title: "Analitika", subtitle: "Ko'rsatishlar, uptime va kampaniya samaradorligini tahlil qilish", action: "Hisobot olish", icon: BarChart3 },
+  "live-monitoring": { active: "Jonli monitoring", kicker: "LIVE MONITORING", title: "Jonli monitoring", subtitle: "Barcha TV ekranlardan screenshot va playback holatini ko'rish", action: "Hammasini yangilash", icon: Eye },
+  "apk-management": { active: "APK boshqaruvi", kicker: "PLAYER RELEASES", title: "APK boshqaruvi", subtitle: "Player versiyalari, rollout, rollback va qurilmalar bo'yicha versiyalar", action: "APK yuklash", icon: Smartphone },
+  alerts: { active: "Ogohlantirishlar", kicker: "ALERT CENTER", title: "Ogohlantirishlar", subtitle: "Offline, xatolik, storage va heartbeat muammolarini boshqarish", action: "Tekshirish", icon: AlertTriangle },
+  widgets: { active: "Ilovalar va Widgetlar", kicker: "WIDGET MARKET", title: "Ilovalar va Widgetlar", subtitle: "Ob-havo, soat, QR, YouTube va boshqa modullar", action: "Widget qo'shish", icon: Wrench },
+  users: { active: "Foydalanuvchilar", kicker: "ACCESS CONTROL", title: "Foydalanuvchilar", subtitle: "Rol, filial huquqi va operatorlarni boshqarish", action: "User yaratish", icon: UsersRound },
+  billing: { active: "Tarif va billing", kicker: "BILLING", title: "Tarif va billing", subtitle: "Tariflar, limitlar, invoice va upgrade jarayoni", action: "Tarifni yangilash", icon: CreditCard },
+  settings: { active: "Sozlamalar", kicker: "SYSTEM SETTINGS", title: "Sozlamalar", subtitle: "Kompaniya, brand, xavfsizlik, API va webhook sozlamalari", action: "Saqlash", icon: Settings },
+};
+
+export function ManagementPage({ section }: { section: SectionKey }) {
+  const store = useCastmapStore();
+  const config = sectionConfig[section];
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState("all");
+  const [modal, setModal] = useState("");
+  const [drawerTitle, setDrawerTitle] = useState("");
+  const [drawerBody, setDrawerBody] = useState<string[]>([]);
+
+  const openDrawer = (title: string, rows: string[]) => {
+    setDrawerTitle(title);
+    setDrawerBody(rows);
+  };
+
+  const doPrimaryAction = () => {
+    if (section === "playlists") store.addPlaylist();
+    else if (section === "schedules") store.addSchedule();
+    else if (section === "campaigns") store.addCampaign();
+    else if (section === "users") store.addUser();
+    else if (section === "apk-management") store.uploadApk();
+    else if (section === "billing") setModal("billing");
+    else if (section === "alerts") store.pushToast("Ogohlantirishlar qayta tekshirildi.", "info");
+    else if (section === "live-monitoring") store.pushToast("Screenshot grid yangilandi.", "info");
+    else if (section === "settings") store.pushToast("Sozlamalar saqlandi.");
+    else setModal(section);
+  };
+
+  return (
+    <main className="flex min-h-screen bg-castBg text-castText max-lg:flex-col">
+      <Sidebar activeLabel={config.active} />
+      <section className="min-w-0 flex-1">
+        <Topbar />
+        <div className="grid gap-5 p-7 max-sm:p-4">
+          <PageHeader kicker={config.kicker} title={config.title} subtitle={config.subtitle} icon={config.icon} actionLabel={config.action} onAction={doPrimaryAction} />
+          <Toolbar query={query} onQuery={setQuery} tab={tab} onTab={setTab} />
+          {section === "screens" && <ScreensContent query={query} openDrawer={openDrawer} />}
+          {section === "playlists" && <PlaylistsContent query={query} openDrawer={openDrawer} />}
+          {section === "schedules" && <SchedulesContent query={query} openDrawer={openDrawer} />}
+          {section === "campaigns" && <CampaignsContent query={query} openDrawer={openDrawer} />}
+          {section === "analytics" && <AnalyticsContent />}
+          {section === "live-monitoring" && <MonitoringContent query={query} openDrawer={openDrawer} />}
+          {section === "apk-management" && <ApkContent openDrawer={openDrawer} />}
+          {section === "alerts" && <AlertsContent query={query} openDrawer={openDrawer} />}
+          {section === "widgets" && <WidgetsContent />}
+          {section === "users" && <UsersContent query={query} openDrawer={openDrawer} />}
+          {section === "billing" && <BillingContent />}
+          {section === "settings" && <SettingsContent />}
+        </div>
+      </section>
+      <Drawer open={!!drawerTitle} title={drawerTitle} onClose={() => setDrawerTitle("")}>
+        <div className="grid gap-3">
+          {drawerBody.map((row) => <div key={row} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-castMuted">{row}</div>)}
+        </div>
+      </Drawer>
+      <MockModal title={config.title} open={!!modal} onClose={() => setModal("")} />
+    </main>
+  );
+}
+
+function Toolbar({ query, onQuery, tab, onTab }: { query: string; onQuery: (value: string) => void; tab: string; onTab: (value: string) => void }) {
+  return (
+    <Card className="grid gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="relative min-w-[280px] flex-1">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-castMuted" />
+          <Input className="pl-11" value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Nom, filial, ID yoki status bo'yicha qidirish" />
+        </label>
+        <Select defaultValue="all">
+          <option value="all">Barcha filiallar</option>
+          <option>Makro Andijon</option>
+          <option>Korzinka Chilonzor</option>
+          <option>Toshkent City</option>
+        </Select>
+        <Select defaultValue="latest">
+          <option value="latest">Eng yangi</option>
+          <option value="status">Status bo'yicha</option>
+          <option value="name">Nomi A-Z</option>
+        </Select>
+        <Button onClick={() => onQuery("")}>Filtrni tozalash</Button>
+      </div>
+      <Tabs
+        active={tab}
+        onChange={onTab}
+        items={[
+          { id: "all", label: "Barchasi" },
+          { id: "active", label: "Faol" },
+          { id: "draft", label: "Draft" },
+          { id: "warning", label: "E'tibor kerak" },
+        ]}
+      />
+    </Card>
+  );
+}
+
+function filterText(query: string, ...values: string[]) {
+  const search = query.trim().toLowerCase();
+  return !search || values.some((value) => value.toLowerCase().includes(search));
+}
+
+function MetricGrid() {
+  const store = useCastmapStore();
+  const online = store.devices.filter((item) => item.status === "online").length;
+  const offline = store.devices.filter((item) => item.status === "offline").length;
+  return (
+    <section className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+      <Metric title="Jami ekranlar" value={String(store.devices.length)} helper="Ro'yxatdan o'tgan TV va boxlar" tone="gold" />
+      <Metric title="Onlayn" value={String(online)} helper="Heartbeat kelmoqda" tone="green" />
+      <Metric title="Offline" value={String(offline)} helper="Tekshiruv talab qiladi" tone="red" />
+      <Metric title="Media oqimi" value={String(store.media.length)} helper="Kutubxonadagi fayllar" tone="blue" />
+    </section>
+  );
+}
+
+function Metric({ title, value, helper, tone }: { title: string; value: string; helper: string; tone: "gold" | "green" | "red" | "blue" }) {
+  const toneClass = tone === "green" ? "text-green-300" : tone === "red" ? "text-red-300" : tone === "blue" ? "text-blue-300" : "text-castGold";
+  return (
+    <Card>
+      <p className="text-sm text-castMuted">{title}</p>
+      <strong className={`mt-3 block text-3xl ${toneClass}`}>{value}</strong>
+      <span className="mt-2 block text-xs text-castMuted">{helper}</span>
+    </Card>
+  );
+}
+
+function ScreensContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const devices = store.devices.filter((device) => filterText(query, device.name, device.branch, device.deviceId));
+  return (
+    <>
+      <LocationCreateCard />
+      <MetricGrid />
+      <Table headers={["Ekran", "Filial", "Status", "Joriy kontent", "APK", "Amallar"]}>
+        {devices.map((device) => (
+          <tr key={device.id} className="hover:bg-white/[0.03]">
+            <td className="px-4 py-3 font-bold text-white">{device.name}<span className="block text-xs text-castMuted">{device.deviceId}</span></td>
+            <td className="px-4 py-3 text-castMuted">{device.branch}</td>
+            <td className="px-4 py-3"><StatusBadge status={device.status} /></td>
+            <td className="px-4 py-3 text-castMuted">{device.playlist}</td>
+            <td className="px-4 py-3 text-castMuted">{device.apkVersion}</td>
+            <td className="px-4 py-3"><Button onClick={() => openDrawer(device.name, deviceRows(device))}>Batafsil</Button></td>
+          </tr>
+        ))}
+      </Table>
+    </>
+  );
+}
+
+function LocationCreateCard() {
+  const store = useCastmapStore();
+  const [form, setForm] = useState({
+    name: "",
+    city: "Toshkent",
+    address: "",
+    workStart: "09:00",
+    workEnd: "22:00",
+  });
+
+  const update = (key: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  return (
+    <Card className="border-castGold/20">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-[220px] flex-1">
+          <h3 className="text-lg font-black text-white">Yangi lokatsiya qo'shish</h3>
+          <p className="mt-1 text-sm text-castMuted">Keyin shu lokatsiyaga TV qurilma ulash va kontent biriktirish mumkin.</p>
+        </div>
+        <Input className="w-56" value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Lokatsiya nomi" />
+        <Input className="w-44" value={form.city} onChange={(event) => update("city", event.target.value)} placeholder="Shahar" />
+        <Input className="w-56" value={form.address} onChange={(event) => update("address", event.target.value)} placeholder="Manzil" />
+        <Input className="w-32" type="time" value={form.workStart} onChange={(event) => update("workStart", event.target.value)} />
+        <Input className="w-32" type="time" value={form.workEnd} onChange={(event) => update("workEnd", event.target.value)} />
+        <Button
+          variant="gold"
+          onClick={() => {
+            store.addBranch(form);
+            setForm({ name: "", city: form.city, address: "", workStart: form.workStart, workEnd: form.workEnd });
+          }}
+        >
+          Qo'shish
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function PlaylistsContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const items = store.playlists.filter((playlist) => filterText(query, playlist.name, playlist.target, playlist.status));
+  return (
+    <section className="grid gap-4 xl:grid-cols-3">
+      {items.map((playlist) => (
+        <Card key={playlist.id} className="grid gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-black text-white">{playlist.name}</h3>
+              <p className="mt-1 text-sm text-castMuted">{playlist.description}</p>
+            </div>
+            <Badge tone={playlist.status === "published" ? "green" : "gray"}>{playlist.status}</Badge>
+          </div>
+          <div className="text-sm text-castMuted">Target: {playlist.target}</div>
+          <div className="text-sm text-castMuted">Media: {playlist.items.length} ta, loop: {playlist.loop ? "yoqilgan" : "o'chirilgan"}</div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="gold" onClick={() => store.publishPlaylist(playlist.id)}>Publish</Button>
+            <Button onClick={() => openDrawer(playlist.name, playlist.items.map((item) => `${item.order}. ${item.mediaId} - ${item.duration}s`))}>Preview</Button>
+            <Button onClick={() => store.duplicatePlaylist(playlist.id)}>Duplicate</Button>
+            <Button variant="danger" onClick={() => store.deletePlaylist(playlist.id)}>Delete</Button>
+          </div>
+        </Card>
+      ))}
+    </section>
+  );
+}
+
+function SchedulesContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const items = store.schedules.filter((schedule) => filterText(query, schedule.name, schedule.type, schedule.status));
+  return (
+    <Table headers={["Nomi", "Playlist", "Filial", "Vaqt", "Kunlar", "Status", "Amallar"]}>
+      {items.map((schedule) => (
+        <tr key={schedule.id} className="hover:bg-white/[0.03]">
+          <td className="px-4 py-3 font-bold text-white">{schedule.name}</td>
+          <td className="px-4 py-3 text-castMuted">{store.playlists.find((playlist) => playlist.id === schedule.playlistId)?.name}</td>
+          <td className="px-4 py-3 text-castMuted">{store.branches.find((branch) => branch.id === schedule.branchId)?.name}</td>
+          <td className="px-4 py-3 text-castMuted">{schedule.startTime} - {schedule.endTime}</td>
+          <td className="px-4 py-3 text-castMuted">{schedule.days.join(", ")}</td>
+          <td className="px-4 py-3"><Badge tone={schedule.status === "active" ? "green" : "orange"}>{schedule.status}</Badge></td>
+          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.toggleSchedule(schedule.id)}>Pause/Start</Button><Button onClick={() => openDrawer(schedule.name, [`Turi: ${schedule.type}`, `Priority: ${schedule.priority}`])}>Ko'rish</Button></td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
+function CampaignsContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const items = store.campaigns.filter((campaign) => filterText(query, campaign.name, campaign.status));
+  return (
+    <section className="grid gap-4 xl:grid-cols-2">
+      {items.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} openDrawer={openDrawer} />)}
+    </section>
+  );
+}
+
+function CampaignCard({ campaign, openDrawer }: { campaign: Campaign; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  return (
+    <Card>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-black text-white">{campaign.name}</h3>
+          <p className="mt-1 text-sm text-castMuted">{campaign.startDate} - {campaign.endDate}</p>
+        </div>
+        <Badge tone={campaign.status === "active" ? "green" : campaign.status === "paused" ? "orange" : "gray"}>{campaign.status}</Badge>
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        <MiniStat label="Budget" value={campaign.budget} />
+        <MiniStat label="Target" value={campaign.impressionsTarget.toLocaleString("ru-RU")} />
+        <MiniStat label="Playback" value={campaign.playbackCount.toLocaleString("ru-RU")} />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="gold" onClick={() => store.setCampaignStatus(campaign.id, "active")}>Start</Button>
+        <Button onClick={() => store.setCampaignStatus(campaign.id, "paused")}>Pause</Button>
+        <Button onClick={() => openDrawer(campaign.name, [`Filiallar: ${campaign.targetBranches.length}`, `Playlistlar: ${campaign.assignedPlaylists.length}`, `Proof of play: ${campaign.playbackCount}`])}>Analitika</Button>
+      </div>
+    </Card>
+  );
+}
+
+function AnalyticsContent() {
+  const store = useCastmapStore();
+  const totalDuration = store.playbackLogs.reduce((sum, log) => sum + log.durationSeconds, 0);
+  const onlineDevices = store.devices.filter((device) => device.status === "online").length;
+  const uptime = store.devices.length ? `${Math.round((onlineDevices / store.devices.length) * 100)}%` : "0%";
+  return (
+    <>
+      <section className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+        <Metric title="Total impressions" value="0" helper="Hisobotlar tozalangan" tone="gold" />
+        <Metric title="Playback count" value={String(store.playbackLogs.length)} helper="Playback log yo'q" tone="blue" />
+        <Metric title="Uptime" value={uptime} helper="Device heartbeat asosida" tone="green" />
+        <Metric title="Offline time" value="0 soat" helper="Filiallar kesimida" tone="red" />
+      </section>
+      <Card>
+        <h3 className="text-lg font-black text-white">Ko'rsatishlar statistikasi</h3>
+        <div className="mt-5 grid h-72 grid-cols-7 items-end gap-3 border-b border-l border-white/10 p-4">
+          {[0, 0, 0, 0, 0, 0, 0].map((height, index) => (
+            <div key={`empty-chart-${index}`} className="flex h-full flex-col justify-end gap-2">
+              <div className="min-h-1 rounded-t-xl bg-gradient-to-t from-castDeepGold to-[#FFE18A] shadow-gold" style={{ height: `${height}%` }} />
+              <span className="text-center text-xs text-castMuted">{11 + index} May</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-sm text-castMuted">Jami ijro vaqti: {Math.round(totalDuration / 60)} daqiqa. Filterlar: sana, filial, device, campaign, media.</p>
+      </Card>
+    </>
+  );
+}
+
+function MonitoringContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const devices = store.devices.filter((device) => filterText(query, device.name, device.branch));
+  return (
+    <section className="grid gap-4 2xl:grid-cols-4 xl:grid-cols-3 md:grid-cols-2">
+      {devices.map((device) => (
+        <Card key={device.id} className="p-3">
+          <div className="aspect-video overflow-hidden rounded-xl border border-white/10 bg-black">
+            {device.screenshotUrl ? <img src={device.screenshotUrl} alt={device.name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-castMuted">Screenshot yo'q</div>}
+          </div>
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <div>
+              <b className="text-white">{device.name}</b>
+              <p className="text-xs text-castMuted">{device.playlist}</p>
+            </div>
+            <StatusBadge status={device.status} />
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Button onClick={() => store.sendCommand(device.id, "TAKE_SCREENSHOT")}>Screenshot</Button>
+            <Button onClick={() => store.sendCommand(device.id, "FORCE_SYNC")}>Sync</Button>
+            <Button onClick={() => openDrawer(device.name, deviceRows(device))}>Detail</Button>
+          </div>
+        </Card>
+      ))}
+    </section>
+  );
+}
+
+function ApkContent({ openDrawer }: { openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  return (
+    <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <Table headers={["Versiya", "Fayl", "Status", "Qurilmalar", "Yuklangan", "Amallar"]}>
+        {store.apkVersions.map((version) => (
+          <tr key={version.id} className="hover:bg-white/[0.03]">
+            <td className="px-4 py-3 font-bold text-white">{version.version}<span className="block text-xs text-castMuted">{version.changelog}</span></td>
+            <td className="px-4 py-3 text-castMuted">{version.fileName}<span className="block text-xs">{version.size}</span></td>
+            <td className="px-4 py-3"><Badge tone={version.status === "latest" ? "green" : version.status === "staged" ? "orange" : "gray"}>{version.status}</Badge></td>
+            <td className="px-4 py-3 text-castMuted">{version.installedDevices} installed, {version.failedDevices} failed</td>
+            <td className="px-4 py-3 text-castMuted">{version.uploadedAt}</td>
+            <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.rolloutApk(version.id)}>Rollout</Button><Button onClick={() => store.rollbackApk(version.id)}>Rollback</Button></td>
+          </tr>
+        ))}
+      </Table>
+      <VersionPanel versions={store.apkVersions} openDrawer={openDrawer} />
+    </section>
+  );
+}
+
+function VersionPanel({ versions, openDrawer }: { versions: ApkVersion[]; openDrawer: (title: string, rows: string[]) => void }) {
+  return (
+    <Card>
+      <h3 className="text-lg font-black text-white">Rollout holati</h3>
+      <div className="mt-4 grid gap-3">
+        {versions.map((version) => (
+          <button key={version.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left hover:border-castGold/30" type="button" onClick={() => openDrawer(version.version, [version.changelog, version.fileName, `Installed: ${version.installedDevices}`, `Failed: ${version.failedDevices}`])}>
+            <b className="text-white">{version.version}</b>
+            <p className="text-sm text-castMuted">{version.installedDevices} ta qurilmada</p>
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function AlertsContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const items = store.alerts.filter((alert) => filterText(query, alert.title, alert.type, alert.status));
+  return (
+    <Table headers={["Ogohlantirish", "Device", "Muhimlik", "Status", "Vaqt", "Amallar"]}>
+      {items.map((alert) => (
+        <tr key={alert.id} className="hover:bg-white/[0.03]">
+          <td className="px-4 py-3 font-bold text-white">{alert.title}<span className="block text-xs text-castMuted">{alert.type}</span></td>
+          <td className="px-4 py-3 text-castMuted">{store.devices.find((device) => device.id === alert.deviceId)?.name}</td>
+          <td className="px-4 py-3"><Badge tone={alert.severity === "high" ? "red" : alert.severity === "medium" ? "orange" : "gray"}>{alert.severity}</Badge></td>
+          <td className="px-4 py-3"><Badge tone={alert.status === "resolved" ? "green" : "gold"}>{alert.status}</Badge></td>
+          <td className="px-4 py-3 text-castMuted">{alert.createdAt}</td>
+          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.resolveAlert(alert.id)}>Resolve</Button><Button onClick={() => store.ignoreAlert(alert.id)}>Ignore</Button><Button onClick={() => openDrawer(alert.title, alertRows(alert))}>Detail</Button></td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
+function WidgetsContent() {
+  const store = useCastmapStore();
+  return (
+    <section className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+      {store.widgets.map((widget) => (
+        <Card key={widget.id}>
+          <div className="flex items-start justify-between">
+            <div className="grid h-11 w-11 place-items-center rounded-xl bg-castGold/10 text-castGold"><Rocket className="h-5 w-5" /></div>
+            <Badge tone={widget.status === "active" ? "green" : "gray"}>{widget.status}</Badge>
+          </div>
+          <h3 className="mt-4 text-lg font-black text-white">{widget.name}</h3>
+          <p className="mt-2 text-sm text-castMuted">{widget.preview}</p>
+          <Button className="mt-4 w-full" variant="gold" onClick={() => store.addWidgetToPlaylist(widget.id)}>Playlistga qo'shish</Button>
+        </Card>
+      ))}
+    </section>
+  );
+}
+
+function UsersContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const items = store.users.filter((user) => filterText(query, user.name, user.email, user.role));
+  return (
+    <Table headers={["Foydalanuvchi", "Rol", "Filial huquqi", "Status", "Oxirgi kirish", "Amallar"]}>
+      {items.map((user) => (
+        <tr key={user.id} className="hover:bg-white/[0.03]">
+          <td className="px-4 py-3 font-bold text-white">{user.name}<span className="block text-xs text-castMuted">{user.email}</span></td>
+          <td className="px-4 py-3 text-castMuted">{user.role}</td>
+          <td className="px-4 py-3 text-castMuted">{user.branchAccess.length} filial</td>
+          <td className="px-4 py-3"><Badge tone={user.status === "active" ? "green" : "gray"}>{user.status}</Badge></td>
+          <td className="px-4 py-3 text-castMuted">{user.lastLogin}</td>
+          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.toggleUserStatus(user.id)}>Active/Inactive</Button><Button onClick={() => openDrawer(user.name, [`Email: ${user.email}`, `Rol: ${user.role}`, `Ruxsatlar: media, device, analytics`])}>Huquqlar</Button></td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
+function BillingContent() {
+  const store = useCastmapStore();
+  return (
+    <section className="grid gap-4 xl:grid-cols-[1fr_420px]">
+      <section className="grid gap-4 md:grid-cols-2">
+        {store.billingPlans.map((plan) => (
+          <Card key={plan.id} className={plan.current ? "border-castGold/35 shadow-gold" : ""}>
+            <div className="flex items-start justify-between">
+              <h3 className="text-xl font-black text-white">{plan.name}</h3>
+              {plan.current ? <Badge tone="gold">Joriy tarif</Badge> : null}
+            </div>
+            <p className="mt-4 text-3xl font-black text-castGold">{plan.price}</p>
+            <p className="mt-3 text-sm text-castMuted">{plan.deviceLimit} device, {plan.storageLimitGb} GB storage</p>
+            <Button className="mt-5 w-full" variant={plan.current ? "ghost" : "gold"} onClick={() => store.updatePlan(plan.id)}>{plan.current ? "Joriy" : "Tanlash"}</Button>
+          </Card>
+        ))}
+      </section>
+      <Card>
+        <h3 className="text-lg font-black text-white">Billing tarixi</h3>
+        <div className="mt-4 grid gap-3">
+          {store.invoices.map((invoice) => <div key={invoice.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><b className="text-white">{invoice.id}</b><p className="text-sm text-castMuted">{invoice.plan} - {invoice.amount} - {invoice.status}</p></div>)}
+        </div>
+      </Card>
+    </section>
+  );
+}
+
+function SettingsContent() {
+  const store = useCastmapStore();
+  const [company, setCompany] = useState("CASTMAP Retail Media");
+  return (
+    <section className="grid gap-4 xl:grid-cols-2">
+      <Card className="grid gap-4">
+        <h3 className="text-lg font-black text-white">Kompaniya profili</h3>
+        <Input value={company} onChange={(event) => setCompany(event.target.value)} />
+        <Select defaultValue="uz">
+          <option value="uz">O'zbek tili</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </Select>
+        <Button variant="gold" onClick={() => store.pushToast("Kompaniya sozlamalari saqlandi.")}>Saqlash</Button>
+      </Card>
+      <Card className="grid gap-4">
+        <h3 className="text-lg font-black text-white">API va webhook</h3>
+        <Input readOnly value="pk_live_castmap_mock_2026" />
+        <Input placeholder="Webhook URL" />
+        <Button onClick={() => store.pushToast("API key yangilandi.", "info")}>API key yangilash</Button>
+      </Card>
+      <Card className="xl:col-span-2">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-black text-white">Lokatsiyalarni boshqarish</h3>
+            <p className="mt-1 text-sm text-castMuted">Test lokatsiyalarni ommaviy tozalash yoki alohida lokatsiyani o'chirish mumkin. Lokatsiya o'chirilsa, unga bog'langan test qurilmalar va jadval ham tozalanadi.</p>
+          </div>
+          <Button variant="danger" onClick={store.clearTestBranches}>Test lokatsiyalarni tozalash</Button>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {store.branches.map((branch) => (
+            <div key={branch.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <div>
+                <b className="text-white">{branch.name}</b>
+                <p className="text-sm text-castMuted">{branch.city} · {branch.screenCount} ekran · {branch.workStart}-{branch.workEnd}</p>
+              </div>
+              <Button variant="danger" onClick={() => store.deleteBranch(branch.id)}>O'chirish</Button>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <Card className="xl:col-span-2">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-black text-white">Shablonlarni tozalash</h3>
+            <p className="mt-1 text-sm text-castMuted">Global mock state ichidagi template turidagi media fayllarni olib tashlaydi.</p>
+          </div>
+          <Button variant="danger" onClick={store.clearTemplates}>Barcha shablonlarni o'chirish</Button>
+        </div>
+      </Card>
+    </section>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "online") return <Badge tone="green">Onlayn</Badge>;
+  if (status === "offline") return <Badge tone="red">Offline</Badge>;
+  if (status === "error") return <Badge tone="orange">Xatolik</Badge>;
+  if (status === "update") return <Badge tone="blue">Yangilanish kerak</Badge>;
+  return <Badge>Nofaol</Badge>;
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><span className="text-xs text-castMuted">{label}</span><b className="mt-1 block text-white">{value}</b></div>;
+}
+
+function deviceRows(device: Device) {
+  return [
+    `Device ID: ${device.deviceId}`,
+    `Filial: ${device.branch}`,
+    `IP: ${device.ipAddress}`,
+    `MAC: ${device.macAddress}`,
+    `Type: ${device.type}`,
+    `APK: ${device.apkVersion}`,
+    `Storage: ${device.storage}%`,
+    `RAM: ${device.ram}%`,
+    `CPU: ${device.cpu}%`,
+    `Internet: ${device.signal}%`,
+    `Uptime: ${device.uptime}`,
+    `Last heartbeat: ${device.lastHeartbeat}`,
+  ];
+}
+
+function alertRows(alert: Alert) {
+  return [`Type: ${alert.type}`, `Severity: ${alert.severity}`, `Status: ${alert.status}`, `Yaratilgan: ${alert.createdAt}`];
+}
+
+function MockModal({ title, open, onClose }: { title: string; open: boolean; onClose: () => void }) {
+  const store = useCastmapStore();
+  return (
+    <Modal open={open} title={`${title} - mock forma`} onClose={onClose}>
+      <div className="grid gap-4">
+        <Input placeholder="Nomi" />
+        <Input placeholder="Tavsif yoki ID" />
+        <Select defaultValue="active">
+          <option value="active">Faol</option>
+          <option value="draft">Draft</option>
+        </Select>
+        <div className="flex justify-end gap-3">
+          <Button onClick={onClose}>Bekor qilish</Button>
+          <Button variant="gold" onClick={() => { store.pushToast("Mock forma saqlandi."); onClose(); }}>Saqlash</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}

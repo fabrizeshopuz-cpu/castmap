@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FabrizeTv"
+rootProject.name = "CastmapPlayer"
 include ":app"
