@@ -17,18 +17,8 @@ import { MediaPreviewModal } from "@/components/media/MediaPreviewModal";
 import { MediaSkeleton } from "@/components/media/MediaSkeleton";
 import { MediaUploadModal } from "@/components/media/MediaUploadModal";
 import { StorageAnalytics } from "@/components/media/StorageAnalytics";
-import {
-  approveMediaAsset,
-  defaultTags,
-  deleteMediaAsset,
-  fetchMediaAssets,
-  mediaFolders,
-  mediaMetrics,
-  moveMediaToFolder,
-  rejectMediaAsset,
-  updateMediaMetadata,
-  uploadMediaAsset,
-} from "@/lib/mediaData";
+import { defaultTags, mediaFolders, mediaMetrics } from "@/lib/mediaData";
+import { useCastmapStore } from "@/lib/store";
 import type { MediaAsset, MediaFolder, MediaRole, MediaSortOption, UploadDraft } from "@/types/media";
 
 const emptyFilters: MediaFilterState = {
@@ -41,9 +31,10 @@ const emptyFilters: MediaFilterState = {
 };
 
 export default function MediaLibraryPage() {
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const store = useCastmapStore();
+  const assets = store.media;
   const [folders, setFolders] = useState<MediaFolder[]>(mediaFolders);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<MediaTab>("all");
   const [activeFolder, setActiveFolder] = useState("Barcha fayllar");
@@ -62,12 +53,8 @@ export default function MediaLibraryPage() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    fetchMediaAssets().then((items) => {
-      setAssets(items);
-      setSelected(items[0] || null);
-      setLoading(false);
-    });
-  }, []);
+    setSelected((current) => current && assets.some((asset) => asset.id === current.id) ? current : assets[0] || null);
+  }, [assets]);
 
   const tags = useMemo(() => [...new Set([...defaultTags, ...assets.flatMap((asset) => asset.tags)])].sort(), [assets]);
   const uploaders = useMemo(() => [...new Set(assets.map((asset) => asset.uploadedBy))].sort(), [assets]);
@@ -118,16 +105,15 @@ export default function MediaLibraryPage() {
   };
 
   const handleUpload = async (draft: UploadDraft) => {
-    const uploaded = await uploadMediaAsset(draft);
-    setAssets((current) => [uploaded, ...current]);
+    const uploaded = store.createMediaFromDraft(draft);
     setSelected(uploaded);
     showNotice("Media yuklandi va kutubxonaga qo'shildi.");
     return uploaded;
   };
 
-  const handleApprove = async (asset: MediaAsset) => {
+  const handleApprove = (asset: MediaAsset) => {
     if (!canApprove) return showNotice("Bu rol tasdiqlash huquqiga ega emas.");
-    const updated = await approveMediaAsset(asset);
+    const updated = { ...asset, status: "active" as const };
     updateAsset(updated);
     showNotice("Media tasdiqlandi.");
   };
@@ -137,16 +123,16 @@ export default function MediaLibraryPage() {
     setRejectTarget(asset);
   };
 
-  const confirmReject = async (reason: string) => {
+  const confirmReject = (reason: string) => {
     if (!rejectTarget) return;
-    const updated = await rejectMediaAsset(rejectTarget, reason);
+    const updated = { ...rejectTarget, status: "draft" as const, tags: [...new Set([...rejectTarget.tags, reason ? "Rad etilgan" : "Tekshirish kerak"])] };
     updateAsset(updated);
     setRejectTarget(null);
     showNotice("Media rad etildi.");
   };
 
   const updateAsset = (asset: MediaAsset) => {
-    setAssets((current) => current.map((item) => item.id === asset.id ? asset : item));
+    store.updateMediaAsset(asset);
     setSelected((current) => current?.id === asset.id ? asset : current);
   };
 
@@ -166,14 +152,14 @@ export default function MediaLibraryPage() {
       return;
     }
     if (action === "archive") {
-      const updated = await updateMediaMetadata({ ...asset, status: "archived" });
+      const updated = { ...asset, status: "archived" as const };
       updateAsset(updated);
       showNotice("Media arxivlandi.");
       return;
     }
     if (action === "move") {
       const nextFolder = asset.folder === "Promo" ? "Retail Ads" : "Promo";
-      const updated = await moveMediaToFolder(asset, nextFolder);
+      const updated = { ...asset, folder: nextFolder };
       updateAsset(updated);
       showNotice(`Media ${nextFolder} papkasiga ko'chirildi.`);
       return;
@@ -188,8 +174,7 @@ export default function MediaLibraryPage() {
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMediaAsset(deleteTarget.id);
-    setAssets((current) => current.filter((asset) => asset.id !== deleteTarget.id));
+    store.deleteMediaAsset(deleteTarget.id);
     setSelected((current) => current?.id === deleteTarget.id ? null : current);
     setDeleteTarget(null);
     showNotice("Media o'chirildi.");
@@ -206,7 +191,7 @@ export default function MediaLibraryPage() {
 
   const clearTemplateAssets = () => {
     const count = assets.filter((asset) => asset.type === "template").length;
-    setAssets((current) => current.filter((asset) => asset.type !== "template"));
+    store.clearTemplates();
     setSelected((current) => current?.type === "template" ? null : current);
     setPreview((current) => current?.type === "template" ? null : current);
     setTab((current) => current === "template" ? "all" : current);

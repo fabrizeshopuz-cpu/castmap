@@ -17,6 +17,7 @@ import {
   users as userSeed,
   widgets as widgetSeed,
 } from "@/lib/mockData";
+import { STATE_SCHEMA_VERSION } from "@/lib/stateSchema";
 import { clamp, formatDateTime, uid } from "@/lib/utils";
 import type {
   Alert,
@@ -35,6 +36,7 @@ import type {
   Widget,
   BillingPlan,
 } from "@/types";
+import type { UploadDraft } from "@/types/media";
 
 export interface ToastMessage {
   id: string;
@@ -96,6 +98,9 @@ interface CastmapState {
   pairDevice: (code: string, name: string, branchId: string) => void;
   addBranch: (input: AddBranchInput) => Branch;
   addMediaAsset: (input: AddMediaInput) => MediaAsset;
+  createMediaFromDraft: (draft: UploadDraft) => MediaAsset;
+  updateMediaAsset: (asset: MediaAsset) => void;
+  deleteMediaAsset: (id: string) => void;
   createTestChain: (input: TestChainInput) => void;
   deleteBranch: (id: string) => void;
   clearTestBranches: () => void;
@@ -113,6 +118,7 @@ interface CastmapState {
 
 interface PersistedCastmapState {
   schemaVersion: number;
+  updatedAt: string;
   devices: Device[];
   media: MediaAsset[];
   playlists: Playlist[];
@@ -128,8 +134,7 @@ interface PersistedCastmapState {
   commands: DeviceCommand[];
 }
 
-const STATE_SCHEMA_VERSION = 2;
-const STORAGE_KEY = "castmap-admin-state-v2";
+const STORAGE_KEY = "castmap-admin-state-v3";
 
 const CastmapContext = createContext<CastmapState | null>(null);
 
@@ -179,6 +184,8 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
 
     const hydrate = async () => {
       try {
+        window.localStorage.removeItem("castmap-admin-state-v1");
+        window.localStorage.removeItem("castmap-admin-state-v2");
         const raw = window.localStorage.getItem(STORAGE_KEY);
         if (raw) applySavedState(JSON.parse(raw) as Partial<PersistedCastmapState>);
       } catch {
@@ -209,6 +216,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
 
     const payload: PersistedCastmapState = {
       schemaVersion: STATE_SCHEMA_VERSION,
+      updatedAt: new Date().toISOString(),
       devices,
       media,
       playlists,
@@ -397,6 +405,57 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Media qo'shildi.");
     return asset;
   }, [media.length, pushToast]);
+
+  const createMediaFromDraft = useCallback((draft: UploadDraft) => {
+    const type = draft.category || "video";
+    const now = formatDateTime();
+    const asset: MediaAsset = {
+      id: uid("media"),
+      name: draft.name.trim() || `castmap_${type}_asset`,
+      type,
+      status: draft.approvalRequired ? "approval" : "active",
+      thumbnailUrl: type === "image"
+        ? "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
+        : "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
+      fileUrl: type === "image"
+        ? "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1920&auto=format&fit=crop"
+        : "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      size: type === "video" ? "42.8 MB" : "4.2 MB",
+      sizeBytes: type === "video" ? 44_879_052 : 4_404_019,
+      duration: type === "video" ? "00:15" : undefined,
+      resolution: type === "web" || type === "html" ? "Responsive" : "1920x1080",
+      orientation: type === "web" || type === "html" ? "responsive" : "landscape",
+      format: type.toUpperCase(),
+      folder: draft.folder || "Promo",
+      tags: draft.tags.length ? draft.tags : ["Promo"],
+      uploadedBy: "Super Admin",
+      uploadedAt: now,
+      usedInPlaylists: draft.addToPlaylist ? 1 : 0,
+      usedOnScreens: 0,
+      lastPlayed: now,
+      playbackCount: 0,
+      cdnUrl: `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name.trim() || `castmap_${type}_asset`)}`,
+    };
+    setMedia((current) => [asset, ...current]);
+    pushToast("Media saqlandi.");
+    return asset;
+  }, [pushToast]);
+
+  const updateMediaAsset = useCallback((asset: MediaAsset) => {
+    setMedia((current) => current.map((item) => item.id === asset.id ? asset : item));
+    pushToast("Media yangilandi.");
+  }, [pushToast]);
+
+  const deleteMediaAsset = useCallback((id: string) => {
+    setMedia((current) => current.filter((asset) => asset.id !== id));
+    setPlaylists((current) => current.map((playlist) => ({
+      ...playlist,
+      items: playlist.items.filter((item) => item.mediaId !== id),
+      updatedAt: formatDateTime(),
+    })));
+    setPlaybackLogs((current) => current.filter((log) => log.mediaId !== id));
+    pushToast("Media o'chirildi.", "warning");
+  }, [pushToast]);
 
   const pairDevice = useCallback((code: string, name: string, branchId: string) => {
     const branch = branches.find((item) => item.id === branchId) || branches[0];
@@ -668,6 +727,9 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pairDevice,
     addBranch,
     addMediaAsset,
+    createMediaFromDraft,
+    updateMediaAsset,
+    deleteMediaAsset,
     createTestChain,
     deleteBranch,
     clearTestBranches,
@@ -681,7 +743,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     rolloutApk,
     rollbackApk,
     addWidgetToPlaylist,
-  }), [addBranch, addCampaign, addMediaAsset, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearTemplates, clearTestBranches, commands, createTestChain, deleteBranch, deletePlaylist, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updatePlan, uploadApk, users, widgets]);
+  }), [addBranch, addCampaign, addMediaAsset, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearTemplates, clearTestBranches, commands, createMediaFromDraft, createTestChain, deleteBranch, deleteMediaAsset, deletePlaylist, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updateMediaAsset, updatePlan, uploadApk, users, widgets]);
 
   return (
     <CastmapContext.Provider value={value}>

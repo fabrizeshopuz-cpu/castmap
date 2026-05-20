@@ -1,0 +1,109 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import type {
+  Alert,
+  ApkVersion,
+  BillingPlan,
+  Branch,
+  Campaign,
+  Device,
+  DeviceCommand,
+  PlaybackLog,
+  Playlist,
+  Schedule,
+  Widget,
+  PlatformUser,
+} from "@/types";
+import type { MediaAsset } from "@/types/media";
+import { STATE_SCHEMA_VERSION } from "@/lib/stateSchema";
+
+export interface PersistedCastmapState {
+  schemaVersion: number;
+  updatedAt: string;
+  devices: Device[];
+  media: MediaAsset[];
+  playlists: Playlist[];
+  schedules: Schedule[];
+  campaigns: Campaign[];
+  alerts: Alert[];
+  users: PlatformUser[];
+  branches: Branch[];
+  billingPlans: BillingPlan[];
+  apkVersions: ApkVersion[];
+  widgets: Widget[];
+  playbackLogs: PlaybackLog[];
+  commands: DeviceCommand[];
+}
+
+const dataDir = path.join(process.cwd(), "data");
+const statePath = path.join(dataDir, "castmap-state.json");
+
+export function createEmptyState(): PersistedCastmapState {
+  return {
+    schemaVersion: STATE_SCHEMA_VERSION,
+    updatedAt: new Date().toISOString(),
+    devices: [],
+    media: [],
+    playlists: [],
+    schedules: [],
+    campaigns: [],
+    alerts: [],
+    users: [],
+    branches: [],
+    billingPlans: [
+      { id: "basic", name: "Basic", deviceLimit: 10, storageLimitGb: 100, price: "299 000 so'm" },
+      { id: "business", name: "Business", deviceLimit: 50, storageLimitGb: 500, price: "899 000 so'm" },
+      { id: "professional", name: "Professional", deviceLimit: 250, storageLimitGb: 1024, price: "1 990 000 so'm", current: true },
+      { id: "enterprise", name: "Enterprise", deviceLimit: 5000, storageLimitGb: 10240, price: "Kelishiladi" },
+    ],
+    apkVersions: [],
+    widgets: [],
+    playbackLogs: [],
+    commands: [],
+  };
+}
+
+export function normalizeState(input: Partial<PersistedCastmapState> | null | undefined): PersistedCastmapState {
+  const fallback = createEmptyState();
+  if (!input || input.schemaVersion !== STATE_SCHEMA_VERSION) return fallback;
+  return {
+    ...fallback,
+    ...input,
+    updatedAt: input.updatedAt || fallback.updatedAt,
+    devices: Array.isArray(input.devices) ? input.devices : [],
+    media: Array.isArray(input.media) ? input.media : [],
+    playlists: Array.isArray(input.playlists) ? input.playlists : [],
+    schedules: Array.isArray(input.schedules) ? input.schedules : [],
+    campaigns: Array.isArray(input.campaigns) ? input.campaigns : [],
+    alerts: Array.isArray(input.alerts) ? input.alerts : [],
+    users: Array.isArray(input.users) ? input.users : [],
+    branches: Array.isArray(input.branches) ? input.branches : [],
+    billingPlans: Array.isArray(input.billingPlans) ? input.billingPlans : fallback.billingPlans,
+    apkVersions: Array.isArray(input.apkVersions) ? input.apkVersions : [],
+    widgets: Array.isArray(input.widgets) ? input.widgets : [],
+    playbackLogs: Array.isArray(input.playbackLogs) ? input.playbackLogs : [],
+    commands: Array.isArray(input.commands) ? input.commands : [],
+  };
+}
+
+export async function readCastmapState(): Promise<PersistedCastmapState> {
+  try {
+    const raw = await readFile(statePath, "utf8");
+    return normalizeState(JSON.parse(raw) as Partial<PersistedCastmapState>);
+  } catch {
+    return createEmptyState();
+  }
+}
+
+export async function writeCastmapState(state: PersistedCastmapState) {
+  const nextState = normalizeState({ ...state, updatedAt: new Date().toISOString() });
+  await mkdir(dataDir, { recursive: true });
+  await writeFile(statePath, JSON.stringify(nextState, null, 2), "utf8");
+  return nextState;
+}
+
+export async function updateCastmapState(updater: (state: PersistedCastmapState) => PersistedCastmapState | void) {
+  const state = await readCastmapState();
+  const updated = updater(state) || state;
+  return writeCastmapState(updated);
+}
