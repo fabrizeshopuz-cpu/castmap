@@ -414,23 +414,29 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const createMediaFromDraft = useCallback((draft: UploadDraft) => {
     const type = draft.category || "video";
     const now = formatDateTime();
+    const fileUrl = draft.uploadedFileUrl;
+    const fileName = draft.uploadedFileName || draft.name.trim();
+    const fileSize = draft.uploadedSizeBytes || (type === "video" ? 44_879_052 : 4_404_019);
+    const format = (draft.uploadedMime?.split("/")[1] || fileName.split(".").pop() || type).toUpperCase();
     const asset: MediaAsset = {
       id: uid("media"),
-      name: draft.name.trim() || `castmap_${type}_asset`,
+      name: draft.name.trim() || fileName || `castmap_${type}_asset`,
       type,
       status: draft.approvalRequired ? "approval" : "active",
-      thumbnailUrl: type === "image"
-        ? "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
-        : "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
-      fileUrl: type === "image"
+      thumbnailUrl: type === "image" && fileUrl
+        ? fileUrl
+        : type === "image"
+          ? "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1200&auto=format&fit=crop"
+          : "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
+      fileUrl: fileUrl || (type === "image"
         ? "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1920&auto=format&fit=crop"
-        : "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-      size: type === "video" ? "42.8 MB" : "4.2 MB",
-      sizeBytes: type === "video" ? 44_879_052 : 4_404_019,
+        : "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"),
+      size: formatBytes(fileSize),
+      sizeBytes: fileSize,
       duration: type === "video" ? "00:15" : undefined,
       resolution: type === "web" || type === "html" ? "Responsive" : "1920x1080",
       orientation: type === "web" || type === "html" ? "responsive" : "landscape",
-      format: type.toUpperCase(),
+      format,
       folder: draft.folder || "Promo",
       tags: draft.tags.length ? draft.tags : ["Promo"],
       uploadedBy: "Super Admin",
@@ -439,7 +445,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       usedOnScreens: 0,
       lastPlayed: now,
       playbackCount: 0,
-      cdnUrl: `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name.trim() || `castmap_${type}_asset`)}`,
+      cdnUrl: fileUrl || `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name.trim() || `castmap_${type}_asset`)}`,
     };
     setMedia((current) => [asset, ...current]);
     pushToast("Media saqlandi.");
@@ -809,6 +815,18 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       <ToastViewport toasts={toasts} />
     </CastmapContext.Provider>
   );
+}
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let index = 0;
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024;
+    index += 1;
+  }
+  return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
 export function useCastmapStore() {

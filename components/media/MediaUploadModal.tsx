@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { defaultTags, mediaFolders } from "@/lib/mediaData";
 import type { MediaAsset, MediaType, UploadDraft } from "@/types/media";
@@ -20,31 +20,59 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "uploading" | "complete" | "failed">("idle");
   const [selectedTag, setSelectedTag] = useState("Promo");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) {
       setDraft(initialDraft);
       setProgress(0);
       setStatus("idle");
+      setSelectedFile(null);
     }
   }, [open]);
 
   const statusText = useMemo(() => ({
-    idle: "Fayl tanlang yoki drag & drop qiling",
+    idle: selectedFile ? `${selectedFile.name} tanlandi (${formatBytes(selectedFile.size)})` : "Fayl tanlang yoki drag & drop qiling",
     uploading: `Yuklanmoqda: ${progress}%`,
     complete: "Upload complete",
     failed: "Upload failed",
-  }[status]), [progress, status]);
+  }[status]), [progress, selectedFile, status]);
 
   if (!open) return null;
+
+  const pickFile = (file: File) => {
+    setSelectedFile(file);
+    const category = inferType(file);
+    setDraft((current) => ({
+      ...current,
+      category,
+      name: current.name || file.name,
+    }));
+  };
 
   const submit = async () => {
     setStatus("uploading");
     setProgress(0);
     const timer = window.setInterval(() => setProgress((value) => Math.min(92, value + 8)), 120);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1400));
-      await onUpload({ ...draft, name: draft.name || `castmap_${draft.category}_asset.${draft.category === "image" ? "jpg" : draft.category}` });
+      let uploaded: Partial<UploadDraft> = {};
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
+        if (!response.ok) throw new Error("Upload failed");
+        const payload = await response.json() as { url: string; fileName: string; mime: string; sizeBytes: number };
+        uploaded = {
+          uploadedFileUrl: payload.url,
+          uploadedFileName: payload.fileName,
+          uploadedMime: payload.mime,
+          uploadedSizeBytes: payload.sizeBytes,
+        };
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      await onUpload({ ...draft, ...uploaded, name: draft.name || selectedFile?.name || `castmap_${draft.category}_asset.${draft.category === "image" ? "jpg" : draft.category}` });
       window.clearInterval(timer);
       setProgress(100);
       setStatus("complete");
@@ -69,11 +97,29 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
         </header>
 
         <div className="mt-5 grid gap-4">
-          <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-castGold/45 bg-castGold/10 p-6 text-center">
+          <div
+            className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-castGold/45 bg-castGold/10 p-6 text-center"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const file = event.dataTransfer.files[0];
+              if (file) pickFile(file);
+            }}
+          >
             <Upload className="h-10 w-10 text-castGold" />
             <b className="mt-3 text-white">{statusText}</b>
             <span className="mt-1 text-sm text-castMuted">Supported: MP4, MOV, WEBM, JPG, PNG, WEBP, SVG, GIF, PDF, URL, HTML</span>
-            <button className="mt-4 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-2 font-black text-black" type="button">
+            <input
+              ref={fileInputRef}
+              className="hidden"
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp,image/svg+xml,image/gif,application/pdf,text/html"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) pickFile(file);
+              }}
+            />
+            <button className="mt-4 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-2 font-black text-black" type="button" onClick={() => fileInputRef.current?.click()}>
               Fayl tanlash
             </button>
             {status !== "idle" ? (
@@ -103,7 +149,7 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
             <div className="flex flex-wrap gap-2">
               {draft.tags.map((tag) => (
                 <button key={tag} className="rounded-full border border-castGold/25 bg-castGold/10 px-3 py-1 text-sm font-bold text-castGold" type="button" onClick={() => setDraft({ ...draft, tags: draft.tags.filter((item) => item !== tag) })}>
-                  {tag} ×
+                  {tag} x
                 </button>
               ))}
             </div>
@@ -147,4 +193,24 @@ function CheckLabel({ label, checked, onChange }: { label: string; checked: bool
       {label}
     </label>
   );
+}
+
+function inferType(file: File): MediaType {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("video/")) return "video";
+  if (file.type === "application/pdf") return "pdf";
+  if (file.type.includes("html")) return "html";
+  return "video";
+}
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let index = 0;
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024;
+    index += 1;
+  }
+  return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
 }

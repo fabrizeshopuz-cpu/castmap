@@ -55,4 +55,8 @@ export interface UploadDraft {
   expireDate: string;
   approvalRequired: boolean;
   addToPlaylist: boolean;
+  uploadedFileUrl?: string;
+  uploadedFileName?: string;
+  uploadedMime?: string;
+  uploadedSizeBytes?: number;
 }
