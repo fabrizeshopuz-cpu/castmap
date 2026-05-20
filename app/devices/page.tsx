@@ -84,7 +84,8 @@ export default function DevicesPage() {
       return;
     }
     if (action === "delete") {
-      store.pushToast("Qurilmani o'chirish real bazada tasdiq oynasi bilan ulanadi. Hozircha mock rejimda buyruq yuborilmadi.", "warning");
+      store.deleteDevice(device.id);
+      setSelected((current) => current?.id === device.id ? null : current);
       return;
     }
     store.pushToast(`${device.name} ma'lumotlari ochildi.`, "info");

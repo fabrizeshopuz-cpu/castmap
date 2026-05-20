@@ -17,6 +17,6 @@ android {
         versionCode 1
         versionName "1.0.0"
 
-        buildConfigField "String", "SERVER_BASE_URL", "\"https://castmap-admin.onrender.com\""
+        buildConfigField "String", "SERVER_BASE_URL", "\"https://castmap.uz\""
     }
 }

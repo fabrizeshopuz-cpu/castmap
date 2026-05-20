@@ -18,7 +18,7 @@ import {
   widgets as widgetSeed,
 } from "@/lib/mockData";
 import { STATE_SCHEMA_VERSION } from "@/lib/stateSchema";
-import { clamp, formatDateTime, uid } from "@/lib/utils";
+import { formatDateTime, uid } from "@/lib/utils";
 import type {
   Alert,
   ApkVersion,
@@ -92,10 +92,13 @@ interface CastmapState {
   deletePlaylist: (id: string) => void;
   addSchedule: () => void;
   toggleSchedule: (id: string) => void;
+  deleteSchedule: (id: string) => void;
   addCampaign: () => void;
   setCampaignStatus: (id: string, status: Campaign["status"]) => void;
+  deleteCampaign: (id: string) => void;
   sendCommand: (deviceId: string, type: CommandType) => DeviceCommand;
   pairDevice: (code: string, name: string, branchId: string) => void;
+  deleteDevice: (id: string) => void;
   addBranch: (input: AddBranchInput) => Branch;
   addMediaAsset: (input: AddMediaInput) => MediaAsset;
   createMediaFromDraft: (draft: UploadDraft) => MediaAsset;
@@ -105,15 +108,20 @@ interface CastmapState {
   deleteBranch: (id: string) => void;
   clearTestBranches: () => void;
   clearTemplates: () => void;
+  clearOperationalData: () => void;
   resolveAlert: (id: string) => void;
   ignoreAlert: (id: string) => void;
+  deleteAlert: (id: string) => void;
   addUser: () => void;
   toggleUserStatus: (id: string) => void;
+  deleteUser: (id: string) => void;
   updatePlan: (id: string) => void;
   uploadApk: () => void;
   rolloutApk: (versionId: string) => void;
   rollbackApk: (versionId: string) => void;
+  deleteApkVersion: (versionId: string) => void;
   addWidgetToPlaylist: (widgetId: string) => void;
+  deleteWidget: (widgetId: string) => void;
 }
 
 interface PersistedCastmapState {
@@ -242,23 +250,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setDevices((current) =>
-        current.map((device, index) => {
-          if (index % 5 !== 0) return device;
-          const online = device.status === "online";
-          return {
-            ...device,
-            status: online ? "offline" : "online",
-            signal: online ? 0 : clamp(device.signal + 11, 45, 98),
-            lastSeen: online ? "1 daqiqa oldin" : "Hozir",
-            lastHeartbeat: online ? "1 daqiqa oldin" : "Hozir",
-          };
-        }),
-      );
       setCommands((current) =>
         current.map((command) => command.status === "running" ? { ...command, status: "success", message: "Buyruq bajarildi" } : command),
       );
-    }, 30000);
+    }, 5000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -326,6 +321,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Jadval holati o'zgartirildi.");
   }, [pushToast]);
 
+  const deleteSchedule = useCallback((id: string) => {
+    setSchedules((current) => current.filter((schedule) => schedule.id !== id));
+    pushToast("Jadval o'chirildi.", "warning");
+  }, [pushToast]);
+
   const addCampaign = useCallback(() => {
     setCampaigns((current) => [{
       id: uid("campaign"),
@@ -345,6 +345,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const setCampaignStatus = useCallback((id: string, status: Campaign["status"]) => {
     setCampaigns((current) => current.map((campaign) => campaign.id === id ? { ...campaign, status } : campaign));
     pushToast("Kampaniya statusi yangilandi.");
+  }, [pushToast]);
+
+  const deleteCampaign = useCallback((id: string) => {
+    setCampaigns((current) => current.filter((campaign) => campaign.id !== id));
+    pushToast("Kampaniya o'chirildi.", "warning");
   }, [pushToast]);
 
   const sendCommand = useCallback((deviceId: string, type: CommandType) => {
@@ -464,10 +469,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       return;
     }
     const source = devices[0];
+    const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     setDevices((current) => [{
       id: uid("device"),
       name: name || `CASTMAP Player ${code}`,
-      deviceId: `CM-PAIR-${code.replace(/\D/g, "").slice(0, 4) || "4829"}`,
+      deviceId: `CM-PAIR-${cleanCode || "482913"}`,
       branch: branch.name,
       branchId: branch.id,
       location: branch.address,
@@ -490,6 +496,14 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Qurilma muvaffaqiyatli ulandi.");
   }, [branches, devices, playlists, pushToast]);
 
+  const deleteDevice = useCallback((id: string) => {
+    setDevices((current) => current.filter((device) => device.id !== id));
+    setAlerts((current) => current.filter((alert) => alert.deviceId !== id));
+    setCommands((current) => current.filter((command) => command.deviceId !== id));
+    setPlaybackLogs((current) => current.filter((log) => log.deviceId !== id));
+    pushToast("Qurilma o'chirildi.", "warning");
+  }, [pushToast]);
+
   const createTestChain = useCallback((input: TestChainInput) => {
     const now = formatDateTime();
     const cleanPairingCode = input.pairingCode.trim().toUpperCase() || "482-913";
@@ -507,7 +521,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     };
     const mediaAsset: MediaAsset = {
       id: uid("media"),
-      name: `${input.campaignName.trim() || "Test kampaniya"} media`,
+      name: input.campaignName.trim() || "Test kampaniya",
       type: "video",
       status: "active",
       thumbnailUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
@@ -643,6 +657,22 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast(count ? `${count} ta shablon media o'chirildi.` : "Shablon media fayl topilmadi.", count ? "warning" : "info");
   }, [media, pushToast]);
 
+  const clearOperationalData = useCallback(() => {
+    setDevices([]);
+    setMedia([]);
+    setPlaylists([]);
+    setSchedules([]);
+    setCampaigns([]);
+    setAlerts([]);
+    setUsers([]);
+    setBranches([]);
+    setApkVersions([]);
+    setWidgets([]);
+    setPlaybackLogs([]);
+    setCommands([]);
+    pushToast("Barcha test va operatsion ma'lumotlar tozalandi.", "warning");
+  }, [pushToast]);
+
   const resolveAlert = useCallback((id: string) => {
     setAlerts((current) => current.map((alert) => alert.id === id ? { ...alert, status: "resolved" } : alert));
     pushToast("Ogohlantirish yopildi.");
@@ -653,6 +683,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Ogohlantirish e'tibordan chetlatildi.", "warning");
   }, [pushToast]);
 
+  const deleteAlert = useCallback((id: string) => {
+    setAlerts((current) => current.filter((alert) => alert.id !== id));
+    pushToast("Ogohlantirish o'chirildi.", "warning");
+  }, [pushToast]);
+
   const addUser = useCallback(() => {
     setUsers((current) => [{ id: uid("user"), name: `Yangi foydalanuvchi ${current.length + 1}`, email: `user${current.length + 1}@castmap.uz`, role: "Operator", branchAccess: [branches[0]?.id || "branch-main"], status: "active", lastLogin: "Hali kirmagan" }, ...current]);
     pushToast("Foydalanuvchi yaratildi.");
@@ -661,6 +696,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const toggleUserStatus = useCallback((id: string) => {
     setUsers((current) => current.map((user) => user.id === id ? { ...user, status: user.status === "active" ? "inactive" : "active" } : user));
     pushToast("Foydalanuvchi holati o'zgardi.");
+  }, [pushToast]);
+
+  const deleteUser = useCallback((id: string) => {
+    setUsers((current) => current.filter((user) => user.id !== id));
+    pushToast("Foydalanuvchi o'chirildi.", "warning");
   }, [pushToast]);
 
   const updatePlan = useCallback((id: string) => {
@@ -693,9 +733,19 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Rollback belgilanib qo'yildi.", "warning");
   }, [pushToast]);
 
+  const deleteApkVersion = useCallback((versionId: string) => {
+    setApkVersions((current) => current.filter((version) => version.id !== versionId));
+    pushToast("APK versiya o'chirildi.", "warning");
+  }, [pushToast]);
+
   const addWidgetToPlaylist = useCallback((widgetId: string) => {
     setWidgets((current) => current.map((widget) => widget.id === widgetId ? { ...widget, status: "active" } : widget));
     pushToast("Widget playlistga qo'shildi.");
+  }, [pushToast]);
+
+  const deleteWidget = useCallback((widgetId: string) => {
+    setWidgets((current) => current.filter((widget) => widget.id !== widgetId));
+    pushToast("Widget o'chirildi.", "warning");
   }, [pushToast]);
 
   const value = useMemo<CastmapState>(() => ({
@@ -721,10 +771,13 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     deletePlaylist,
     addSchedule,
     toggleSchedule,
+    deleteSchedule,
     addCampaign,
     setCampaignStatus,
+    deleteCampaign,
     sendCommand,
     pairDevice,
+    deleteDevice,
     addBranch,
     addMediaAsset,
     createMediaFromDraft,
@@ -734,16 +787,21 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     deleteBranch,
     clearTestBranches,
     clearTemplates,
+    clearOperationalData,
     resolveAlert,
     ignoreAlert,
+    deleteAlert,
     addUser,
     toggleUserStatus,
+    deleteUser,
     updatePlan,
     uploadApk,
     rolloutApk,
     rollbackApk,
+    deleteApkVersion,
     addWidgetToPlaylist,
-  }), [addBranch, addCampaign, addMediaAsset, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearTemplates, clearTestBranches, commands, createMediaFromDraft, createTestChain, deleteBranch, deleteMediaAsset, deletePlaylist, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updateMediaAsset, updatePlan, uploadApk, users, widgets]);
+    deleteWidget,
+  }), [addBranch, addCampaign, addMediaAsset, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearOperationalData, clearTemplates, clearTestBranches, commands, createMediaFromDraft, createTestChain, deleteAlert, deleteApkVersion, deleteBranch, deleteCampaign, deleteDevice, deleteMediaAsset, deletePlaylist, deleteSchedule, deleteUser, deleteWidget, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updateMediaAsset, updatePlan, uploadApk, users, widgets]);
 
   return (
     <CastmapContext.Provider value={value}>

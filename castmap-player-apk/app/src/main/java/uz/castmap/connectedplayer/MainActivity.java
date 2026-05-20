@@ -487,7 +487,7 @@ public class MainActivity extends Activity {
         JSONObject command = device.optJSONObject("pendingCommand");
         if (command == null) return;
         String type = command.optString("command", "");
-        long commandId = command.optLong("id", 0);
+        String commandId = command.optString("id", "0");
         if ("refresh".equals(type)) {
             postCommandStatus(commandId, type, "Refresh bajarildi");
         } else if ("restart".equals(type)) {
@@ -499,7 +499,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void downloadApk(JSONObject apk, long commandId) {
+    private void downloadApk(JSONObject apk, String commandId) {
         executor.execute(() -> {
             try {
                 String apkUrl = absoluteUrl(apk.optString("url", ""));
@@ -553,7 +553,7 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void postCommandStatus(long commandId, String command, String status) {
+    private void postCommandStatus(String commandId, String command, String status) {
         try {
             JSONObject body = new JSONObject();
             body.put("code", deviceCode);

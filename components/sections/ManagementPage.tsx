@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import {
@@ -206,7 +206,7 @@ function ScreensContent({ query, openDrawer }: { query: string; openDrawer: (tit
             <td className="px-4 py-3"><StatusBadge status={device.status} /></td>
             <td className="px-4 py-3 text-castMuted">{device.playlist}</td>
             <td className="px-4 py-3 text-castMuted">{device.apkVersion}</td>
-            <td className="px-4 py-3"><Button onClick={() => openDrawer(device.name, deviceRows(device))}>Batafsil</Button></td>
+            <td className="px-4 py-3 flex gap-2"><Button onClick={() => openDrawer(device.name, deviceRows(device))}>Batafsil</Button><Button variant="danger" onClick={() => store.deleteDevice(device.id)}>O'chirish</Button></td>
           </tr>
         ))}
       </Table>
@@ -295,7 +295,7 @@ function SchedulesContent({ query, openDrawer }: { query: string; openDrawer: (t
           <td className="px-4 py-3 text-castMuted">{schedule.startTime} - {schedule.endTime}</td>
           <td className="px-4 py-3 text-castMuted">{schedule.days.join(", ")}</td>
           <td className="px-4 py-3"><Badge tone={schedule.status === "active" ? "green" : "orange"}>{schedule.status}</Badge></td>
-          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.toggleSchedule(schedule.id)}>Pause/Start</Button><Button onClick={() => openDrawer(schedule.name, [`Turi: ${schedule.type}`, `Priority: ${schedule.priority}`])}>Ko'rish</Button></td>
+          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.toggleSchedule(schedule.id)}>Pause/Start</Button><Button onClick={() => openDrawer(schedule.name, [`Turi: ${schedule.type}`, `Priority: ${schedule.priority}`])}>Ko'rish</Button><Button variant="danger" onClick={() => store.deleteSchedule(schedule.id)}>O'chirish</Button></td>
         </tr>
       ))}
     </Table>
@@ -332,6 +332,7 @@ function CampaignCard({ campaign, openDrawer }: { campaign: Campaign; openDrawer
         <Button variant="gold" onClick={() => store.setCampaignStatus(campaign.id, "active")}>Start</Button>
         <Button onClick={() => store.setCampaignStatus(campaign.id, "paused")}>Pause</Button>
         <Button onClick={() => openDrawer(campaign.name, [`Filiallar: ${campaign.targetBranches.length}`, `Playlistlar: ${campaign.assignedPlaylists.length}`, `Proof of play: ${campaign.playbackCount}`])}>Analitika</Button>
+        <Button variant="danger" onClick={() => store.deleteCampaign(campaign.id)}>O'chirish</Button>
       </div>
     </Card>
   );
@@ -406,7 +407,7 @@ function ApkContent({ openDrawer }: { openDrawer: (title: string, rows: string[]
             <td className="px-4 py-3"><Badge tone={version.status === "latest" ? "green" : version.status === "staged" ? "orange" : "gray"}>{version.status}</Badge></td>
             <td className="px-4 py-3 text-castMuted">{version.installedDevices} installed, {version.failedDevices} failed</td>
             <td className="px-4 py-3 text-castMuted">{version.uploadedAt}</td>
-            <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.rolloutApk(version.id)}>Rollout</Button><Button onClick={() => store.rollbackApk(version.id)}>Rollback</Button></td>
+            <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.rolloutApk(version.id)}>Rollout</Button><Button onClick={() => store.rollbackApk(version.id)}>Rollback</Button><Button variant="danger" onClick={() => store.deleteApkVersion(version.id)}>O'chirish</Button></td>
           </tr>
         ))}
       </Table>
@@ -443,7 +444,7 @@ function AlertsContent({ query, openDrawer }: { query: string; openDrawer: (titl
           <td className="px-4 py-3"><Badge tone={alert.severity === "high" ? "red" : alert.severity === "medium" ? "orange" : "gray"}>{alert.severity}</Badge></td>
           <td className="px-4 py-3"><Badge tone={alert.status === "resolved" ? "green" : "gold"}>{alert.status}</Badge></td>
           <td className="px-4 py-3 text-castMuted">{alert.createdAt}</td>
-          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.resolveAlert(alert.id)}>Resolve</Button><Button onClick={() => store.ignoreAlert(alert.id)}>Ignore</Button><Button onClick={() => openDrawer(alert.title, alertRows(alert))}>Detail</Button></td>
+          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.resolveAlert(alert.id)}>Resolve</Button><Button onClick={() => store.ignoreAlert(alert.id)}>Ignore</Button><Button onClick={() => openDrawer(alert.title, alertRows(alert))}>Detail</Button><Button variant="danger" onClick={() => store.deleteAlert(alert.id)}>O'chirish</Button></td>
         </tr>
       ))}
     </Table>
@@ -462,7 +463,10 @@ function WidgetsContent() {
           </div>
           <h3 className="mt-4 text-lg font-black text-white">{widget.name}</h3>
           <p className="mt-2 text-sm text-castMuted">{widget.preview}</p>
-          <Button className="mt-4 w-full" variant="gold" onClick={() => store.addWidgetToPlaylist(widget.id)}>Playlistga qo'shish</Button>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Button variant="gold" onClick={() => store.addWidgetToPlaylist(widget.id)}>Qo'shish</Button>
+            <Button variant="danger" onClick={() => store.deleteWidget(widget.id)}>O'chirish</Button>
+          </div>
         </Card>
       ))}
     </section>
@@ -481,7 +485,7 @@ function UsersContent({ query, openDrawer }: { query: string; openDrawer: (title
           <td className="px-4 py-3 text-castMuted">{user.branchAccess.length} filial</td>
           <td className="px-4 py-3"><Badge tone={user.status === "active" ? "green" : "gray"}>{user.status}</Badge></td>
           <td className="px-4 py-3 text-castMuted">{user.lastLogin}</td>
-          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.toggleUserStatus(user.id)}>Active/Inactive</Button><Button onClick={() => openDrawer(user.name, [`Email: ${user.email}`, `Rol: ${user.role}`, `Ruxsatlar: media, device, analytics`])}>Huquqlar</Button></td>
+          <td className="px-4 py-3 flex gap-2"><Button onClick={() => store.toggleUserStatus(user.id)}>Active/Inactive</Button><Button onClick={() => openDrawer(user.name, [`Email: ${user.email}`, `Rol: ${user.role}`, `Ruxsatlar: media, device, analytics`])}>Huquqlar</Button><Button variant="danger" onClick={() => store.deleteUser(user.id)}>O'chirish</Button></td>
         </tr>
       ))}
     </Table>
@@ -525,7 +529,7 @@ function SettingsContent() {
         <Input value={company} onChange={(event) => setCompany(event.target.value)} />
         <Select defaultValue="uz">
           <option value="uz">O'zbek tili</option>
-          <option value="ru">Русский</option>
+          <option value="ru">Rus tili</option>
           <option value="en">English</option>
         </Select>
         <Button variant="gold" onClick={() => store.pushToast("Kompaniya sozlamalari saqlandi.")}>Saqlash</Button>
@@ -549,7 +553,7 @@ function SettingsContent() {
             <div key={branch.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
               <div>
                 <b className="text-white">{branch.name}</b>
-                <p className="text-sm text-castMuted">{branch.city} · {branch.screenCount} ekran · {branch.workStart}-{branch.workEnd}</p>
+                <p className="text-sm text-castMuted">{branch.city} - {branch.screenCount} ekran - {branch.workStart}-{branch.workEnd}</p>
               </div>
               <Button variant="danger" onClick={() => store.deleteBranch(branch.id)}>O'chirish</Button>
             </div>
@@ -563,6 +567,15 @@ function SettingsContent() {
             <p className="mt-1 text-sm text-castMuted">Global mock state ichidagi template turidagi media fayllarni olib tashlaydi.</p>
           </div>
           <Button variant="danger" onClick={store.clearTemplates}>Barcha shablonlarni o'chirish</Button>
+        </div>
+      </Card>
+      <Card className="xl:col-span-2 border-red-400/20">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-black text-white">Barcha test ma'lumotlarni tozalash</h3>
+            <p className="mt-1 text-sm text-castMuted">Lokatsiya, ekran, media, playlist, jadval, kampaniya, hisobot, APK va ogohlantirishlar to'liq tozalanadi.</p>
+          </div>
+          <Button variant="danger" onClick={store.clearOperationalData}>Hammasini tozalash</Button>
         </div>
       </Card>
     </section>

@@ -3,7 +3,8 @@ import { updateCastmapState } from "@/lib/serverState";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const deviceId = body.deviceId || `CM-PAIR-${String(body.code || "482913").replace(/\D/g, "").slice(0, 8) || Date.now()}`;
+  const cleanCode = String(body.code || "482913").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const deviceId = body.deviceId || `CM-PAIR-${cleanCode || Date.now()}`;
   const branchId = body.branchId || "branch-main";
   await updateCastmapState((state) => {
     const branch = state.branches.find((item) => item.id === branchId) || state.branches[0];

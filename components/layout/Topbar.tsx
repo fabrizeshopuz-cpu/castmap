@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ArrowLeft, CalendarDays, LogOut } from "lucide-react";
 import { topbarActions } from "@/lib/dashboard-data";
 
 export function Topbar() {
   const { searchIcon: Search, notificationIcon: Bell, helpIcon: HelpCircle, lightIcon: Sun, darkIcon: Moon } = topbarActions;
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const router = useRouter();
+  const pathname = usePathname();
+  const isDashboard = pathname === "/" || pathname === "/dashboard";
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("castmap-theme") === "light" ? "light" : "dark";
@@ -23,6 +27,26 @@ export function Topbar() {
 
   return (
     <header className="flex min-h-24 items-center justify-between gap-5 border-b border-white/10 bg-black/35 px-7 py-5 max-xl:flex-col max-xl:items-stretch">
+      <div className="hidden gap-2 max-lg:flex">
+        <button
+          className="flex min-h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm font-bold text-white"
+          type="button"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="h-4 w-4 text-castGold" />
+          Orqaga
+        </button>
+        {!isDashboard ? (
+          <button
+            className="flex min-h-10 items-center gap-2 rounded-xl border border-castGold/30 bg-castGold/10 px-3 text-sm font-bold text-castGold"
+            type="button"
+            onClick={() => router.push("/dashboard")}
+          >
+            <LogOut className="h-4 w-4" />
+            Chiqish
+          </button>
+        ) : null}
+      </div>
       <div>
         <p className="text-xs font-black uppercase tracking-[0.28em] text-castGold">CASTMAP</p>
         <h1 className="mt-1 text-2xl font-black text-white">Retail Media Infrastructure Platform</h1>
