@@ -1,4 +1,4 @@
-import { typeText } from "@/data/mediaMockData";
+import { typeText } from "@/lib/mediaData";
 import type { MediaAction } from "@/components/media/MediaActionMenu";
 import { MediaActionMenu } from "@/components/media/MediaActionMenu";
 import { MediaStatusBadge } from "@/components/media/MediaStatusBadge";

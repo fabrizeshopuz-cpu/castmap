@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: "npm install && npm run build:next"
-    startCommand: "npm run start:next"
+    startCommand: "npm start"
     envVars:
       - key: PUBLIC_BASE_URL
-        value: https://fabrize-cloud-tv.onrender.com
+        value: https://castmap-admin.onrender.com

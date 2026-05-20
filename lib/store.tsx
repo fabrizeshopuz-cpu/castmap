@@ -112,6 +112,7 @@ interface CastmapState {
 }
 
 interface PersistedCastmapState {
+  schemaVersion: number;
   devices: Device[];
   media: MediaAsset[];
   playlists: Playlist[];
@@ -127,7 +128,8 @@ interface PersistedCastmapState {
   commands: DeviceCommand[];
 }
 
-const STORAGE_KEY = "castmap-admin-state-v1";
+const STATE_SCHEMA_VERSION = 2;
+const STORAGE_KEY = "castmap-admin-state-v2";
 
 const CastmapContext = createContext<CastmapState | null>(null);
 
@@ -159,6 +161,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
 
     const applySavedState = (saved: Partial<PersistedCastmapState>) => {
       if (cancelled) return;
+      if (saved.schemaVersion !== STATE_SCHEMA_VERSION) return;
       if (Array.isArray(saved.devices)) setDevices(saved.devices);
       if (Array.isArray(saved.media)) setMedia(saved.media);
       if (Array.isArray(saved.playlists)) setPlaylists(saved.playlists);
@@ -205,6 +208,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     if (!isHydrated) return;
 
     const payload: PersistedCastmapState = {
+      schemaVersion: STATE_SCHEMA_VERSION,
       devices,
       media,
       playlists,

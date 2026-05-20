@@ -28,7 +28,7 @@ import {
   rejectMediaAsset,
   updateMediaMetadata,
   uploadMediaAsset,
-} from "@/data/mediaMockData";
+} from "@/lib/mediaData";
 import type { MediaAsset, MediaFolder, MediaRole, MediaSortOption, UploadDraft } from "@/types/media";
 
 const emptyFilters: MediaFilterState = {

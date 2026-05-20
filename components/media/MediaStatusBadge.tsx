@@ -1,4 +1,4 @@
-import { statusText } from "@/data/mediaMockData";
+import { statusText } from "@/lib/mediaData";
 import type { MediaStatus } from "@/types/media";
 
 const statusClasses: Record<MediaStatus, string> = {

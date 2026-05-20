@@ -19,6 +19,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   const payload = await request.json();
+  if (payload?.schemaVersion !== 2) {
+    return NextResponse.json({ ok: false, error: "Unsupported state schema" }, { status: 409 });
+  }
   await mkdir(dataDir, { recursive: true });
   await writeFile(statePath, JSON.stringify(payload, null, 2), "utf8");
   return NextResponse.json({ ok: true });

@@ -1,6 +1,6 @@
 import { Archive, Copy, Download, FolderInput, ListPlus, Maximize2, Pencil, Trash2, UploadCloud, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { typeText } from "@/data/mediaMockData";
+import { typeText } from "@/lib/mediaData";
 import { ApprovalActions } from "@/components/media/ApprovalActions";
 import type { MediaAction } from "@/components/media/MediaActionMenu";
 import { MediaStatusBadge } from "@/components/media/MediaStatusBadge";

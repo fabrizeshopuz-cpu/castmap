@@ -1,103 +1,75 @@
-# CASTMAP Admin Panel
+# CASTMAP Admin Platform
 
-CASTMAP uchun markaziy boshqaruvli retail media va TV kontent tizimi.
+CASTMAP - retail media ekranlari, Android TV Box va Smart TV playerlarni markazdan boshqarish uchun premium cloud admin panel.
 
 ## Ishga tushirish
 
+Dependencylarni o'rnatish:
+
 ```bash
-npm start
+npm install
 ```
 
-Windowsda `npm` bo'lmasa:
-
-```bat
-start-server.bat
-```
-
-Eski Node server `0.0.0.0:5173` da ishlaydi.
-
-Yangi CASTMAP admin panel:
+Development server:
 
 ```bash
 npm run dev:next
 ```
 
-Local:
+Local manzil:
 
 ```text
 http://localhost:3000/dashboard
 ```
 
-Shu kompyuterda:
+Windowsda PowerShell `npm`ni bloklasa:
 
-```text
-http://127.0.0.1:5173
+```powershell
+npm.cmd run dev:next
 ```
 
-Boshqa telefon, noutbuk yoki TV boxdan ochish uchun hamma qurilmalar bitta Wi-Fi/LAN tarmog'ida bo'lishi kerak:
+Yoki:
 
-```text
-http://KOMPYUTER_IP:5173
+```bat
+start-server.bat
 ```
 
-Server ishga tushganda konsolda `LAN browser: http://...:5173` manzillarini ko'rsatadi.
-
-## Muhim sozlamalar
-
-Renderdagi hozirgi server:
-
-```text
-https://fabrize-cloud-tv.onrender.com
-```
-
-Public server yoki VPSda ishlatganda:
+## Production build
 
 ```bash
-PUBLIC_BASE_URL=https://fabrize-cloud-tv.onrender.com npm start
+npm run build:next
+npm start
 ```
 
-Shunda sotuv bo'limida mijozga beriladigan cabinet linklari to'g'ri domain bilan chiqadi.
-
-## Admin login
-
-Default admin:
+Render deploy uchun:
 
 ```text
-Login: admin
-Parol: Fabrize2026!
+buildCommand: npm install && npm run build:next
+startCommand: npm start
 ```
 
-Ishga tushirishdan oldin o'zingizga mos login/parol berish tavsiya qilinadi:
-
-```bash
-ADMIN_LOGIN=admin ADMIN_PASSWORD=YangiKuchliParol ADMIN_EMAIL=owner@example.com npm start
-```
-
-Registratsiya va parol esdan chiqish so'rovlari `data/mail-outbox.json` fayliga yoziladi. Gmail orqali yuborish uchun Render Environment Variables:
+Public URL:
 
 ```text
-ADMIN_EMAIL=sizning-gmail@gmail.com
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=sizning-gmail@gmail.com
-SMTP_PASS=GOOGLE_APP_PASSWORD
-MAIL_FROM=sizning-gmail@gmail.com
+https://castmap-admin.onrender.com
 ```
 
-Gmail parolini emas, Google App Password ishlatiladi. Google hisobida 2-Step Verification yoqilgan bo'lishi kerak.
+## Asosiy sahifalar
 
-Tashqi email webhook ishlatmoqchi bo'lsangiz:
-
-```bash
-EMAIL_WEBHOOK_URL=https://example.com/email-webhook npm start
-```
-
-## Sahifalar
-
-- `/` - General admin panel
-- `/client.html` - Mijoz cabinet
-- `/tv.html?device=TV_ID` - Web TV player
+- `/dashboard` - umumiy monitoring va KPI
+- `/devices` - TV qurilmalar boshqaruvi
+- `/media-library` - media yuklash va boshqarish
+- `/playlists` - playlistlar
+- `/schedules` - jadval va rejalashtirish
+- `/campaigns` - kampaniyalar
+- `/analytics` - analitika
+- `/live-monitoring` - jonli monitoring
+- `/apk-management` - APK versiyalarini boshqarish
+- `/alerts` - ogohlantirishlar
+- `/widgets` - ilovalar va widgetlar
+- `/users` - foydalanuvchilar
+- `/billing` - tarif va billing
+- `/settings` - sozlamalar
 
 ## Ma'lumot saqlanishi
 
@@ -106,21 +78,24 @@ Next admin panel ma'lumotlarni ikki joyga yozadi:
 - brauzer `localStorage`
 - serverdagi `data/castmap-state.json`
 
-Shu sabab bir xil server URL orqali telefon yoki boshqa kompyuterdan kirganda ma'lumotlar umumiy ko'rinadi. Render free instance restart yoki redeploy bo'lsa diskdagi JSON yo'qolishi mumkin. To'liq production uchun PostgreSQL + Prisma ulanishi kerak.
+Bir xil server URL orqali telefon yoki boshqa kompyuterdan kirilganda ma'lumotlar umumiy ko'rinadi. Render free instance restart yoki redeploy bo'lsa diskdagi JSON yo'qolishi mumkin. To'liq production uchun PostgreSQL + Prisma ulash kerak.
 
-## Render deploy
+## APK player
 
-`render.yaml` yangi Next admin panelni deploy qiladi:
+APK manba kodi:
 
 ```text
-buildCommand: npm install && npm run build:next
-startCommand: npm run start:next
+castmap-player-apk/
 ```
 
-## GitHub haqida
+Server URL:
 
-Bu loyiha Node.js server bilan ishlaydi. GitHub Pages faqat statik sayt ochadi, upload/API/APK monitoring ishlamaydi. To'liq ishlashi uchun loyiha VPS, Render, Railway yoki boshqa Node.js hostingda ishga tushiriladi.
+```text
+https://castmap-admin.onrender.com
+```
 
-## Gitga kiritilmaydigan fayllar
+APK build qilinganda `castmap-player-apk/app/build.gradle` ichidagi `SERVER_BASE_URL` qiymati real server URL bilan bir xil bo'lishi kerak.
 
-`data/db.json`, `uploads/`, Android build va local SDK sozlamalari `.gitignore` orqali chiqarib tashlangan. Bu mijoz fayllari, video/rasmlar va lokal maxfiy sozlamalar GitHubga chiqib ketmasligi uchun qilingan.
+## GitHub va deploy
+
+Kod GitHub'ga push qilingandan keyin Render repo'ga ulangan bo'lsa avtomatik build/deploy boshlaydi. GitHub faqat kod hosting; admin panelni internetda ishlatish uchun Render, VPS yoki boshqa Node hosting kerak.

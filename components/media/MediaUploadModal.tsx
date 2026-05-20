@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Upload, X } from "lucide-react";
-import { defaultTags, mediaFolders } from "@/data/mediaMockData";
+import { defaultTags, mediaFolders } from "@/lib/mediaData";
 import type { MediaAsset, MediaType, UploadDraft } from "@/types/media";
 
 const initialDraft: UploadDraft = {
