@@ -281,8 +281,8 @@ export default function MediaLibraryPage() {
                 </button>
               </section>
 
-              <section className="grid gap-4 2xl:grid-cols-[240px_minmax(0,1fr)_390px] xl:grid-cols-[220px_minmax(0,1fr)]">
-                <div className="grid gap-4 self-start">
+              <section className="grid min-w-0 items-start gap-4 2xl:grid-cols-[240px_minmax(0,1fr)_390px] xl:grid-cols-[220px_minmax(0,1fr)]">
+                <div className="grid min-w-0 gap-4 self-start">
                   <MediaFolderPanel folders={folders} activeFolder={activeFolder} onChange={setActiveFolder} onCreate={() => setFolderModalOpen(true)} />
                   <StorageAnalytics assets={assets} />
                 </div>
@@ -299,7 +299,7 @@ export default function MediaLibraryPage() {
                   )}
                 </div>
 
-                <div className="max-2xl:col-span-2 max-xl:col-span-1">
+                <div className="min-w-0 max-2xl:col-span-2 max-xl:col-span-1">
                   {selected ? (
                     <MediaDetailDrawer asset={selected} onClose={() => setSelected(null)} onAction={handleAction} onApprove={handleApprove} onReject={handleReject} />
                   ) : (

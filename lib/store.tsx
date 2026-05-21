@@ -509,10 +509,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const createMediaFromDraft = useCallback((draft: UploadDraft) => {
     const type = draft.category || "video";
     const now = formatDateTime();
-    const fileUrl = draft.uploadedFileUrl;
-    const fileName = draft.uploadedFileName || draft.name.trim();
-    const fileSize = draft.uploadedSizeBytes || (type === "video" ? 44_879_052 : 4_404_019);
-    const format = (draft.uploadedMime?.split("/")[1] || fileName.split(".").pop() || type).toUpperCase();
+    const webUrl = normalizeWebUrl(draft.webUrl);
+    const fileUrl = webUrl || draft.uploadedFileUrl;
+    const fileName = draft.uploadedFileName || draft.name.trim() || webUrlToName(webUrl);
+    const fileSize = webUrl ? 0 : draft.uploadedSizeBytes || (type === "video" ? 44_879_052 : 4_404_019);
+    const format = webUrl ? "URL" : (draft.uploadedMime?.split("/")[1] || fileName.split(".").pop() || type).toUpperCase();
     const asset: MediaAsset = {
       id: uid("media"),
       name: draft.name.trim() || fileName || `castmap_${type}_asset`,
@@ -525,7 +526,9 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
           : "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
       fileUrl: fileUrl || (type === "image"
         ? "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1920&auto=format&fit=crop"
-        : "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"),
+        : type === "web"
+          ? "about:blank"
+          : "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"),
       size: formatBytes(fileSize),
       sizeBytes: fileSize,
       duration: type === "video" ? "00:15" : undefined,
@@ -543,6 +546,48 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       cdnUrl: fileUrl || `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name.trim() || `castmap_${type}_asset`)}`,
     };
     setMedia((current) => [asset, ...current]);
+    if (draft.addToPlaylist) {
+      setPlaylists((current) => {
+        const playlistItem = {
+          id: uid("item"),
+          mediaId: asset.id,
+          duration: asset.type === "video" ? 20 : 10,
+          transition: "fade" as const,
+          order: 1,
+          priority: 1,
+          status: "active" as const,
+        };
+        if (!current.length) {
+          return [{
+            id: uid("playlist"),
+            name: "APK media playlist",
+            description: "Media upload orqali avtomatik yaratilgan playlist",
+            target: "Barcha TV qurilmalar",
+            status: "published",
+            loop: true,
+            items: [playlistItem],
+            updatedAt: now,
+          }, ...current];
+        }
+
+        const targetIndex = current.findIndex((playlist) => playlist.status === "published");
+        const index = targetIndex >= 0 ? targetIndex : 0;
+        return current.map((playlist, playlistIndex) => {
+          if (playlistIndex !== index || playlist.items.some((item) => item.mediaId === asset.id)) return playlist;
+          return {
+            ...playlist,
+            items: [
+              ...playlist.items,
+              {
+                ...playlistItem,
+                order: playlist.items.length + 1,
+              },
+            ],
+            updatedAt: now,
+          };
+        });
+      });
+    }
     pushToast("Media saqlandi.");
     return asset;
   }, [pushToast]);
@@ -981,6 +1026,29 @@ function formatBytes(bytes: number) {
     index += 1;
   }
   return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
+function normalizeWebUrl(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "";
+  try {
+    const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(withProtocol);
+    if (!["http:", "https:"].includes(url.protocol)) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function webUrlToName(value: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return url.hostname.replace(/^www\./, "") || "web_content";
+  } catch {
+    return "";
+  }
 }
 
 export function useCastmapStore() {

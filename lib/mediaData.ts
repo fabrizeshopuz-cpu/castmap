@@ -246,19 +246,22 @@ export async function fetchMediaAssets() {
 
 export async function uploadMediaAsset(draft: UploadDraft): Promise<MediaAsset> {
   await delay();
+  const webUrl = normalizeWebUrl(draft.webUrl);
+  const fileUrl = webUrl || draft.uploadedFileUrl || `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name || "yangi_media")}`;
+  const sizeBytes = webUrl ? 0 : draft.uploadedSizeBytes || (draft.category === "video" ? 25_165_824 : 3_145_728);
   return {
     id: `media-${Date.now()}`,
-    name: draft.name || "yangi_media.mp4",
+    name: draft.name || webUrlToName(webUrl) || "yangi_media.mp4",
     type: draft.category,
     status: draft.approvalRequired ? "approval" : "active",
     thumbnailUrl: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
-    fileUrl: `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name || "yangi_media")}`,
-    size: draft.category === "video" ? "24 MB" : "3 MB",
-    sizeBytes: draft.category === "video" ? 25_165_824 : 3_145_728,
+    fileUrl,
+    size: webUrl ? "URL" : draft.category === "video" ? "24 MB" : "3 MB",
+    sizeBytes,
     duration: draft.category === "video" ? "00:20" : undefined,
     resolution: draft.category === "html" || draft.category === "web" ? "Responsive" : "1920x1080",
     orientation: draft.category === "html" || draft.category === "web" ? "responsive" : "landscape",
-    format: draft.category.toUpperCase(),
+    format: webUrl ? "URL" : draft.category.toUpperCase(),
     folder: draft.folder,
     tags: draft.tags,
     uploadedBy: "Super Admin",
@@ -266,7 +269,7 @@ export async function uploadMediaAsset(draft: UploadDraft): Promise<MediaAsset> 
     usedInPlaylists: draft.addToPlaylist ? 1 : 0,
     usedOnScreens: 0,
     playbackCount: 0,
-    cdnUrl: `https://cdn.castmap.uz/media/${encodeURIComponent(draft.name || "yangi_media")}`,
+    cdnUrl: fileUrl,
   };
 }
 
@@ -290,4 +293,27 @@ export async function rejectMediaAsset(asset: MediaAsset, _reason: string) {
 
 export async function moveMediaToFolder(asset: MediaAsset, folder: string) {
   return updateMediaMetadata({ ...asset, folder });
+}
+
+function normalizeWebUrl(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "";
+  try {
+    const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(withProtocol);
+    if (!["http:", "https:"].includes(url.protocol)) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function webUrlToName(value: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return url.hostname.replace(/^www\./, "") || "web_content";
+  } catch {
+    return "";
+  }
 }

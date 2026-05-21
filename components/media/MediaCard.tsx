@@ -23,7 +23,7 @@ export function MediaCard({
   onAction: (asset: MediaAsset, action: MediaAction) => void;
 }) {
   return (
-    <article className={`group relative cursor-pointer overflow-visible rounded-2xl border border-white/10 bg-castCard transition hover:border-castGold/45 hover:bg-castPanel hover:shadow-gold ${openActionId === asset.id ? "z-40" : "z-0"}`} onClick={() => onSelect(asset)}>
+    <article className={`group relative min-w-0 cursor-pointer overflow-visible rounded-2xl border border-white/10 bg-castCard transition hover:border-castGold/45 hover:bg-castPanel hover:shadow-gold ${openActionId === asset.id ? "z-40" : "z-0"}`} onClick={() => onSelect(asset)}>
       <div className="relative aspect-video overflow-hidden bg-black">
         <img src={asset.thumbnailUrl} alt={asset.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         <div className="absolute left-3 top-3 rounded-lg border border-white/10 bg-black/65 px-2 py-1 text-[10px] font-black uppercase text-white">{typeText(asset.type)}</div>
@@ -34,22 +34,22 @@ export function MediaCard({
           <HoverButton icon={<Pencil className="h-4 w-4" />} label="Edit" onClick={() => onAction(asset, "edit")} />
         </div>
       </div>
-      <div className="grid gap-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="truncate font-black text-white">{asset.name}</h3>
-            <p className="mt-1 text-xs text-castMuted">{asset.size} • {asset.resolution}</p>
+      <div className="grid min-w-0 gap-3 p-4">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="block max-w-full truncate font-black text-white">{asset.name}</h3>
+            <p className="mt-1 max-w-full truncate text-xs text-castMuted">{asset.size} / {asset.resolution}</p>
           </div>
           <MediaActionMenu asset={asset} open={openActionId === asset.id} onToggle={() => onToggleActions(asset.id)} onAction={onAction} />
         </div>
         <MediaTags tags={asset.tags.slice(0, 2)} />
-        <div className="flex items-center justify-between gap-3 text-xs text-castMuted">
+        <div className="flex min-w-0 items-center justify-between gap-3 text-xs text-castMuted">
           <MediaStatusBadge status={asset.status} />
-          <span>{asset.usedInPlaylists} playlist</span>
+          <span className="shrink-0">{asset.usedInPlaylists} playlist</span>
         </div>
-        <div className="flex items-center justify-between text-xs text-castMuted">
-          <span>{asset.uploadedBy}</span>
-          <span>{asset.uploadedAt.split(" ").slice(0, 3).join(" ")}</span>
+        <div className="flex min-w-0 items-center justify-between gap-3 text-xs text-castMuted">
+          <span className="min-w-0 truncate">{asset.uploadedBy}</span>
+          <span className="shrink-0">{asset.uploadedAt.split(" ").slice(0, 3).join(" ")}</span>
         </div>
       </div>
     </article>

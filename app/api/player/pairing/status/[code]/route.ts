@@ -13,7 +13,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ code: stri
   const paired = Boolean(device);
   return NextResponse.json({
     paired,
-    accessToken: paired ? "mock-access-token" : null,
+    accessToken: paired ? `device:${device?.deviceId}` : null,
     refreshToken: paired ? "mock-refresh-token" : null,
     deviceId: paired ? device?.deviceId : null,
     organizationId: paired ? "org-castmap" : null,

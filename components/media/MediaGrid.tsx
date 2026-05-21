@@ -18,7 +18,7 @@ export function MediaGrid({
   onAction: (asset: MediaAsset, action: MediaAction) => void;
 }) {
   return (
-    <div className="grid gap-4 2xl:grid-cols-4 xl:grid-cols-3 md:grid-cols-2">
+    <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
       {assets.map((asset) => (
         <MediaCard key={asset.id} asset={asset} openActionId={openActionId} onToggleActions={onToggleActions} onSelect={onSelect} onPreview={onPreview} onAction={onAction} />
       ))}

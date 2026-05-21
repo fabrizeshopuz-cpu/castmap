@@ -39,10 +39,10 @@ export function MediaDetailDrawer({
   ];
 
   return (
-    <aside className="sticky top-5 max-h-[calc(100vh-40px)] overflow-y-auto rounded-2xl border border-white/10 bg-castCard p-4 max-xl:static max-xl:max-h-none">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-white">{asset.name}</h2>
+    <aside className="sticky top-5 min-w-0 max-h-[calc(100vh-40px)] overflow-y-auto rounded-2xl border border-white/10 bg-castCard p-4 max-xl:static max-xl:max-h-none">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-black text-white [overflow-wrap:anywhere]">{asset.name}</h2>
           <div className="mt-2"><MediaStatusBadge status={asset.status} /></div>
         </div>
         <button className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 text-castMuted hover:text-white" type="button" onClick={onClose}>
@@ -58,9 +58,9 @@ export function MediaDetailDrawer({
         <h3 className="mb-3 text-sm font-black text-castGold">Ma'lumot</h3>
         <div className="grid gap-3">
           {details.map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-4 text-sm">
-              <span className="text-castMuted">{label}</span>
-              <b className="max-w-[55%] text-right text-white">{value}</b>
+            <div key={label} className="flex min-w-0 justify-between gap-4 text-sm">
+              <span className="shrink-0 text-castMuted">{label}</span>
+              <b className="min-w-0 max-w-[60%] text-right text-white [overflow-wrap:anywhere]">{value}</b>
             </div>
           ))}
           <div className="grid gap-2 text-sm">
@@ -69,7 +69,7 @@ export function MediaDetailDrawer({
           </div>
           <div className="grid gap-2 text-sm">
             <span className="text-castMuted">CDN URL / public URL</span>
-            <code className="rounded-xl border border-white/10 bg-black/40 p-2 text-xs text-castGold">{asset.cdnUrl || asset.fileUrl}</code>
+            <code className="block max-w-full rounded-xl border border-white/10 bg-black/40 p-2 text-xs text-castGold [overflow-wrap:anywhere]">{asset.cdnUrl || asset.fileUrl}</code>
           </div>
         </div>
       </div>

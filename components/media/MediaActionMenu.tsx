@@ -27,7 +27,7 @@ export function MediaActionMenu({
   onAction: (asset: MediaAsset, action: MediaAction) => void;
 }) {
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <button className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-black/45 text-white hover:border-castGold/35" type="button" onClick={(event) => { event.stopPropagation(); onToggle(); }}>
         <MoreVertical className="h-4 w-4" />
       </button>

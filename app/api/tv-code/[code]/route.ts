@@ -1,27 +1,10 @@
 import { NextResponse } from "next/server";
 import { readCastmapState } from "@/lib/serverState";
+import { fallbackDurationSeconds, mediaMime, mediaPublicUrl, playableMediaAssets, tvDuration, tvMediaKind } from "@/lib/playerMedia";
 import type { CommandType, DeviceCommand } from "@/types";
-import type { MediaAsset } from "@/types/media";
 
 function cleanCode(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-function mediaKind(asset?: MediaAsset) {
-  if (!asset) return "Video";
-  if (asset.type === "image") return "Rasm";
-  if (asset.type === "video") return "Video";
-  if (asset.type === "web") return "Web";
-  if (asset.type === "html") return "HTML";
-  return asset.type.toUpperCase();
-}
-
-function mime(asset?: MediaAsset) {
-  if (!asset) return "video/mp4";
-  if (asset.type === "image") return "image/jpeg";
-  if (asset.type === "video") return "video/mp4";
-  if (asset.type === "web" || asset.type === "html") return "text/html";
-  return "application/octet-stream";
 }
 
 function commandForPlayer(command: DeviceCommand) {
@@ -43,8 +26,9 @@ function commandForPlayer(command: DeviceCommand) {
   };
 }
 
-export async function GET(_: Request, { params }: { params: Promise<{ code: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
+  const origin = new URL(request.url).origin;
   const state = await readCastmapState();
   const normalizedCode = cleanCode(code);
   const device = state.devices.find((item) => cleanCode(item.deviceId).endsWith(normalizedCode));
@@ -71,6 +55,25 @@ export async function GET(_: Request, { params }: { params: Promise<{ code: stri
     && (command.status === "queued" || command.status === "running")
   );
   const latestApk = state.apkVersions.find((version) => version.status === "latest") || state.apkVersions[0];
+  const playlistMedia = playlist ? playlist.items.map((item) => {
+    const asset = state.media.find((mediaItem) => mediaItem.id === item.mediaId);
+    return {
+      id: asset?.id || item.mediaId,
+      name: asset?.name || "Kontent",
+      type: tvMediaKind(asset),
+      mime: mediaMime(asset),
+      url: mediaPublicUrl(asset, origin),
+      duration: tvDuration(item.duration),
+    };
+  }).filter((item) => item.url) : [];
+  const fallbackMedia = playlistMedia.length ? [] : playableMediaAssets(state.media).map((asset) => ({
+    id: asset.id,
+    name: asset.name,
+    type: tvMediaKind(asset),
+    mime: mediaMime(asset),
+    url: mediaPublicUrl(asset, origin),
+    duration: tvDuration(fallbackDurationSeconds(asset)),
+  }));
 
   return NextResponse.json({
     paired: true,
@@ -95,16 +98,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ code: stri
       temperature: 26,
       description: "Ochiq",
     },
-    media: playlist ? playlist.items.map((item) => {
-      const asset = state.media.find((mediaItem) => mediaItem.id === item.mediaId);
-      return {
-        id: asset?.id || item.mediaId,
-        name: asset?.name || "Kontent",
-        type: mediaKind(asset),
-        mime: mime(asset),
-        url: asset?.fileUrl || "",
-        duration: `00:00:${String(Math.max(5, item.duration)).padStart(2, "0")}`,
-      };
-    }).filter((item) => item.url) : [],
+    media: playlistMedia.length ? playlistMedia : fallbackMedia,
   });
 }

@@ -59,4 +59,5 @@ export interface UploadDraft {
   uploadedFileName?: string;
   uploadedMime?: string;
   uploadedSizeBytes?: number;
+  webUrl?: string;
 }

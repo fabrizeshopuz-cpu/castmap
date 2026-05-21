@@ -36,7 +36,7 @@ export function MediaListView({
             }}
           >
             <img src={asset.thumbnailUrl} alt={asset.name} className="h-12 w-20 rounded-lg object-cover" />
-            <b className="truncate text-white">{asset.name}</b>
+            <b className="min-w-0 truncate text-white">{asset.name}</b>
             <span>{typeText(asset.type)}</span>
             <span>{asset.size}</span>
             <span>{asset.resolution}</span>

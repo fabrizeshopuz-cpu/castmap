@@ -13,12 +13,14 @@ const initialDraft: UploadDraft = {
   expireDate: "",
   approvalRequired: true,
   addToPlaylist: false,
+  webUrl: "",
 };
 
 export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; onClose: () => void; onUpload: (draft: UploadDraft) => Promise<MediaAsset> }) {
   const [draft, setDraft] = useState<UploadDraft>(initialDraft);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "uploading" | "complete" | "failed">("idle");
+  const [error, setError] = useState("");
   const [selectedTag, setSelectedTag] = useState("Promo");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,31 +30,58 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
       setDraft(initialDraft);
       setProgress(0);
       setStatus("idle");
+      setError("");
+      setSelectedTag("Promo");
       setSelectedFile(null);
     }
   }, [open]);
 
   const statusText = useMemo(() => ({
-    idle: selectedFile ? `${selectedFile.name} tanlandi (${formatBytes(selectedFile.size)})` : "Fayl tanlang yoki drag & drop qiling",
+    idle: selectedFile
+      ? `${selectedFile.name} tanlandi (${formatBytes(selectedFile.size)})`
+      : draft.webUrl?.trim()
+        ? "Web URL tayyor"
+        : "Fayl tanlang yoki web URL kiriting",
     uploading: `Yuklanmoqda: ${progress}%`,
     complete: "Upload complete",
-    failed: "Upload failed",
-  }[status]), [progress, selectedFile, status]);
+    failed: error || "Upload failed",
+  }[status]), [draft.webUrl, error, progress, selectedFile, status]);
+
+  const canSubmit = status !== "uploading" && (selectedFile || draft.category !== "web" || Boolean(draft.webUrl?.trim()));
 
   if (!open) return null;
 
   const pickFile = (file: File) => {
     setSelectedFile(file);
     const category = inferType(file);
+    setError("");
     setDraft((current) => ({
       ...current,
       category,
       name: current.name || file.name,
+      webUrl: "",
     }));
   };
 
+  const changeCategory = (category: MediaType) => {
+    setError("");
+    if (category === "web") {
+      setSelectedFile(null);
+    }
+    setDraft((current) => ({ ...current, category }));
+  };
+
   const submit = async () => {
+    const normalizedWebUrl = normalizeWebUrl(draft.webUrl);
+    const isWebUrlUpload = !selectedFile && draft.category === "web";
+    if (isWebUrlUpload && !normalizedWebUrl) {
+      setError("To'g'ri web URL kiriting.");
+      setStatus("failed");
+      return;
+    }
+
     setStatus("uploading");
+    setError("");
     setProgress(0);
     const timer = window.setInterval(() => setProgress((value) => Math.min(92, value + 8)), 120);
     try {
@@ -69,16 +98,25 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
           uploadedMime: payload.mime,
           uploadedSizeBytes: payload.sizeBytes,
         };
+      } else if (isWebUrlUpload) {
+        uploaded = { webUrl: normalizedWebUrl };
+        await new Promise((resolve) => setTimeout(resolve, 300));
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
-      await onUpload({ ...draft, ...uploaded, name: draft.name || selectedFile?.name || `castmap_${draft.category}_asset.${draft.category === "image" ? "jpg" : draft.category}` });
+      await onUpload({
+        ...draft,
+        ...uploaded,
+        category: isWebUrlUpload ? "web" : draft.category,
+        name: draft.name || selectedFile?.name || webUrlToName(normalizedWebUrl) || `castmap_${draft.category}_asset.${draft.category === "image" ? "jpg" : draft.category}`,
+      });
       window.clearInterval(timer);
       setProgress(100);
       setStatus("complete");
       setTimeout(onClose, 500);
-    } catch {
+    } catch (uploadError) {
       window.clearInterval(timer);
+      setError(uploadError instanceof Error ? uploadError.message : "Upload failed");
       setStatus("failed");
     }
   };
@@ -137,11 +175,16 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
               </select>
             </label>
             <label className="grid gap-1 text-sm text-castMuted">Kategoriya
-              <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value as MediaType })}>
+              <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.category} onChange={(event) => changeCategory(event.target.value as MediaType)}>
                 {["video", "image", "web", "html", "pdf", "template"].map((type) => <option key={type}>{type}</option>)}
               </select>
             </label>
             <Field label="Expire date" value={draft.expireDate} onChange={(value) => setDraft({ ...draft, expireDate: value })} placeholder="2026-06-01" />
+            {draft.category === "web" ? (
+              <div className="md:col-span-2">
+                <Field label="Web URL" type="url" value={draft.webUrl || ""} onChange={(value) => { setError(""); setDraft({ ...draft, webUrl: value }); }} placeholder="https://example.com/menu" />
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
@@ -168,7 +211,7 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
 
           <div className="flex justify-end gap-3">
             <button className="rounded-xl border border-white/10 px-5 py-3 font-bold text-white" type="button" onClick={onClose}>Bekor qilish</button>
-            <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-3 font-black text-black disabled:opacity-60" type="button" disabled={status === "uploading"} onClick={submit}>
+            <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-3 font-black text-black disabled:opacity-60" type="button" disabled={!canSubmit} onClick={submit}>
               Yuklash
             </button>
           </div>
@@ -178,10 +221,10 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
   );
 }
 
-function Field({ label, value, placeholder, onChange }: { label: string; value: string; placeholder: string; onChange: (value: string) => void }) {
+function Field({ label, value, placeholder, type = "text", onChange }: { label: string; value: string; placeholder: string; type?: string; onChange: (value: string) => void }) {
   return (
     <label className="grid gap-1 text-sm text-castMuted">{label}
-      <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none placeholder:text-castMuted" value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+      <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none placeholder:text-castMuted" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
@@ -201,6 +244,29 @@ function inferType(file: File): MediaType {
   if (file.type === "application/pdf") return "pdf";
   if (file.type.includes("html")) return "html";
   return "video";
+}
+
+function normalizeWebUrl(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "";
+  try {
+    const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const url = new URL(withProtocol);
+    if (!["http:", "https:"].includes(url.protocol)) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function webUrlToName(value: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return url.hostname.replace(/^www\./, "") || "web_content";
+  } catch {
+    return "";
+  }
 }
 
 function formatBytes(bytes: number) {
