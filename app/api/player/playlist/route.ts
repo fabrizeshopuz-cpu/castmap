@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fallbackDurationSeconds, mediaPublicUrl, playableMediaAssets, playerMediaType, playlistDurationMs } from "@/lib/playerMedia";
+import { fallbackDurationSeconds, mediaPublicUrl, playableMediaAssets, playerMediaType, playlistDurationMs, publicRequestOrigin } from "@/lib/playerMedia";
 import { readCastmapState } from "@/lib/serverState";
 
 function tokenDeviceId(request: Request) {
@@ -10,7 +10,7 @@ function tokenDeviceId(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
+  const origin = publicRequestOrigin(request);
   const state = await readCastmapState();
   const requestedDeviceId = tokenDeviceId(request);
   const device = state.devices.find((item) => item.id === requestedDeviceId || item.deviceId === requestedDeviceId) || state.devices[0];

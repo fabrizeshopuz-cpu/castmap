@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { publicRequestOrigin } from "@/lib/playerMedia";
 
 export async function POST(request: Request) {
-  const baseUrl = new URL(request.url).origin;
+  const baseUrl = publicRequestOrigin(request);
   return NextResponse.json({
     pairingCode: "482-913",
     qrUrl: `${baseUrl}/devices?pair=482-913`,

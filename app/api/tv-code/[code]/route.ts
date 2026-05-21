@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readCastmapState } from "@/lib/serverState";
-import { fallbackDurationSeconds, mediaMime, mediaPublicUrl, playableMediaAssets, tvDuration, tvMediaKind } from "@/lib/playerMedia";
+import { fallbackDurationSeconds, mediaMime, mediaPublicUrl, playableMediaAssets, publicRequestOrigin, tvDuration, tvMediaKind } from "@/lib/playerMedia";
 import type { CommandType, DeviceCommand } from "@/types";
 
 function cleanCode(value: string) {
@@ -28,7 +28,7 @@ function commandForPlayer(command: DeviceCommand) {
 
 export async function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const origin = new URL(request.url).origin;
+  const origin = publicRequestOrigin(request);
   const state = await readCastmapState();
   const normalizedCode = cleanCode(code);
   const device = state.devices.find((item) => cleanCode(item.deviceId).endsWith(normalizedCode));

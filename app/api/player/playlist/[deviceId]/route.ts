@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { fallbackDurationSeconds, mediaPublicUrl, playableMediaAssets, playerMediaType, playlistDurationMs } from "@/lib/playerMedia";
+import { fallbackDurationSeconds, mediaPublicUrl, playableMediaAssets, playerMediaType, playlistDurationMs, publicRequestOrigin } from "@/lib/playerMedia";
 import { readCastmapState } from "@/lib/serverState";
 
 export async function GET(request: Request, { params }: { params: Promise<{ deviceId: string }> }) {
   const { deviceId } = await params;
-  const origin = new URL(request.url).origin;
+  const origin = publicRequestOrigin(request);
   const state = await readCastmapState();
   const device = state.devices.find((item) => item.id === deviceId || item.deviceId === deviceId);
   const playlist = state.playlists.find((item) => device && item.deviceIds?.includes(device.id) && item.status === "published")

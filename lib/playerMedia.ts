@@ -1,5 +1,20 @@
 import type { MediaAsset } from "@/types/media";
 
+export function publicRequestOrigin(request: Request) {
+  const configured = process.env.PUBLIC_BASE_URL?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host")?.split(",")[0]?.trim();
+  if (host) {
+    const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+    const protocol = forwardedProto || new URL(request.url).protocol.replace(":", "") || "https";
+    return `${protocol}://${host}`.replace(/\/$/, "");
+  }
+
+  return new URL(request.url).origin.replace(/\/$/, "");
+}
+
 export function mediaPublicUrl(asset: MediaAsset | undefined, origin: string) {
   const url = asset?.fileUrl || asset?.cdnUrl || "";
   if (!url) return "";
