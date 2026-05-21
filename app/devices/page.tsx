@@ -11,9 +11,13 @@ import { DeviceTable } from "@/components/devices/DeviceTable";
 import { PairDeviceModal } from "@/components/devices/PairDeviceModal";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { useCastmapStore } from "@/lib/store";
-import type { CommandType } from "@/types";
-import type { Device, DeviceFilter } from "@/types/devices";
+import type { CommandType, Device } from "@/types";
+import type { DeviceFilter } from "@/types/devices";
 
 export default function DevicesPage() {
   const store = useCastmapStore();
@@ -22,6 +26,7 @@ export default function DevicesPage() {
   const [selected, setSelected] = useState<Device | null>(null);
   const [openActionId, setOpenActionId] = useState("");
   const [pairOpen, setPairOpen] = useState(false);
+  const [editing, setEditing] = useState<Device | null>(null);
   const [loading] = useState(false);
 
   const updateRequiredDeviceIds = useMemo(
@@ -81,6 +86,10 @@ export default function DevicesPage() {
     const command = commandByAction[action];
     if (command) {
       store.sendCommand(device.id, command);
+      return;
+    }
+    if (action === "edit") {
+      setEditing(device);
       return;
     }
     if (action === "delete") {
@@ -172,6 +181,41 @@ export default function DevicesPage() {
         </div>
       </section>
       <PairDeviceModal open={pairOpen} onClose={() => setPairOpen(false)} />
+      <EditDeviceModal device={editing} onClose={() => setEditing(null)} />
     </main>
+  );
+}
+
+function EditDeviceModal({ device, onClose }: { device: Device | null; onClose: () => void }) {
+  const store = useCastmapStore();
+  const [draft, setDraft] = useState<Device | null>(device);
+
+  useEffect(() => {
+    setDraft(device);
+  }, [device]);
+
+  if (!device || !draft) return null;
+
+  return (
+    <Modal open={!!device} title="Qurilmani tahrirlash" onClose={onClose}>
+      <div className="grid gap-4">
+        <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Qurilma nomi" />
+        <Input value={draft.deviceId} onChange={(event) => setDraft({ ...draft, deviceId: event.target.value })} placeholder="TV kodi / Device ID" />
+        <Select value={draft.branchId} onChange={(event) => setDraft({ ...draft, branchId: event.target.value })}>
+          {store.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+        </Select>
+        <Select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as Device["status"] })}>
+          <option value="online">Onlayn</option>
+          <option value="offline">Offline</option>
+          <option value="error">Xatolik</option>
+          <option value="inactive">Nofaol</option>
+        </Select>
+        <Input value={draft.apkVersion} onChange={(event) => setDraft({ ...draft, apkVersion: event.target.value })} placeholder="APK versiya" />
+        <div className="flex justify-end gap-3">
+          <Button onClick={onClose}>Bekor qilish</Button>
+          <Button variant="gold" onClick={() => { store.updateDevice(device.id, draft); onClose(); }}>Saqlash</Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

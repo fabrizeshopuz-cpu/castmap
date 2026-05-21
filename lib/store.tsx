@@ -87,6 +87,7 @@ interface CastmapState {
   toasts: ToastMessage[];
   pushToast: (text: string, tone?: ToastMessage["tone"]) => void;
   addPlaylist: () => Playlist;
+  updatePlaylist: (id: string, patch: Partial<Playlist>) => void;
   publishPlaylist: (id: string) => void;
   duplicatePlaylist: (id: string) => void;
   deletePlaylist: (id: string) => void;
@@ -94,12 +95,16 @@ interface CastmapState {
   toggleSchedule: (id: string) => void;
   deleteSchedule: (id: string) => void;
   addCampaign: () => void;
+  createCampaign: (input: Partial<Campaign>) => Campaign;
+  updateCampaign: (id: string, patch: Partial<Campaign>) => void;
   setCampaignStatus: (id: string, status: Campaign["status"]) => void;
   deleteCampaign: (id: string) => void;
   sendCommand: (deviceId: string, type: CommandType) => DeviceCommand;
   pairDevice: (code: string, name: string, branchId: string) => void;
+  updateDevice: (id: string, patch: Partial<Device>) => void;
   deleteDevice: (id: string) => void;
   addBranch: (input: AddBranchInput) => Branch;
+  updateBranch: (id: string, patch: Partial<Branch>) => void;
   addMediaAsset: (input: AddMediaInput) => MediaAsset;
   createMediaFromDraft: (draft: UploadDraft) => MediaAsset;
   updateMediaAsset: (asset: MediaAsset) => void;
@@ -281,6 +286,15 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     return playlist;
   }, [branches, media, playlists.length, pushToast]);
 
+  const updatePlaylist = useCallback((id: string, patch: Partial<Playlist>) => {
+    setPlaylists((current) => current.map((playlist) => playlist.id === id ? { ...playlist, ...patch, updatedAt: formatDateTime() } : playlist));
+    const nextName = patch.name?.trim();
+    if (nextName) {
+      setDevices((current) => current.map((device) => device.playlist === playlists.find((playlist) => playlist.id === id)?.name ? { ...device, playlist: nextName } : device));
+    }
+    pushToast("Playlist tahrirlandi.");
+  }, [playlists, pushToast]);
+
   const publishPlaylist = useCallback((id: string) => {
     setPlaylists((current) => current.map((playlist) => playlist.id === id ? { ...playlist, status: "published", updatedAt: formatDateTime() } : playlist));
     pushToast("Playlist publish qilindi.");
@@ -342,6 +356,29 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Kampaniya yaratildi.");
   }, [branches, playlists, pushToast]);
 
+  const createCampaign = useCallback((input: Partial<Campaign>) => {
+    const campaign: Campaign = {
+      id: uid("campaign"),
+      name: input.name?.trim() || `Yangi kampaniya ${campaigns.length + 1}`,
+      status: input.status || "draft",
+      startDate: input.startDate || "2026-05-21",
+      endDate: input.endDate || "2026-06-21",
+      targetBranches: input.targetBranches?.length ? input.targetBranches : [branches[0]?.id || "branch-main"],
+      assignedPlaylists: input.assignedPlaylists?.length ? input.assignedPlaylists : [playlists[0]?.id || "playlist-main"],
+      budget: input.budget || "0 so'm",
+      impressionsTarget: input.impressionsTarget || 0,
+      playbackCount: input.playbackCount || 0,
+    };
+    setCampaigns((current) => [campaign, ...current]);
+    pushToast("Kampaniya qo'shildi.");
+    return campaign;
+  }, [branches, campaigns.length, playlists, pushToast]);
+
+  const updateCampaign = useCallback((id: string, patch: Partial<Campaign>) => {
+    setCampaigns((current) => current.map((campaign) => campaign.id === id ? { ...campaign, ...patch } : campaign));
+    pushToast("Kampaniya tahrirlandi.");
+  }, [pushToast]);
+
   const setCampaignStatus = useCallback((id: string, status: Campaign["status"]) => {
     setCampaigns((current) => current.map((campaign) => campaign.id === id ? { ...campaign, status } : campaign));
     pushToast("Kampaniya statusi yangilandi.");
@@ -375,6 +412,17 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Lokatsiya qo'shildi.");
     return branch;
   }, [branches.length, pushToast]);
+
+  const updateBranch = useCallback((id: string, patch: Partial<Branch>) => {
+    const oldBranch = branches.find((branch) => branch.id === id);
+    const nextName = patch.name?.trim();
+    setBranches((current) => current.map((branch) => branch.id === id ? { ...branch, ...patch, name: nextName || branch.name } : branch));
+    if (oldBranch && nextName) {
+      setDevices((current) => current.map((device) => device.branchId === id ? { ...device, branch: nextName, location: patch.address || device.location } : device));
+      setPlaylists((current) => current.map((playlist) => playlist.target === oldBranch.name ? { ...playlist, target: nextName, updatedAt: formatDateTime() } : playlist));
+    }
+    pushToast("Lokatsiya tahrirlandi.");
+  }, [branches, pushToast]);
 
   const addMediaAsset = useCallback((input: AddMediaInput) => {
     const type = input.type || "video";
@@ -501,6 +549,20 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     }, ...current]);
     pushToast("Qurilma muvaffaqiyatli ulandi.");
   }, [branches, devices, playlists, pushToast]);
+
+  const updateDevice = useCallback((id: string, patch: Partial<Device>) => {
+    setDevices((current) => current.map((device) => {
+      if (device.id !== id) return device;
+      const nextBranch = patch.branchId ? branches.find((branch) => branch.id === patch.branchId) : undefined;
+      return {
+        ...device,
+        ...patch,
+        branch: nextBranch?.name || patch.branch || device.branch,
+        location: nextBranch?.address || patch.location || device.location,
+      };
+    }));
+    pushToast("Qurilma tahrirlandi.");
+  }, [branches, pushToast]);
 
   const deleteDevice = useCallback((id: string) => {
     setDevices((current) => current.filter((device) => device.id !== id));
@@ -772,6 +834,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     toasts,
     pushToast,
     addPlaylist,
+    updatePlaylist,
     publishPlaylist,
     duplicatePlaylist,
     deletePlaylist,
@@ -779,12 +842,16 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     toggleSchedule,
     deleteSchedule,
     addCampaign,
+    createCampaign,
+    updateCampaign,
     setCampaignStatus,
     deleteCampaign,
     sendCommand,
     pairDevice,
+    updateDevice,
     deleteDevice,
     addBranch,
+    updateBranch,
     addMediaAsset,
     createMediaFromDraft,
     updateMediaAsset,
@@ -807,7 +874,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     deleteApkVersion,
     addWidgetToPlaylist,
     deleteWidget,
-  }), [addBranch, addCampaign, addMediaAsset, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearOperationalData, clearTemplates, clearTestBranches, commands, createMediaFromDraft, createTestChain, deleteAlert, deleteApkVersion, deleteBranch, deleteCampaign, deleteDevice, deleteMediaAsset, deletePlaylist, deleteSchedule, deleteUser, deleteWidget, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updateMediaAsset, updatePlan, uploadApk, users, widgets]);
+  }), [addBranch, addCampaign, addMediaAsset, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearOperationalData, clearTemplates, clearTestBranches, commands, createCampaign, createMediaFromDraft, createTestChain, deleteAlert, deleteApkVersion, deleteBranch, deleteCampaign, deleteDevice, deleteMediaAsset, deletePlaylist, deleteSchedule, deleteUser, deleteWidget, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updateBranch, updateCampaign, updateDevice, updateMediaAsset, updatePlan, updatePlaylist, uploadApk, users, widgets]);
 
   return (
     <CastmapContext.Provider value={value}>

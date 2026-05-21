@@ -57,12 +57,12 @@ export interface MapMarkerData {
 
 export const sidebarItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "TV Qurilmalar", icon: MonitorPlay, href: "/devices" },
-  { label: "Ekranlar", icon: Monitor, href: "/screens" },
-  { label: "Media kutubxona", icon: Library, href: "/media-library" },
-  { label: "Playlistlar", icon: GalleryVerticalEnd, href: "/playlists" },
-  { label: "Jadval", icon: CalendarClock, href: "/schedules" },
   { label: "Kampaniyalar", icon: Radio, href: "/campaigns" },
+  { label: "Lokatsiyalar", icon: Monitor, href: "/locations" },
+  { label: "TV Qurilmalar", icon: MonitorPlay, href: "/devices" },
+  { label: "Playlistlar", icon: GalleryVerticalEnd, href: "/playlists" },
+  { label: "Media kutubxona", icon: Library, href: "/media-library" },
+  { label: "Jadval", icon: CalendarClock, href: "/schedules" },
   { label: "Analitika", icon: BarChart3, href: "/analytics" },
   { label: "Jonli monitoring", icon: ScanLine, href: "/live-monitoring" },
   { label: "APK boshqaruvi", icon: TerminalSquare, href: "/apk-management" },

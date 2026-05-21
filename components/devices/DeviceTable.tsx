@@ -1,4 +1,4 @@
-import type { Device } from "@/types/devices";
+import type { Device } from "@/types";
 import { DeviceHealthBar } from "./DeviceHealthBar";
 import { DeviceRowActions } from "./DeviceRowActions";
 import { DeviceStatusBadge } from "./DeviceStatusBadge";

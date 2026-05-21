@@ -9,6 +9,7 @@ interface DeviceRowActionsProps {
 
 const actions = [
   ["view", "Batafsil ko'rish"],
+  ["edit", "Tahrirlash"],
   ["screenshot", "Screenshot olish"],
   ["sync", "Sync qilish"],
   ["restart", "Restart"],

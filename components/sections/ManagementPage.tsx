@@ -36,9 +36,10 @@ import { Select } from "@/components/ui/Select";
 import { Table } from "@/components/ui/Table";
 import { Tabs } from "@/components/ui/Tabs";
 import { useCastmapStore } from "@/lib/store";
-import type { Alert, ApkVersion, Campaign, CommandType, Device, Playlist, Schedule } from "@/types";
+import type { Alert, ApkVersion, Branch, Campaign, CommandType, Device, Playlist, Schedule } from "@/types";
 
 type SectionKey =
+  | "locations"
   | "screens"
   | "playlists"
   | "schedules"
@@ -53,6 +54,7 @@ type SectionKey =
   | "settings";
 
 const sectionConfig: Record<SectionKey, { active: string; kicker: string; title: string; subtitle: string; action: string; icon: typeof LayoutGrid }> = {
+  locations: { active: "Lokatsiyalar", kicker: "LOCATION MANAGEMENT", title: "Lokatsiyalar", subtitle: "Filial va manzillarni yaratish, tahrirlash, ishlash vaqtini belgilash", action: "Lokatsiya qo'shish", icon: Monitor },
   screens: { active: "Ekranlar", kicker: "SCREEN INVENTORY", title: "Ekranlar", subtitle: "Filiallar bo'yicha ekran joylashuvi va holatini boshqarish", action: "Ekran qo'shish", icon: Monitor },
   playlists: { active: "Playlistlar", kicker: "PLAYLIST BUILDER", title: "Playlistlar", subtitle: "Media fayllarni tartiblash, publish qilish va targetlash", action: "Playlist yaratish", icon: GalleryVerticalEnd },
   schedules: { active: "Jadval", kicker: "SCHEDULING ENGINE", title: "Jadval", subtitle: "Playlistlarni kun, vaqt va filial bo'yicha rejalashtirish", action: "Jadval qo'shish", icon: CalendarClock },
@@ -82,7 +84,8 @@ export function ManagementPage({ section }: { section: SectionKey }) {
   };
 
   const doPrimaryAction = () => {
-    if (section === "playlists") store.addPlaylist();
+    if (section === "locations") store.addBranch({ name: `Yangi lokatsiya ${store.branches.length + 1}`, city: "Toshkent", workStart: "09:00", workEnd: "22:00" });
+    else if (section === "playlists") store.addPlaylist();
     else if (section === "schedules") store.addSchedule();
     else if (section === "campaigns") store.addCampaign();
     else if (section === "users") store.addUser();
@@ -102,6 +105,7 @@ export function ManagementPage({ section }: { section: SectionKey }) {
         <div className="grid gap-5 p-7 max-sm:p-4">
           <PageHeader kicker={config.kicker} title={config.title} subtitle={config.subtitle} icon={config.icon} actionLabel={config.action} onAction={doPrimaryAction} />
           <Toolbar query={query} onQuery={setQuery} tab={tab} onTab={setTab} />
+          {section === "locations" && <LocationsContent query={query} openDrawer={openDrawer} />}
           {section === "screens" && <ScreensContent query={query} openDrawer={openDrawer} />}
           {section === "playlists" && <PlaylistsContent query={query} openDrawer={openDrawer} />}
           {section === "schedules" && <SchedulesContent query={query} openDrawer={openDrawer} />}
@@ -191,6 +195,92 @@ function Metric({ title, value, helper, tone }: { title: string; value: string; 
   );
 }
 
+function LocationsContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const [editingId, setEditingId] = useState("");
+  const branches = store.branches.filter((branch) => filterText(query, branch.name, branch.city, branch.address));
+  const deviceCount = (branchId: string) => store.devices.filter((device) => device.branchId === branchId).length;
+  const onlineCount = (branchId: string) => store.devices.filter((device) => device.branchId === branchId && device.status === "online").length;
+
+  return (
+    <>
+      <LocationCreateCard />
+      <section className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+        <Metric title="Lokatsiyalar" value={String(store.branches.length)} helper="Barcha filiallar" tone="gold" />
+        <Metric title="TV ekranlar" value={String(store.devices.length)} helper="Lokatsiyalarga bog'langan" tone="blue" />
+        <Metric title="Onlayn" value={String(store.devices.filter((device) => device.status === "online").length)} helper="Hozir faol" tone="green" />
+        <Metric title="Offline" value={String(store.devices.filter((device) => device.status === "offline").length)} helper="Tekshirish kerak" tone="red" />
+      </section>
+      <Table headers={["Lokatsiya", "Shahar", "Ish vaqti", "TV soni", "Onlayn", "Amallar"]}>
+        {branches.map((branch) => (
+          <LocationRow
+            key={branch.id}
+            branch={branch}
+            editing={editingId === branch.id}
+            onEdit={() => setEditingId(branch.id)}
+            onCancel={() => setEditingId("")}
+            onDetail={() => openDrawer(branch.name, [
+              `Shahar: ${branch.city}`,
+              `Manzil: ${branch.address}`,
+              `Ish vaqti: ${branch.workStart} - ${branch.workEnd}`,
+              `TV soni: ${deviceCount(branch.id)}`,
+              `Onlayn TV: ${onlineCount(branch.id)}`,
+            ])}
+            deviceCount={deviceCount(branch.id)}
+            onlineCount={onlineCount(branch.id)}
+          />
+        ))}
+      </Table>
+    </>
+  );
+}
+
+function LocationRow({ branch, editing, onEdit, onCancel, onDetail, deviceCount, onlineCount }: { branch: Branch; editing: boolean; onEdit: () => void; onCancel: () => void; onDetail: () => void; deviceCount: number; onlineCount: number }) {
+  const store = useCastmapStore();
+  const [draft, setDraft] = useState(branch);
+  const update = (key: keyof Branch, value: string) => setDraft((current) => ({ ...current, [key]: value }));
+
+  if (editing) {
+    return (
+      <tr className="bg-castGold/5">
+        <td className="px-4 py-3"><Input value={draft.name} onChange={(event) => update("name", event.target.value)} /></td>
+        <td className="px-4 py-3"><Input value={draft.city} onChange={(event) => update("city", event.target.value)} /></td>
+        <td className="px-4 py-3">
+          <div className="flex gap-2">
+            <Input type="time" value={draft.workStart} onChange={(event) => update("workStart", event.target.value)} />
+            <Input type="time" value={draft.workEnd} onChange={(event) => update("workEnd", event.target.value)} />
+          </div>
+        </td>
+        <td className="px-4 py-3 text-castMuted">{deviceCount}</td>
+        <td className="px-4 py-3 text-green-300">{onlineCount}</td>
+        <td className="px-4 py-3">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="gold" onClick={() => { store.updateBranch(branch.id, draft); onCancel(); }}>Saqlash</Button>
+            <Button onClick={() => { setDraft(branch); onCancel(); }}>Bekor</Button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr className="hover:bg-white/[0.03]">
+      <td className="px-4 py-3 font-bold text-white">{branch.name}<span className="block text-xs text-castMuted">{branch.address}</span></td>
+      <td className="px-4 py-3 text-castMuted">{branch.city}</td>
+      <td className="px-4 py-3 text-castMuted">{branch.workStart} - {branch.workEnd}</td>
+      <td className="px-4 py-3 text-castMuted">{deviceCount}</td>
+      <td className="px-4 py-3 text-green-300">{onlineCount}</td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={onDetail}>Batafsil</Button>
+          <Button onClick={onEdit}>Tahrirlash</Button>
+          <Button variant="danger" onClick={() => store.deleteBranch(branch.id)}>O'chirish</Button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 function ScreensContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
   const store = useCastmapStore();
   const devices = store.devices.filter((device) => filterText(query, device.name, device.branch, device.deviceId));
@@ -256,29 +346,58 @@ function LocationCreateCard() {
 
 function PlaylistsContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
   const store = useCastmapStore();
+  const [editingId, setEditingId] = useState("");
   const items = store.playlists.filter((playlist) => filterText(query, playlist.name, playlist.target, playlist.status));
   return (
     <section className="grid gap-4 xl:grid-cols-3">
       {items.map((playlist) => (
-        <Card key={playlist.id} className="grid gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-black text-white">{playlist.name}</h3>
-              <p className="mt-1 text-sm text-castMuted">{playlist.description}</p>
-            </div>
-            <Badge tone={playlist.status === "published" ? "green" : "gray"}>{playlist.status}</Badge>
-          </div>
-          <div className="text-sm text-castMuted">Target: {playlist.target}</div>
-          <div className="text-sm text-castMuted">Media: {playlist.items.length} ta, loop: {playlist.loop ? "yoqilgan" : "o'chirilgan"}</div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="gold" onClick={() => store.publishPlaylist(playlist.id)}>Publish</Button>
-            <Button onClick={() => openDrawer(playlist.name, playlist.items.map((item) => `${item.order}. ${item.mediaId} - ${item.duration}s`))}>Preview</Button>
-            <Button onClick={() => store.duplicatePlaylist(playlist.id)}>Duplicate</Button>
-            <Button variant="danger" onClick={() => store.deletePlaylist(playlist.id)}>Delete</Button>
-          </div>
-        </Card>
+        <PlaylistCard key={playlist.id} playlist={playlist} editing={editingId === playlist.id} onEdit={() => setEditingId(playlist.id)} onCancel={() => setEditingId("")} openDrawer={openDrawer} />
       ))}
     </section>
+  );
+}
+
+function PlaylistCard({ playlist, editing, onEdit, onCancel, openDrawer }: { playlist: Playlist; editing: boolean; onEdit: () => void; onCancel: () => void; openDrawer: (title: string, rows: string[]) => void }) {
+  const store = useCastmapStore();
+  const [draft, setDraft] = useState(playlist);
+  return (
+    <Card className="grid gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {editing ? (
+            <div className="grid gap-2">
+              <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+              <Input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
+              <Select value={draft.target} onChange={(event) => setDraft({ ...draft, target: event.target.value })}>
+                {store.branches.map((branch) => <option key={branch.id} value={branch.name}>{branch.name}</option>)}
+              </Select>
+            </div>
+          ) : (
+            <>
+              <h3 className="truncate text-lg font-black text-white">{playlist.name}</h3>
+              <p className="mt-1 text-sm text-castMuted">{playlist.description}</p>
+            </>
+          )}
+        </div>
+        <Badge tone={playlist.status === "published" ? "green" : "gray"}>{playlist.status}</Badge>
+      </div>
+      <div className="text-sm text-castMuted">Target: {playlist.target}</div>
+      <div className="text-sm text-castMuted">Media: {playlist.items.length} ta, loop: {playlist.loop ? "yoqilgan" : "o'chirilgan"}</div>
+      <div className="flex flex-wrap gap-2">
+        {editing ? (
+          <>
+            <Button variant="gold" onClick={() => { store.updatePlaylist(playlist.id, draft); onCancel(); }}>Saqlash</Button>
+            <Button onClick={() => { setDraft(playlist); onCancel(); }}>Bekor</Button>
+          </>
+        ) : (
+          <Button onClick={onEdit}>Tahrirlash</Button>
+        )}
+        <Button variant="gold" onClick={() => store.publishPlaylist(playlist.id)}>Publish</Button>
+        <Button onClick={() => openDrawer(playlist.name, playlist.items.length ? playlist.items.map((item) => `${item.order}. ${item.mediaId} - ${item.duration}s`) : ["Media biriktirilmagan"])}>Preview</Button>
+        <Button onClick={() => store.duplicatePlaylist(playlist.id)}>Nusxalash</Button>
+        <Button variant="danger" onClick={() => store.deletePlaylist(playlist.id)}>O'chirish</Button>
+      </div>
+    </Card>
   );
 }
 
@@ -304,22 +423,69 @@ function SchedulesContent({ query, openDrawer }: { query: string; openDrawer: (t
 
 function CampaignsContent({ query, openDrawer }: { query: string; openDrawer: (title: string, rows: string[]) => void }) {
   const store = useCastmapStore();
+  const [form, setForm] = useState({ name: "", startDate: "2026-05-21", endDate: "2026-06-21", branchId: store.branches[0]?.id || "", playlistId: store.playlists[0]?.id || "", budget: "0 so'm" });
   const items = store.campaigns.filter((campaign) => filterText(query, campaign.name, campaign.status));
   return (
-    <section className="grid gap-4 xl:grid-cols-2">
-      {items.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} openDrawer={openDrawer} />)}
-    </section>
+    <>
+      <Card className="border-castGold/20">
+        <div className="grid gap-3 xl:grid-cols-[1.3fr_150px_150px_1fr_1fr_150px_auto]">
+          <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Kampaniya nomi" />
+          <Input type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} />
+          <Input type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} />
+          <Select value={form.branchId} onChange={(event) => setForm({ ...form, branchId: event.target.value })}>
+            {store.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+          </Select>
+          <Select value={form.playlistId} onChange={(event) => setForm({ ...form, playlistId: event.target.value })}>
+            {store.playlists.map((playlist) => <option key={playlist.id} value={playlist.id}>{playlist.name}</option>)}
+          </Select>
+          <Input value={form.budget} onChange={(event) => setForm({ ...form, budget: event.target.value })} placeholder="Budget" />
+          <Button
+            variant="gold"
+            onClick={() => {
+              store.createCampaign({
+                name: form.name,
+                startDate: form.startDate,
+                endDate: form.endDate,
+                targetBranches: form.branchId ? [form.branchId] : [],
+                assignedPlaylists: form.playlistId ? [form.playlistId] : [],
+                budget: form.budget,
+              });
+              setForm({ ...form, name: "" });
+            }}
+          >
+            Qo'shish
+          </Button>
+        </div>
+      </Card>
+      <section className="grid gap-4 xl:grid-cols-2">
+        {items.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} openDrawer={openDrawer} />)}
+      </section>
+    </>
   );
 }
 
 function CampaignCard({ campaign, openDrawer }: { campaign: Campaign; openDrawer: (title: string, rows: string[]) => void }) {
   const store = useCastmapStore();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(campaign);
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-black text-white">{campaign.name}</h3>
-          <p className="mt-1 text-sm text-castMuted">{campaign.startDate} - {campaign.endDate}</p>
+          {editing ? (
+            <div className="grid gap-2">
+              <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="date" value={draft.startDate} onChange={(event) => setDraft({ ...draft, startDate: event.target.value })} />
+                <Input type="date" value={draft.endDate} onChange={(event) => setDraft({ ...draft, endDate: event.target.value })} />
+              </div>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-lg font-black text-white">{campaign.name}</h3>
+              <p className="mt-1 text-sm text-castMuted">{campaign.startDate} - {campaign.endDate}</p>
+            </>
+          )}
         </div>
         <Badge tone={campaign.status === "active" ? "green" : campaign.status === "paused" ? "orange" : "gray"}>{campaign.status}</Badge>
       </div>
@@ -329,6 +495,14 @@ function CampaignCard({ campaign, openDrawer }: { campaign: Campaign; openDrawer
         <MiniStat label="Playback" value={campaign.playbackCount.toLocaleString("ru-RU")} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
+        {editing ? (
+          <>
+            <Button variant="gold" onClick={() => { store.updateCampaign(campaign.id, draft); setEditing(false); }}>Saqlash</Button>
+            <Button onClick={() => { setDraft(campaign); setEditing(false); }}>Bekor</Button>
+          </>
+        ) : (
+          <Button onClick={() => setEditing(true)}>Tahrirlash</Button>
+        )}
         <Button variant="gold" onClick={() => store.setCampaignStatus(campaign.id, "active")}>Start</Button>
         <Button onClick={() => store.setCampaignStatus(campaign.id, "paused")}>Pause</Button>
         <Button onClick={() => openDrawer(campaign.name, [`Filiallar: ${campaign.targetBranches.length}`, `Playlistlar: ${campaign.assignedPlaylists.length}`, `Proof of play: ${campaign.playbackCount}`])}>Analitika</Button>
