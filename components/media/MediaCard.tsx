@@ -23,7 +23,7 @@ export function MediaCard({
   onAction: (asset: MediaAsset, action: MediaAction) => void;
 }) {
   return (
-    <article className="group cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-castCard transition hover:border-castGold/45 hover:bg-castPanel hover:shadow-gold" onClick={() => onSelect(asset)}>
+    <article className={`group relative cursor-pointer overflow-visible rounded-2xl border border-white/10 bg-castCard transition hover:border-castGold/45 hover:bg-castPanel hover:shadow-gold ${openActionId === asset.id ? "z-40" : "z-0"}`} onClick={() => onSelect(asset)}>
       <div className="relative aspect-video overflow-hidden bg-black">
         <img src={asset.thumbnailUrl} alt={asset.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         <div className="absolute left-3 top-3 rounded-lg border border-white/10 bg-black/65 px-2 py-1 text-[10px] font-black uppercase text-white">{typeText(asset.type)}</div>
