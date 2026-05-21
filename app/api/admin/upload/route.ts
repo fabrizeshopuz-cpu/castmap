@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { saveUploadedFileToDb } from "@/lib/serverDb";
 
 const uploadDir = path.join(process.cwd(), "data", "uploads");
 
@@ -20,11 +21,21 @@ export async function POST(request: Request) {
 
   const fileName = safeName(file.name);
   const bytes = Buffer.from(await file.arrayBuffer());
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), bytes);
+  const savedToDb = await saveUploadedFileToDb({
+    fileName,
+    originalName: file.name,
+    mime: file.type || "application/octet-stream",
+    sizeBytes: file.size,
+    data: bytes,
+  });
+  if (!savedToDb) {
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(path.join(uploadDir, fileName), bytes);
+  }
 
   return NextResponse.json({
     ok: true,
+    storage: savedToDb ? "postgres" : "disk",
     fileName,
     originalName: file.name,
     mime: file.type || "application/octet-stream",

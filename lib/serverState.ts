@@ -15,6 +15,7 @@ import type {
   PlatformUser,
 } from "@/types";
 import type { MediaAsset } from "@/types/media";
+import { readStateFromDb, writeStateToDb } from "@/lib/serverDb";
 import { STATE_SCHEMA_VERSION } from "@/lib/stateSchema";
 
 export interface PersistedCastmapState {
@@ -87,9 +88,14 @@ export function normalizeState(input: Partial<PersistedCastmapState> | null | un
 }
 
 export async function readCastmapState(): Promise<PersistedCastmapState> {
+  const dbState = await readStateFromDb();
+  if (dbState) return normalizeState(dbState);
+
   try {
     const raw = await readFile(statePath, "utf8");
-    return normalizeState(JSON.parse(raw) as Partial<PersistedCastmapState>);
+    const fileState = normalizeState(JSON.parse(raw) as Partial<PersistedCastmapState>);
+    await writeStateToDb(fileState);
+    return fileState;
   } catch {
     return createEmptyState();
   }
@@ -97,6 +103,9 @@ export async function readCastmapState(): Promise<PersistedCastmapState> {
 
 export async function writeCastmapState(state: PersistedCastmapState) {
   const nextState = normalizeState({ ...state, updatedAt: new Date().toISOString() });
+  const dbState = await writeStateToDb(nextState);
+  if (dbState) return dbState;
+
   await mkdir(dataDir, { recursive: true });
   await writeFile(statePath, JSON.stringify(nextState, null, 2), "utf8");
   return nextState;

@@ -8,3 +8,10 @@ services:
     envVars:
       - key: PUBLIC_BASE_URL
         value: https://castmap.uz
+      - key: DATABASE_URL
+        fromDatabase:
+          name: castmap-db
+          property: connectionString
+databases:
+  - name: castmap-db
+    plan: free

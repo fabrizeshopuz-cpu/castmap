@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { readUploadedFileFromDb } from "@/lib/serverDb";
 
 const uploadDir = path.join(process.cwd(), "data", "uploads");
 
@@ -21,6 +22,16 @@ const mimeByExt: Record<string, string> = {
 export async function GET(_: Request, { params }: { params: Promise<{ file: string }> }) {
   const { file } = await params;
   const safeFile = path.basename(decodeURIComponent(file));
+  const dbFile = await readUploadedFileFromDb(safeFile);
+  if (dbFile) {
+    return new Response(new Uint8Array(dbFile.data), {
+      headers: {
+        "Content-Type": dbFile.mime || mimeByExt[path.extname(safeFile).toLowerCase()] || "application/octet-stream",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
+  }
+
   try {
     const buffer = await readFile(path.join(uploadDir, safeFile));
     return new Response(new Uint8Array(buffer), {
