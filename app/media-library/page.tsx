@@ -19,6 +19,7 @@ import { MediaUploadModal } from "@/components/media/MediaUploadModal";
 import { StorageAnalytics } from "@/components/media/StorageAnalytics";
 import { defaultTags, mediaFolders, mediaMetrics } from "@/lib/mediaData";
 import { useCastmapStore } from "@/lib/store";
+import type { Branch, Campaign, Playlist } from "@/types";
 import type { MediaAsset, MediaFolder, MediaRole, MediaSortOption, UploadDraft } from "@/types/media";
 
 const emptyFilters: MediaFilterState = {
@@ -48,6 +49,7 @@ export default function MediaLibraryPage() {
   const [openActionId, setOpenActionId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MediaAsset | null>(null);
   const [rejectTarget, setRejectTarget] = useState<MediaAsset | null>(null);
+  const [playlistTarget, setPlaylistTarget] = useState<MediaAsset | null>(null);
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [newFolder, setNewFolder] = useState({ name: "", description: "", permission: "Admin" });
   const [notice, setNotice] = useState("");
@@ -155,6 +157,10 @@ export default function MediaLibraryPage() {
       const updated = { ...asset, status: "archived" as const };
       updateAsset(updated);
       showNotice("Media arxivlandi.");
+      return;
+    }
+    if (action === "playlist") {
+      setPlaylistTarget(asset);
       return;
     }
     if (action === "move") {
@@ -324,8 +330,97 @@ export default function MediaLibraryPage() {
       <MediaPreviewModal asset={preview} onClose={() => setPreview(null)} />
       <DeleteConfirm asset={deleteTarget} onCancel={() => setDeleteTarget(null)} onConfirm={confirmDelete} />
       <RejectReason asset={rejectTarget} onCancel={() => setRejectTarget(null)} onConfirm={confirmReject} />
+      <PlaylistAssignModal
+        asset={playlistTarget}
+        playlists={store.playlists}
+        campaigns={store.campaigns}
+        branches={store.branches}
+        onCancel={() => setPlaylistTarget(null)}
+        onAssign={(playlistId) => {
+          if (!playlistTarget) return;
+          store.addMediaToPlaylist(playlistTarget.id, playlistId);
+          setPlaylistTarget(null);
+          showNotice("Media playlistga biriktirildi.");
+        }}
+      />
       <FolderModal open={folderModalOpen} value={newFolder} onChange={setNewFolder} onCancel={() => setFolderModalOpen(false)} onConfirm={createFolder} />
     </main>
+  );
+}
+
+function PlaylistAssignModal({
+  asset,
+  playlists,
+  campaigns,
+  branches,
+  onCancel,
+  onAssign,
+}: {
+  asset: MediaAsset | null;
+  playlists: Playlist[];
+  campaigns: Campaign[];
+  branches: Branch[];
+  onCancel: () => void;
+  onAssign: (playlistId: string) => void;
+}) {
+  if (!asset) return null;
+  const sortedPlaylists = [...playlists].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5">
+      <section className="w-full max-w-2xl rounded-2xl border border-castGold/25 bg-castCard p-5 shadow-2xl shadow-castGold/10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">Playlist tanlash</p>
+            <h2 className="mt-1 text-xl font-black text-white">Media qaysi playlistda ko'rsatilsin?</h2>
+            <p className="mt-2 text-sm text-castMuted">{asset.name}</p>
+          </div>
+          <button className="rounded-xl border border-white/10 px-3 py-2 text-sm font-bold text-white hover:bg-white/10" type="button" onClick={onCancel}>
+            Yopish
+          </button>
+        </div>
+
+        <div className="mt-5 max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+          {sortedPlaylists.length ? sortedPlaylists.map((playlist) => {
+            const included = playlist.items.some((item) => item.mediaId === asset.id);
+            const campaign = playlist.campaignId ? campaigns.find((item) => item.id === playlist.campaignId) : null;
+            const branch = playlist.branchId ? branches.find((item) => item.id === playlist.branchId) : null;
+
+            return (
+              <article key={playlist.id} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-castGold/30 max-sm:flex-col max-sm:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <b className="text-white">{playlist.name}</b>
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-black uppercase ${playlist.status === "published" ? "bg-green-500/15 text-green-300" : "bg-white/10 text-castMuted"}`}>
+                      {playlist.status === "published" ? "E'lon qilingan" : playlist.status === "draft" ? "Qoralama" : "Arxiv"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-castMuted">
+                    Kampaniya: <span className="text-white">{campaign?.name || "Tanlanmagan"}</span>
+                    {" · "}
+                    Lokatsiya: <span className="text-white">{branch?.name || playlist.target || "Umumiy"}</span>
+                  </p>
+                  <p className="mt-1 text-xs text-castMuted">{playlist.items.length} ta media · Yangilangan: {playlist.updatedAt}</p>
+                </div>
+                <button
+                  className={`min-h-10 rounded-xl px-4 text-sm font-black transition ${included ? "cursor-not-allowed border border-white/10 bg-white/5 text-castMuted" : "bg-gradient-to-r from-[#FFE18A] to-castDeepGold text-black hover:shadow-lg hover:shadow-castGold/20"}`}
+                  type="button"
+                  disabled={included}
+                  onClick={() => onAssign(playlist.id)}
+                >
+                  {included ? "Allaqachon bor" : "Tanlash"}
+                </button>
+              </article>
+            );
+          }) : (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
+              <b className="text-white">Playlist yo'q</b>
+              <p className="mt-2 text-sm text-castMuted">Avval Playlistlar bo'limida playlist yarating, keyin media biriktirasiz.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 
