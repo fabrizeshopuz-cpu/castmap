@@ -33,6 +33,7 @@ import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
+import androidx.core.content.FileProvider;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -58,7 +59,7 @@ public class MainActivity extends Activity {
     private static final String PREFS = "castmap-player";
     private static final String KEY_CODE = "device_code";
     private static final String KEY_LAST_PAYLOAD = "last_payload";
-    private static final String APP_VERSION = "1.0.8";
+    private static final String APP_VERSION = "1.0.9";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -534,10 +535,24 @@ public class MainActivity extends Activity {
                 File target = new File(getExternalFilesDir(null), name);
                 downloadToFile(apkUrl, target);
                 postCommandStatus(commandId, "update", "APK yuklandi: " + target.getAbsolutePath());
+                runOnUiThread(() -> promptApkInstall(target, commandId));
             } catch (Exception e) {
                 postCommandStatus(commandId, "update", "APK yuklash xatosi: " + e.getMessage());
             }
         });
+    }
+
+    private void promptApkInstall(File apkFile, String commandId) {
+        try {
+            Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", apkFile);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/vnd.android.package-archive");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+            postCommandStatus(commandId, "update", "APK o'rnatish oynasi ochildi");
+        } catch (Exception e) {
+            postCommandStatus(commandId, "update", "APK o'rnatish oynasi ochilmadi: " + e.getMessage());
+        }
     }
 
     private void cacheMedia(ArrayList<MediaItem> items) {

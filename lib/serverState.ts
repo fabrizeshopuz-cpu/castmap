@@ -40,11 +40,11 @@ const dataDir = path.join(process.cwd(), "data");
 const statePath = path.join(dataDir, "castmap-state.json");
 
 const defaultApkVersions: ApkVersion[] = [{
-  id: "apk-1-0-8-20260522",
-  version: "v1.0.8",
-  changelog: "Media3 ExoPlayer video playback, player error logging va castmap.uz stream support",
-  fileName: "castmap-player-1.0.8.apk",
-  size: "5.4 MB",
+  id: "apk-1-0-9-20260522",
+  version: "v1.0.9",
+  changelog: "Media3 ExoPlayer playback, player error logging va APK install prompt",
+  fileName: "castmap-player-1.0.9.apk",
+  size: "6.0 MB",
   status: "latest",
   installedDevices: 0,
   failedDevices: 0,

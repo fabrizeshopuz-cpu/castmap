@@ -14,14 +14,15 @@ android {
         applicationId "uz.castmap.connectedplayer"
         minSdk 23
         targetSdk 36
-        versionCode 8
-        versionName "1.0.8"
+        versionCode 9
+        versionName "1.0.9"
 
         buildConfigField "String", "SERVER_BASE_URL", "\"https://castmap.uz\""
     }
 }
 
 dependencies {
+    implementation "androidx.core:core:1.13.1"
     implementation "androidx.media3:media3-exoplayer:1.5.1"
     implementation "androidx.media3:media3-ui:1.5.1"
 }
