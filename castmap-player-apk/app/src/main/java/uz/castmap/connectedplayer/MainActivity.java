@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
     private static final String PREFS = "castmap-player";
     private static final String KEY_CODE = "device_code";
     private static final String KEY_LAST_PAYLOAD = "last_payload";
-    private static final String APP_VERSION = "1.0.0";
+    private static final String APP_VERSION = "1.0.1";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
