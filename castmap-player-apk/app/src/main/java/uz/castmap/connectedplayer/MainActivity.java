@@ -27,7 +27,12 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.VideoView;
+
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.AspectRatioFrameLayout;
+import androidx.media3.ui.PlayerView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -53,7 +58,7 @@ public class MainActivity extends Activity {
     private static final String PREFS = "castmap-player";
     private static final String KEY_CODE = "device_code";
     private static final String KEY_LAST_PAYLOAD = "last_payload";
-    private static final String APP_VERSION = "1.0.1";
+    private static final String APP_VERSION = "1.0.8";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -68,6 +73,7 @@ public class MainActivity extends Activity {
     private JSONObject currentDevice;
     private JSONObject weather;
     private long centerDownAt = 0L;
+    private ExoPlayer activeVideoPlayer;
 
     private final Runnable pollRunnable = new Runnable() {
         @Override public void run() {
@@ -110,6 +116,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         handler.removeCallbacksAndMessages(null);
+        releaseActiveVideoPlayer();
         executor.shutdownNow();
         super.onDestroy();
     }
@@ -162,6 +169,7 @@ public class MainActivity extends Activity {
 
     private void showSplashScreen() {
         overlay.setVisibility(View.GONE);
+        releaseActiveVideoPlayer();
         contentLayer.removeAllViews();
         contentLayer.setRotation(0f);
 
@@ -199,6 +207,7 @@ public class MainActivity extends Activity {
     }
 
     private void showPairingScreen(String message) {
+        releaseActiveVideoPlayer();
         contentLayer.removeAllViews();
         contentLayer.setRotation(0f);
         overlay.setVisibility(View.GONE);
@@ -347,6 +356,7 @@ public class MainActivity extends Activity {
         MediaItem item = playlist.get(currentIndex);
         reportNowPlaying(item);
 
+        releaseActiveVideoPlayer();
         contentLayer.removeAllViews();
         contentLayer.setRotation(rotationFromDevice());
 
@@ -357,19 +367,35 @@ public class MainActivity extends Activity {
     }
 
     private void playVideo(MediaItem item) {
-        VideoView video = new VideoView(this);
-        video.setBackgroundColor(0xFF000000);
-        video.setVideoURI(Uri.parse(resolvePlayablePath(item)));
-        video.setOnPreparedListener(mp -> {
-            mp.setLooping(false);
-            video.start();
+        String playablePath = resolvePlayablePath(item);
+        PlayerView playerView = new PlayerView(this);
+        playerView.setBackgroundColor(0xFF000000);
+        playerView.setUseController(false);
+        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+
+        ExoPlayer player = new ExoPlayer.Builder(this).build();
+        activeVideoPlayer = player;
+        playerView.setPlayer(player);
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == Player.STATE_READY) {
+                    reportPlayerLog("info", item, "Video ready: " + playablePath);
+                } else if (playbackState == Player.STATE_ENDED) {
+                    nextMedia();
+                }
+            }
+
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                reportPlayerLog("error", item, "Video error " + error.getErrorCodeName() + ": " + error.getMessage());
+                nextMedia();
+            }
         });
-        video.setOnCompletionListener(mp -> nextMedia());
-        video.setOnErrorListener((mp, what, extra) -> {
-            nextMedia();
-            return true;
-        });
-        contentLayer.addView(video, match());
+        contentLayer.addView(playerView, match());
+        player.setMediaItem(androidx.media3.common.MediaItem.fromUri(Uri.parse(playablePath)));
+        player.prepare();
+        player.play();
     }
 
     private void playImage(MediaItem item) {
@@ -415,6 +441,7 @@ public class MainActivity extends Activity {
     }
 
     private void showBlackScreen(String text) {
+        releaseActiveVideoPlayer();
         contentLayer.removeAllViews();
         TextView view = new TextView(this);
         view.setText(text);
@@ -551,6 +578,30 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {
             }
         });
+    }
+
+    private void reportPlayerLog(String level, MediaItem item, String message) {
+        executor.execute(() -> {
+            try {
+                JSONObject body = new JSONObject();
+                body.put("code", deviceCode);
+                body.put("deviceId", currentDevice == null ? "" : currentDevice.optString("deviceId", ""));
+                body.put("mediaId", item.id);
+                body.put("mediaName", item.name);
+                body.put("mediaType", item.type);
+                body.put("level", level);
+                body.put("message", message);
+                body.put("appVersion", APP_VERSION);
+                httpPost(BuildConfig.SERVER_BASE_URL + "/api/player/logs", body.toString());
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
+    private void releaseActiveVideoPlayer() {
+        if (activeVideoPlayer == null) return;
+        activeVideoPlayer.release();
+        activeVideoPlayer = null;
     }
 
     private void postCommandStatus(String commandId, String command, String status) {

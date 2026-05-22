@@ -909,10 +909,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const uploadApk = useCallback(() => {
     setApkVersions((current) => [{
       id: uid("apk"),
-      version: "v1.0.1",
-      changelog: "Video stream Range support va castmap.uz production API bilan yangi player build",
-      fileName: "castmap-player-1.0.1.apk",
-      size: "1.6 MB",
+      version: "v1.0.8",
+      changelog: "Media3 ExoPlayer video playback, player error logging va castmap.uz stream support",
+      fileName: "castmap-player-1.0.8.apk",
+      size: "5.4 MB",
       status: "staged",
       installedDevices: 0,
       failedDevices: 0,

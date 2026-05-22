@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       status: "online",
       currentMediaId: body.mediaId || item.currentMediaId,
       playlist: playlist?.name || item.playlist,
+      apkVersion: body.appVersion ? `v${String(body.appVersion).replace(/^v/i, "")}` : item.apkVersion,
       lastSeen: "Hozir",
       lastHeartbeat: new Date().toISOString(),
     } : item);

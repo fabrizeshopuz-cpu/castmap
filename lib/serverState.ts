@@ -40,16 +40,38 @@ const dataDir = path.join(process.cwd(), "data");
 const statePath = path.join(dataDir, "castmap-state.json");
 
 const defaultApkVersions: ApkVersion[] = [{
-  id: "apk-1-0-1-20260522",
-  version: "v1.0.1",
-  changelog: "Video stream Range support va castmap.uz production API bilan yangi player build",
-  fileName: "castmap-player-1.0.1.apk",
-  size: "1.6 MB",
+  id: "apk-1-0-8-20260522",
+  version: "v1.0.8",
+  changelog: "Media3 ExoPlayer video playback, player error logging va castmap.uz stream support",
+  fileName: "castmap-player-1.0.8.apk",
+  size: "5.4 MB",
   status: "latest",
   installedDevices: 0,
   failedDevices: 0,
   uploadedAt: "2026-05-22 12:22",
 }];
+
+function apkVersionScore(version: string) {
+  return version
+    .replace(/^v/i, "")
+    .split(".")
+    .map((part) => Number.parseInt(part, 10) || 0)
+    .reduce((score, part) => (score * 1000) + part, 0);
+}
+
+function normalizeApkVersions(input: unknown): ApkVersion[] {
+  const versions = Array.isArray(input) ? input as ApkVersion[] : [];
+  const latestDefault = defaultApkVersions[0];
+  const hasCurrentOrNewer = versions.some((version) => apkVersionScore(version.version) >= apkVersionScore(latestDefault.version));
+  if (hasCurrentOrNewer) return versions;
+  return [
+    latestDefault,
+    ...versions.map((version) => ({
+      ...version,
+      status: version.status === "latest" ? "active" as const : version.status,
+    })),
+  ];
+}
 
 export function createEmptyState(): PersistedCastmapState {
   return {
@@ -92,7 +114,7 @@ export function normalizeState(input: Partial<PersistedCastmapState> | null | un
     users: Array.isArray(input.users) ? input.users : [],
     branches: Array.isArray(input.branches) ? input.branches : [],
     billingPlans: Array.isArray(input.billingPlans) ? input.billingPlans : fallback.billingPlans,
-    apkVersions: Array.isArray(input.apkVersions) && input.apkVersions.length ? input.apkVersions : defaultApkVersions,
+    apkVersions: normalizeApkVersions(input.apkVersions),
     widgets: Array.isArray(input.widgets) ? input.widgets : [],
     playbackLogs: Array.isArray(input.playbackLogs) ? input.playbackLogs : [],
     commands: Array.isArray(input.commands) ? input.commands : [],
