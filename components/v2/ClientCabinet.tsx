@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Activity, CheckCircle2, Clapperboard, GalleryVerticalEnd, MapPin, Monitor, Pause, Play, Plus, RefreshCw, Search, Trash2, Zap } from "lucide-react";
+import { MediaUploadModal } from "@/components/media/MediaUploadModal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -490,30 +491,59 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
 
 function MediaPanel({ query }: { query: string }) {
   const store = useCastmapStore();
+  const [uploadOpen, setUploadOpen] = useState(false);
   const media = store.media.filter((asset) => includes(query, asset.name, asset.type, asset.folder));
+  const targetPlaylist = store.playlists.find((playlist) => playlist.status === "published") || store.playlists[0];
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111]">
-      <PanelHeader icon={Clapperboard} title="Media kutubxona" />
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="text-xs uppercase text-castMuted">
-            <tr><th className="px-4 py-3">Media</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Format</th><th className="px-4 py-3">Folder</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Amal</th></tr>
-          </thead>
-          <tbody>
-            {media.map((asset) => (
-              <tr key={asset.id} className="border-t border-white/10">
-                <td className="max-w-[360px] truncate px-4 py-4 font-bold text-white">{asset.name}<span className="block text-xs text-castMuted">{asset.duration || asset.size}</span></td>
-                <td className="px-4 py-4 text-castMuted">{asset.type}</td>
-                <td className="px-4 py-4 text-castMuted">{asset.format}</td>
-                <td className="px-4 py-4 text-castMuted">{asset.folder}</td>
-                <td className="px-4 py-4"><V2Status value={asset.status} /></td>
-                <td className="px-4 py-4"><Button variant="danger" onClick={() => store.deleteMediaAsset(asset.id)}>O'chirish</Button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <>
+      <section className="grid gap-4 md:grid-cols-3">
+        {[
+          ["Video", "MP4, MOV, WEBM yoki HLS/MP4 URL"],
+          ["Rasm", "JPG, PNG, WEBP, SVG"],
+          ["Stream URL", "Web sahifa, live stream yoki tashqi link"],
+        ].map(([title, detail]) => (
+          <button key={title} className="rounded-lg border border-white/10 bg-[#111] p-4 text-left transition hover:border-castGold/35" type="button" onClick={() => setUploadOpen(true)}>
+            <Clapperboard className="h-5 w-5 text-castGold" />
+            <b className="mt-4 block text-white">{title}</b>
+            <span className="mt-2 block text-sm text-castMuted">{detail}</span>
+          </button>
+        ))}
+      </section>
+
+      <section className="rounded-lg border border-white/10 bg-[#111]">
+        <PanelHeader icon={Clapperboard} title="Media kutubxona" action="Media qo'shish" onAction={() => setUploadOpen(true)} />
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[880px] text-left text-sm">
+            <thead className="text-xs uppercase text-castMuted">
+              <tr><th className="px-4 py-3">Media</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Format</th><th className="px-4 py-3">Folder</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Playlist</th><th className="px-4 py-3">Amal</th></tr>
+            </thead>
+            <tbody>
+              {media.map((asset) => (
+                <tr key={asset.id} className="border-t border-white/10">
+                  <td className="max-w-[360px] truncate px-4 py-4 font-bold text-white">{asset.name}<span className="block text-xs text-castMuted">{asset.duration || asset.size}</span></td>
+                  <td className="px-4 py-4 text-castMuted">{asset.type}</td>
+                  <td className="px-4 py-4 text-castMuted">{asset.format}</td>
+                  <td className="px-4 py-4 text-castMuted">{asset.folder}</td>
+                  <td className="px-4 py-4"><V2Status value={asset.status} /></td>
+                  <td className="px-4 py-4 text-castMuted">{asset.usedInPlaylists} playlist</td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button disabled={!targetPlaylist} onClick={() => targetPlaylist && store.addMediaToPlaylist(asset.id, targetPlaylist.id)}>Playlistga qo'shish</Button>
+                      <Button variant="danger" onClick={() => store.deleteMediaAsset(asset.id)}>O'chirish</Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <MediaUploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUpload={async (draft) => store.createMediaFromDraft({ ...draft, approvalRequired: false })}
+      />
+    </>
   );
 }
 

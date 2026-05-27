@@ -11,8 +11,8 @@ const initialDraft: UploadDraft = {
   tags: ["Promo"],
   category: "video",
   expireDate: "",
-  approvalRequired: true,
-  addToPlaylist: false,
+  approvalRequired: false,
+  addToPlaylist: true,
   webUrl: "",
 };
 
@@ -40,14 +40,14 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
     idle: selectedFile
       ? `${selectedFile.name} tanlandi (${formatBytes(selectedFile.size)})`
       : draft.webUrl?.trim()
-        ? "Web URL tayyor"
-        : "Fayl tanlang yoki web URL kiriting",
+        ? "URL tayyor"
+        : "Fayl tanlang yoki stream URL kiriting",
     uploading: `Yuklanmoqda: ${progress}%`,
     complete: "Upload complete",
     failed: error || "Upload failed",
   }[status]), [draft.webUrl, error, progress, selectedFile, status]);
 
-  const canSubmit = status !== "uploading" && (selectedFile || draft.category !== "web" || Boolean(draft.webUrl?.trim()));
+  const canSubmit = status !== "uploading" && (selectedFile || Boolean(draft.webUrl?.trim()));
 
   if (!open) return null;
 
@@ -73,9 +73,9 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
 
   const submit = async () => {
     const normalizedWebUrl = normalizeWebUrl(draft.webUrl);
-    const isWebUrlUpload = !selectedFile && draft.category === "web";
-    if (isWebUrlUpload && !normalizedWebUrl) {
-      setError("To'g'ri web URL kiriting.");
+    const isUrlUpload = !selectedFile && Boolean(draft.webUrl?.trim());
+    if (!selectedFile && !normalizedWebUrl) {
+      setError("To'g'ri fayl yoki URL kiriting.");
       setStatus("failed");
       return;
     }
@@ -98,7 +98,7 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
           uploadedMime: payload.mime,
           uploadedSizeBytes: payload.sizeBytes,
         };
-      } else if (isWebUrlUpload) {
+      } else if (isUrlUpload) {
         uploaded = { webUrl: normalizedWebUrl };
         await new Promise((resolve) => setTimeout(resolve, 300));
       } else {
@@ -107,7 +107,7 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
       await onUpload({
         ...draft,
         ...uploaded,
-        category: isWebUrlUpload ? "web" : draft.category,
+        category: draft.category,
         name: draft.name || selectedFile?.name || webUrlToName(normalizedWebUrl) || `castmap_${draft.category}_asset.${draft.category === "image" ? "jpg" : draft.category}`,
       });
       window.clearInterval(timer);
@@ -180,9 +180,9 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
               </select>
             </label>
             <Field label="Expire date" value={draft.expireDate} onChange={(value) => setDraft({ ...draft, expireDate: value })} placeholder="2026-06-01" />
-            {draft.category === "web" ? (
+            {!selectedFile ? (
               <div className="md:col-span-2">
-                <Field label="Web URL" type="url" value={draft.webUrl || ""} onChange={(value) => { setError(""); setDraft({ ...draft, webUrl: value }); }} placeholder="https://example.com/menu" />
+                <Field label="URL / stream" type="url" value={draft.webUrl || ""} onChange={(value) => { setError(""); setDraft({ ...draft, webUrl: value }); }} placeholder="https://example.com/video.mp4 yoki https://example.com/live.m3u8" />
               </div>
             ) : null}
           </div>
