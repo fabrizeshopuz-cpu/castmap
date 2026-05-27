@@ -3,7 +3,7 @@ import { V2AppShell, V2MetricCard, V2Status } from "@/components/v2/V2Shell";
 
 const auditRows = [
   ["2026-05-27 19:56", "Fabrize", "Playlist order updated", "media-start-video-20260527 first"],
-  ["2026-05-22 14:44", "System", "APK release", "castmap-player-1.0.9.apk latest"],
+  ["2026-05-27 20:36", "System", "APK release", "castmap-player-1.1.0.apk latest"],
   ["2026-05-22 14:40", "Player", "Playback contract", "Range streaming verified"],
 ];
 
@@ -60,7 +60,7 @@ export default function SuperAdminPage() {
                     <V2Status value={device.status} />
                   </div>
                   <p className="mt-2 text-sm text-castMuted">{device.branch} / {device.code}</p>
-                  <p className="mt-1 text-sm text-castMuted">APK latest target: v1.0.9</p>
+                  <p className="mt-1 text-sm text-castMuted">APK latest target: v1.1.0</p>
                 </article>
               ))}
             </div>

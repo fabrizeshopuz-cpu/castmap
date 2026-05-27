@@ -112,7 +112,7 @@ export const v2Devices: V2Device[] = [
     code: "CM-PAIR-CSWGYK3Y",
     branch: "Bunyodkor",
     status: "online",
-    apk: "v1.0.9",
+    apk: "v1.1.0",
     current: "a_cb_c_e_d_a_f_a_v_mp_.mp4",
     heartbeat: "Hozir",
   },

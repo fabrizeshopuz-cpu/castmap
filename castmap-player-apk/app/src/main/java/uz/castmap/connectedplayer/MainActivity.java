@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
     private static final String PREFS = "castmap-player";
     private static final String KEY_CODE = "device_code";
     private static final String KEY_LAST_PAYLOAD = "last_payload";
-    private static final String APP_VERSION = "1.0.9";
+    private static final String APP_VERSION = "1.1.0";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -258,12 +258,12 @@ public class MainActivity extends Activity {
         middle.addView(code, codeParams);
         screen.addView(middle);
 
-        TextView status = text("● Ulanishni kutmoqda...", 18, 0xFFD4AF37, true);
+        TextView status = text("Ulanishni kutmoqda...", 18, 0xFFD4AF37, true);
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(wrap(), wrap());
         statusParams.setMargins(0, dp(22), 0, dp(8));
         screen.addView(status, statusParams);
 
-        TextView info = text(message + "\n\nDevice code: " + deviceCode + "   •   App: " + APP_VERSION + "   •   Server: " + BuildConfig.SERVER_BASE_URL, 15, 0xFFC7C7C7, false);
+        TextView info = text(message + "\n\nDevice code: " + deviceCode + "   |   App: " + APP_VERSION + "   |   Server: " + BuildConfig.SERVER_BASE_URL, 15, 0xFFC7C7C7, false);
         info.setGravity(Gravity.CENTER);
         info.setLineSpacing(dp(4), 1);
         info.setPadding(dp(22), dp(16), dp(22), dp(16));
@@ -278,18 +278,26 @@ public class MainActivity extends Activity {
     private void pollServer() {
         executor.execute(() -> {
             try {
-                String url = BuildConfig.SERVER_BASE_URL + "/api/tv-code/" + URLEncoder.encode(deviceCode, "UTF-8")
+                String url = BuildConfig.SERVER_BASE_URL + "/api/v2/player/playlist"
                         + "?appVersion=" + URLEncoder.encode(APP_VERSION, "UTF-8");
                 String text = httpGet(url);
                 getPrefs().edit().putString(KEY_LAST_PAYLOAD, text).apply();
                 handlePayload(new JSONObject(text), true);
-            } catch (Exception onlineError) {
+            } catch (Exception v2Error) {
                 try {
-                    String cached = getPrefs().getString(KEY_LAST_PAYLOAD, "");
-                    if (!cached.isEmpty()) handlePayload(new JSONObject(cached), false);
-                    else runOnUiThread(() -> showPairingScreen("Internet yo'q. Admin panelga ulanish kutilmoqda."));
-                } catch (Exception ignored) {
-                    runOnUiThread(() -> showPairingScreen("Internet yo'q. Cache kontent topilmadi."));
+                    String oldUrl = BuildConfig.SERVER_BASE_URL + "/api/tv-code/" + URLEncoder.encode(deviceCode, "UTF-8")
+                            + "?appVersion=" + URLEncoder.encode(APP_VERSION, "UTF-8");
+                    String text = httpGet(oldUrl);
+                    getPrefs().edit().putString(KEY_LAST_PAYLOAD, text).apply();
+                    handlePayload(new JSONObject(text), true);
+                } catch (Exception oldApiError) {
+                    try {
+                        String cached = getPrefs().getString(KEY_LAST_PAYLOAD, "");
+                        if (!cached.isEmpty()) handlePayload(new JSONObject(cached), false);
+                        else runOnUiThread(() -> showPairingScreen("Internet yo'q. Admin panelga ulanish kutilmoqda."));
+                    } catch (Exception ignored) {
+                        runOnUiThread(() -> showPairingScreen("Internet yo'q. Cache kontent topilmadi."));
+                    }
                 }
             }
         });
@@ -306,6 +314,7 @@ public class MainActivity extends Activity {
         currentDevice = payload.optJSONObject("device");
         weather = payload.optJSONObject("weather");
         JSONArray media = payload.optJSONArray("media");
+        if (media == null) media = payload.optJSONArray("items");
         applyDeviceSettings(currentDevice);
         applyPendingCommand(currentDevice);
 
@@ -465,7 +474,7 @@ public class MainActivity extends Activity {
         String weatherText = "";
         if (weather != null) {
             String city = weather.optString("city", "");
-            String temp = weather.isNull("temperature") ? "" : weather.optInt("temperature") + "°C";
+            String temp = weather.isNull("temperature") ? "" : weather.optInt("temperature") + " C";
             String desc = weather.optString("description", "");
             weatherText = "\n" + city + " " + temp + " " + desc;
         }
@@ -590,6 +599,14 @@ public class MainActivity extends Activity {
                 body.put("index", currentIndex);
                 body.put("appVersion", APP_VERSION);
                 httpPost(BuildConfig.SERVER_BASE_URL + "/api/tv-now-playing", body.toString());
+
+                JSONObject heartbeat = new JSONObject();
+                heartbeat.put("deviceId", currentDevice == null ? deviceCode : currentDevice.optString("deviceId", deviceCode));
+                heartbeat.put("deviceCode", deviceCode);
+                heartbeat.put("status", "online");
+                heartbeat.put("currentMediaId", item.id);
+                heartbeat.put("appVersion", APP_VERSION);
+                httpPost(BuildConfig.SERVER_BASE_URL + "/api/v2/player/heartbeat", heartbeat.toString());
             } catch (Exception ignored) {
             }
         });
@@ -777,21 +794,23 @@ public class MainActivity extends Activity {
         static MediaItem from(JSONObject json) {
             MediaItem item = new MediaItem();
             item.id = String.valueOf(json.opt("id"));
-            item.name = json.optString("name", "Kontent");
+            item.name = json.optString("name", json.optString("title", "Kontent"));
             item.type = json.optString("type", "");
             item.mime = json.optString("mime", "");
             item.url = json.optString("url", "");
-            item.durationMs = parseDuration(json.optString("duration", "00:00:10"));
+            item.durationMs = json.has("durationMs")
+                    ? Math.max(5_000, json.optLong("durationMs", 10_000))
+                    : parseDuration(json.optString("duration", "00:00:10"));
             if (!item.url.startsWith("http")) item.url = new MainActivityUrlHelper().absolute(item.url);
             return item;
         }
 
         boolean isVideo() {
-            return "Video".equalsIgnoreCase(type) || mime.startsWith("video/");
+            return "Video".equalsIgnoreCase(type) || "VIDEO".equalsIgnoreCase(type) || mime.startsWith("video/");
         }
 
         boolean isImage() {
-            return "Rasm".equalsIgnoreCase(type) || mime.startsWith("image/");
+            return "Rasm".equalsIgnoreCase(type) || "IMAGE".equalsIgnoreCase(type) || mime.startsWith("image/");
         }
 
         boolean isAudio() {
