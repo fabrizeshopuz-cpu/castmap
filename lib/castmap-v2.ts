@@ -49,10 +49,12 @@ export interface V2Device {
 }
 
 export const clientNav: V2NavItem[] = [
-  { label: "Overview", href: "/browse", icon: LayoutDashboard },
+  { label: "Overview", href: "/browse?tab=overview", icon: LayoutDashboard },
+  { label: "Kampaniyalar", href: "/browse?tab=campaigns", icon: RadioTower },
+  { label: "Lokatsiyalar", href: "/browse?tab=locations", icon: Building2 },
+  { label: "TV qurilmalar", href: "/browse?tab=devices", icon: Monitor },
+  { label: "Playlistlar", href: "/browse?tab=playlists", icon: GalleryVerticalEnd },
   { label: "Media", href: "/browse?tab=media", icon: Clapperboard },
-  { label: "Playlists", href: "/browse?tab=playlists", icon: GalleryVerticalEnd },
-  { label: "Devices", href: "/browse?tab=devices", icon: Monitor },
   { label: "Billing", href: "/browse?tab=billing", icon: CreditCard },
 ];
 

@@ -651,7 +651,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       return;
     }
     const source = devices[0];
-    const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const cleanCode = code.trim().toUpperCase().replace(/^CM-PAIR-/i, "").replace(/^CMPAIR/i, "").replace(/[^A-Z0-9]/g, "");
     setDevices((current) => [{
       id: uid("device"),
       name: name || `CASTMAP Player ${code}`,
@@ -667,7 +667,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       cpu: source?.cpu || 9,
       playlist: playlists[0]?.name || "Playlist biriktirilmagan",
       lastSeen: "Hozir",
-      apkVersion: source?.apkVersion || "v1.0.5",
+      apkVersion: source?.apkVersion || "v1.1.0",
       ipAddress: source?.ipAddress || "192.168.0.120",
       macAddress: source?.macAddress || "00:CM:48:29:13:00",
       uptime: "0 kun 0 soat",
