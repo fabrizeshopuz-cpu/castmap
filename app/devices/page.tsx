@@ -101,12 +101,12 @@ export default function DevicesPage() {
   };
 
   return (
-    <main className="flex min-h-screen bg-castBg text-castText max-lg:flex-col">
+    <main className="gradient-background flex min-h-screen text-castText max-lg:flex-col">
       <Sidebar activeLabel="TV Qurilmalar" />
       <section className="min-w-0 flex-1">
         <Topbar />
         <div className="grid gap-5 p-7 max-sm:p-4">
-          <header className="flex items-start justify-between gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 max-xl:flex-col">
+          <header className="glass-panel flex items-start justify-between gap-5 rounded-2xl p-5 max-xl:flex-col">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">DEVICE MANAGEMENT</p>
               <h1 className="mt-1 text-3xl font-black text-white">TV Qurilmalar</h1>
@@ -116,14 +116,14 @@ export default function DevicesPage() {
               <label className="relative w-[430px] max-w-full">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-castMuted" />
                 <input
-                  className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white outline-none placeholder:text-castMuted"
+                  className="glass-input h-11 w-full rounded-xl pl-11 pr-4 text-sm text-white outline-none placeholder:text-castMuted"
                   value={query}
                   placeholder="Qurilma nomi, filial yoki ID bo'yicha qidirish"
                   onChange={(event) => setQuery(event.target.value)}
                 />
               </label>
-              <button className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white" type="button"><Filter className="h-4 w-4 text-castGold" />Filtr</button>
-              <select className="h-11 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none">
+              <button className="flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-sm font-bold text-white backdrop-blur-xl transition hover:border-castGold/35" type="button"><Filter className="h-4 w-4 text-castGold" />Filtr</button>
+              <select className="glass-input h-11 rounded-xl px-4 text-sm text-white outline-none">
                 <option>17 May, 2026 - Barcha statuslar</option>
                 <option>Faqat onlayn qurilmalar</option>
                 <option>Yangilanish kerak</option>
@@ -169,7 +169,7 @@ export default function DevicesPage() {
                   ["Storage 80% dan oshgan qurilmalar", "Ma'lumot yo'q", "Qurilmalar ulangandan keyin ko'rinadi"],
                   ["So'nggi ulanishlar", "Ma'lumot yo'q", "Qurilmalar ulangandan keyin ko'rinadi"],
                 ].map(([title, first, second]) => (
-                  <article key={title} className="grid gap-2 rounded-2xl border border-white/10 bg-castCard p-5">
+                  <article key={title} className="glass-panel hover-3d grid gap-2 rounded-2xl p-5">
                     <h3 className="font-black text-white">{title}</h3>
                     <span className="text-sm text-castMuted">{first}</span>
                     <span className="text-sm text-castMuted">{second}</span>

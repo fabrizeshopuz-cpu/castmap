@@ -34,7 +34,7 @@ export function ProblemSection() {
             const Icon = problem.icon;
             return (
               <Reveal delay={index * 0.08} key={problem.title}>
-                <TiltCard className="h-full rounded-lg border border-white/[0.08] bg-[#111111]/90 p-6 shadow-[0_18px_70px_rgba(0,0,0,0.28)] backdrop-blur">
+                <TiltCard className="glass-panel h-full rounded-lg p-6 shadow-[0_18px_70px_rgba(2,6,23,0.28)]">
                   <div className="grid h-12 w-12 place-items-center rounded-lg border border-red-300/20 bg-red-400/10 text-red-200">
                     <Icon className="h-5 w-5" />
                   </div>

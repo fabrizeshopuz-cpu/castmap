@@ -12,11 +12,11 @@ export function DeviceStatusChart({ data }: DeviceStatusChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-castCard p-5 shadow-black/30">
+    <article className="glass-panel hover-3d rounded-2xl p-5">
       <h2 className="mb-5 text-lg font-black text-white">Ekranlar holati</h2>
       <div className="grid items-center gap-6 sm:grid-cols-[190px_1fr]">
-        <div className="grid aspect-square w-44 place-items-center rounded-full bg-[conic-gradient(#56C66B_0deg_313deg,#FF645A_313deg_341deg,#94A3B8_341deg_353deg,#D4AF37_353deg_360deg)] shadow-gold">
-          <div className="grid aspect-square w-24 place-items-center rounded-full bg-castBg text-center">
+        <div className="grid aspect-square w-44 place-items-center rounded-full bg-[conic-gradient(#22C55E_0deg_313deg,#EF4444_313deg_341deg,#94A3B8_341deg_353deg,#D4AF37_353deg_360deg)] shadow-gold">
+          <div className="grid aspect-square w-24 place-items-center rounded-full bg-[#0F172A]/90 text-center backdrop-blur-xl">
             <div>
               <strong className="block text-2xl text-white">{total.toLocaleString("en-US")}</strong>
               <span className="text-sm text-castMuted">Jami</span>

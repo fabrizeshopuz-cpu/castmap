@@ -39,7 +39,7 @@ export function MediaDetailDrawer({
   ];
 
   return (
-    <aside className="sticky top-5 min-w-0 max-h-[calc(100vh-40px)] overflow-y-auto rounded-2xl border border-white/10 bg-castCard p-4 max-xl:static max-xl:max-h-none">
+    <aside className="glass-panel sticky top-5 min-w-0 max-h-[calc(100vh-40px)] overflow-y-auto rounded-2xl p-4 max-xl:static max-xl:max-h-none">
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-black text-white [overflow-wrap:anywhere]">{asset.name}</h2>
@@ -50,7 +50,7 @@ export function MediaDetailDrawer({
         </button>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0F172A]/80">
         <img src={asset.thumbnailUrl} alt={asset.name} className="aspect-video w-full object-cover" />
       </div>
 
@@ -69,7 +69,7 @@ export function MediaDetailDrawer({
           </div>
           <div className="grid gap-2 text-sm">
             <span className="text-castMuted">CDN URL / public URL</span>
-            <code className="block max-w-full rounded-xl border border-white/10 bg-black/40 p-2 text-xs text-castGold [overflow-wrap:anywhere]">{asset.cdnUrl || asset.fileUrl}</code>
+            <code className="block max-w-full rounded-xl border border-white/10 bg-white/[0.055] p-2 text-xs text-castGold backdrop-blur [overflow-wrap:anywhere]">{asset.cdnUrl || asset.fileUrl}</code>
           </div>
         </div>
       </div>

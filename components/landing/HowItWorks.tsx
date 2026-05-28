@@ -22,7 +22,7 @@ export function HowItWorks() {
             const Icon = step.icon;
             return (
               <Reveal delay={index * 0.08} key={step.title}>
-                <div className="relative h-full rounded-lg border border-white/[0.08] bg-[#111111]/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur">
+                <div className="glass-panel relative h-full rounded-lg p-6 shadow-[0_18px_60px_rgba(2,6,23,0.22)]">
                   <div className="flex items-center justify-between">
                     <div className="grid h-12 w-12 place-items-center rounded-lg border border-[#D4AF37]/25 bg-[#D4AF37]/10 text-[#D4AF37]">
                       <Icon className="h-5 w-5" />

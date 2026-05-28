@@ -141,8 +141,8 @@ export function MediaUploadModal({ open, mode = "file", onClose, onUpload }: { o
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5 backdrop-blur">
-      <section className="w-full max-w-3xl rounded-2xl border border-white/10 bg-castCard p-5 shadow-2xl max-sm:h-full max-sm:overflow-y-auto">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-3xl rounded-2xl p-5 shadow-glass max-sm:h-full max-sm:overflow-y-auto">
         <header className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black text-white">Media yuklash</h2>
@@ -182,7 +182,7 @@ export function MediaUploadModal({ open, mode = "file", onClose, onUpload }: { o
               </button>
             ) : null}
             {status !== "idle" ? (
-              <div className="mt-4 h-2 w-full max-w-md overflow-hidden rounded-full bg-black/40">
+              <div className="mt-4 h-2 w-full max-w-md overflow-hidden rounded-full bg-white/[0.08]">
                 <div className="h-full rounded-full bg-castGold" style={{ width: `${progress}%` }} />
               </div>
             ) : null}
@@ -191,12 +191,12 @@ export function MediaUploadModal({ open, mode = "file", onClose, onUpload }: { o
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Media nomi" value={draft.name} onChange={(value) => setDraft({ ...draft, name: value })} placeholder="burger_menu_may.mp4" />
             <label className="grid gap-1 text-sm text-castMuted">Papka tanlash
-              <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.folder} onChange={(event) => setDraft({ ...draft, folder: event.target.value })}>
+              <select className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.folder} onChange={(event) => setDraft({ ...draft, folder: event.target.value })}>
                 {mediaFolders.filter((folder) => folder.name !== "Barcha fayllar").map((folder) => <option key={folder.name}>{folder.name}</option>)}
               </select>
             </label>
             <label className="grid gap-1 text-sm text-castMuted">Kategoriya
-              <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none disabled:opacity-60" value={draft.category} disabled={mode === "stream"} onChange={(event) => changeCategory(event.target.value as MediaType)}>
+              <select className="glass-input h-11 rounded-xl px-3 text-white outline-none disabled:opacity-60" value={draft.category} disabled={mode === "stream"} onChange={(event) => changeCategory(event.target.value as MediaType)}>
                 {["video", "image", "web", "html", "pdf", "template"].map((type) => <option key={type}>{type}</option>)}
               </select>
             </label>
@@ -218,7 +218,7 @@ export function MediaUploadModal({ open, mode = "file", onClose, onUpload }: { o
               ))}
             </div>
             <div className="flex gap-2">
-              <select className="h-10 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={selectedTag} onChange={(event) => setSelectedTag(event.target.value)}>
+              <select className="glass-input h-10 rounded-xl px-3 text-white outline-none" value={selectedTag} onChange={(event) => setSelectedTag(event.target.value)}>
                 {defaultTags.map((tag) => <option key={tag}>{tag}</option>)}
               </select>
               <button className="rounded-xl border border-castGold/25 px-4 text-sm font-bold text-castGold" type="button" onClick={() => setDraft({ ...draft, tags: [...new Set([...draft.tags, selectedTag])] })}>Tag qo'shish</button>
@@ -231,7 +231,7 @@ export function MediaUploadModal({ open, mode = "file", onClose, onUpload }: { o
           </div>
 
           <div className="flex justify-end gap-3">
-            <button className="rounded-xl border border-white/10 px-5 py-3 font-bold text-white" type="button" onClick={onClose}>Bekor qilish</button>
+            <button className="rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 font-bold text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={onClose}>Bekor qilish</button>
             <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 py-3 font-black text-black disabled:opacity-60" type="button" disabled={!canSubmit} onClick={submit}>
               Yuklash
             </button>
@@ -245,7 +245,7 @@ export function MediaUploadModal({ open, mode = "file", onClose, onUpload }: { o
 function Field({ label, value, placeholder, type = "text", onChange }: { label: string; value: string; placeholder: string; type?: string; onChange: (value: string) => void }) {
   return (
     <label className="grid gap-1 text-sm text-castMuted">{label}
-      <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none placeholder:text-castMuted" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+      <input className="glass-input h-11 rounded-xl px-3 text-white outline-none placeholder:text-castMuted" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }

@@ -4,7 +4,7 @@ interface DeviceEmptyStateProps {
 
 export function DeviceEmptyState({ onPair }: DeviceEmptyStateProps) {
   return (
-    <div className="grid min-h-80 place-items-center rounded-2xl border border-white/10 bg-castCard p-8 text-center">
+    <div className="glass-panel grid min-h-80 place-items-center rounded-2xl p-8 text-center">
       <div>
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-[#FFE18A] to-castDeepGold font-black text-black">TV</div>
         <h3 className="mt-4 text-xl font-black text-white">Hali qurilma ulanmagan</h3>

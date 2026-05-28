@@ -36,8 +36,8 @@ export function PairDeviceModal({ open, onClose }: PairDeviceModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5 backdrop-blur-xl">
-      <section className="w-full max-w-2xl rounded-2xl border border-white/10 bg-castCard p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-2xl rounded-2xl p-6 shadow-glass">
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-castGold">Step {step} / 4</p>
@@ -55,21 +55,21 @@ export function PairDeviceModal({ open, onClose }: PairDeviceModalProps) {
 
         <div className="grid min-h-52 place-content-center gap-3">
           {step === 1 ? <div className="grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-[#FFE18A] to-castDeepGold font-black text-black">APK</div> : null}
-          {step === 2 ? <input className="h-12 w-80 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-white outline-none" placeholder="Masalan: 482-913" value={code} onChange={(event) => setCode(event.target.value)} /> : null}
+          {step === 2 ? <input className="glass-input h-12 w-80 rounded-xl px-4 text-white outline-none" placeholder="Masalan: 482-913" value={code} onChange={(event) => setCode(event.target.value)} /> : null}
           {step === 3 ? (
             <div className="grid w-80 gap-3">
-              <select className="h-12 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-white"><option>CASTMAP</option></select>
-              <select className="h-12 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-white" value={branchId} onChange={(event) => setBranchId(event.target.value)}>
+              <select className="glass-input h-12 rounded-xl px-4 text-white"><option>CASTMAP</option></select>
+              <select className="glass-input h-12 rounded-xl px-4 text-white" value={branchId} onChange={(event) => setBranchId(event.target.value)}>
                 {store.branches.length ? store.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>) : <option value="">Avval lokatsiya yarating</option>}
               </select>
-              <input className="h-12 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-white" value={deviceName} onChange={(event) => setDeviceName(event.target.value)} placeholder="Qurilma nomi" />
+              <input className="glass-input h-12 rounded-xl px-4 text-white" value={deviceName} onChange={(event) => setDeviceName(event.target.value)} placeholder="Qurilma nomi" />
             </div>
           ) : null}
           {step === 4 ? <div className="grid h-20 w-20 place-items-center rounded-2xl bg-emerald-500 font-black text-white">OK</div> : null}
         </div>
 
         <footer className="mt-5 flex justify-end gap-3">
-          <button className="min-h-11 rounded-xl border border-white/10 bg-white/[0.04] px-5 font-bold text-white disabled:opacity-40" type="button" disabled={step === 1} onClick={prev}>Orqaga</button>
+          <button className="min-h-11 rounded-xl border border-white/15 bg-white/[0.06] px-5 font-bold text-white backdrop-blur-xl transition hover:border-castGold/35 disabled:opacity-40" type="button" disabled={step === 1} onClick={prev}>Orqaga</button>
           {step < 4 ? (
             <button className="min-h-11 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 font-black text-black" type="button" onClick={next}>Davom etish</button>
           ) : (

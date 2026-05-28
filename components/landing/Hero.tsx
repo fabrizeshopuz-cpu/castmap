@@ -107,7 +107,7 @@ function DashboardMockup() {
     <div className="relative">
       <div className="absolute -inset-5 rounded-[28px] bg-[#D4AF37]/20 blur-3xl" />
       <motion.div
-        className="relative overflow-hidden rounded-lg border border-white/[0.10] bg-[#111111]/90 p-4 shadow-[0_0_80px_rgba(212,175,55,0.25)] backdrop-blur lg:[transform:perspective(1200px)_rotateX(5deg)_rotateY(-10deg)]"
+        className="glass-panel light-sweep relative overflow-hidden rounded-lg p-4 shadow-[0_0_80px_rgba(212,175,55,0.20)] lg:[transform:perspective(1200px)_rotateX(5deg)_rotateY(-10deg)]"
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
@@ -131,7 +131,7 @@ function DashboardMockup() {
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="rounded-lg border border-white/[0.08] bg-black/40 p-4">
+          <div className="rounded-lg border border-white/[0.10] bg-white/[0.055] p-4 backdrop-blur">
             <div className="flex items-center justify-between">
               <span className="text-sm font-black text-white">Ko'rsatishlar grafigi</span>
               <span className="rounded-full bg-[#D4AF37]/20 px-3 py-1 text-xs font-black text-[#D4AF37]">+18%</span>
@@ -153,15 +153,15 @@ function DashboardMockup() {
           </div>
 
           <div className="grid gap-4">
-            <div className="rounded-lg border border-white/[0.08] bg-black/40 p-4">
+            <div className="rounded-lg border border-white/[0.10] bg-white/[0.055] p-4 backdrop-blur">
               <span className="text-sm font-black text-white">Device status</span>
               <div className="mx-auto mt-5 grid h-32 w-32 place-items-center rounded-full bg-[conic-gradient(#34d399_0_82%,#ef4444_82%_86%,#D4AF37_86%_100%)] p-3">
-                <div className="grid h-full w-full place-items-center rounded-full bg-[#111111] text-center">
+                <div className="grid h-full w-full place-items-center rounded-full bg-[#0F172A]/90 text-center backdrop-blur-xl">
                   <span className="text-2xl font-black text-white">98.7%</span>
                 </div>
               </div>
             </div>
-            <div className="rounded-lg border border-white/[0.08] bg-black/40 p-4">
+            <div className="rounded-lg border border-white/[0.10] bg-white/[0.055] p-4 backdrop-blur">
               <span className="text-sm font-black text-white">Activity</span>
               <div className="mt-3 grid gap-3">
                 {["Promo playlist synced", "APK update scheduled", "Screenshot proof received"].map((item) => (
@@ -176,11 +176,11 @@ function DashboardMockup() {
         </div>
       </motion.div>
 
-      <div className="absolute -left-3 top-28 hidden rounded-lg border border-[#D4AF37]/25 bg-[#111111]/90 px-4 py-3 shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur sm:block lg:[transform:translateZ(48px)]">
+      <div className="glass-panel absolute -left-3 top-28 hidden rounded-lg border-[#D4AF37]/25 px-4 py-3 shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:block lg:[transform:translateZ(48px)]">
         <p className="text-xs font-bold text-[#A1A1AA]">Offline playback</p>
         <p className="mt-1 text-lg font-black text-white">12 soat cache</p>
       </div>
-      <div className="absolute -right-2 bottom-16 hidden rounded-lg border border-emerald-300/25 bg-[#111111]/90 px-4 py-3 shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur sm:block">
+      <div className="glass-panel absolute -right-2 bottom-16 hidden rounded-lg border-emerald-300/25 px-4 py-3 shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:block">
         <p className="text-xs font-bold text-[#A1A1AA]">Online</p>
         <p className="mt-1 flex items-center gap-2 text-lg font-black text-white">
           <Tv className="h-4 w-4 text-emerald-300" />
@@ -200,7 +200,7 @@ function Metric({ title, value, tone }: { title: string; value: string; tone: "g
   };
 
   return (
-    <div className="rounded-lg border border-white/[0.08] bg-black/40 p-3">
+    <div className="rounded-lg border border-white/[0.10] bg-white/[0.055] p-3 backdrop-blur">
       <p className="text-[11px] font-bold text-[#A1A1AA]">{title}</p>
       <p className={`mt-3 rounded-md px-2 py-2 text-xl font-black ${tones[tone]}`}>{value}</p>
     </div>

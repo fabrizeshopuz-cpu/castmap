@@ -4,8 +4,8 @@ import type { MediaAsset } from "@/types/media";
 export function MediaPreviewModal({ asset, onClose }: { asset: MediaAsset | null; onClose: () => void }) {
   if (!asset) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5 backdrop-blur">
-      <section className="w-full max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-castCard shadow-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/78 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-6xl overflow-hidden rounded-2xl shadow-glass">
         <header className="flex items-center justify-between border-b border-white/10 p-4">
           <div>
             <h2 className="text-xl font-black text-white">{asset.name}</h2>
@@ -15,7 +15,7 @@ export function MediaPreviewModal({ asset, onClose }: { asset: MediaAsset | null
             <X className="h-5 w-5" />
           </button>
         </header>
-        <div className="grid min-h-[560px] place-items-center bg-black">
+        <div className="grid min-h-[560px] place-items-center bg-[#020617]/82">
           {asset.type === "video" ? (
             <video src={asset.fileUrl} poster={asset.thumbnailUrl} controls muted className="max-h-[70vh] w-full object-contain" />
           ) : asset.type === "image" ? (

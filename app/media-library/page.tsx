@@ -236,12 +236,12 @@ export default function MediaLibraryPage() {
   };
 
   return (
-    <main className="flex min-h-screen bg-castBg text-castText max-lg:flex-col">
+    <main className="gradient-background flex min-h-screen text-castText max-lg:flex-col">
       <Sidebar activeLabel="Media kutubxona" />
       <section className="min-w-0 flex-1">
         <Topbar />
         <div className="grid gap-5 p-7 max-sm:p-4">
-          <header className="flex items-start justify-between gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 max-2xl:flex-col">
+          <header className="glass-panel flex items-start justify-between gap-5 rounded-2xl p-5 max-2xl:flex-col">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">MEDIA LIBRARY</p>
               <h1 className="mt-1 text-3xl font-black text-white">Media kutubxona</h1>
@@ -251,7 +251,7 @@ export default function MediaLibraryPage() {
               <label className="relative w-[430px] max-w-full">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-castMuted" />
                 <input
-                  className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-11 pr-4 text-sm text-white outline-none placeholder:text-castMuted"
+                  className="glass-input h-11 w-full rounded-xl pl-11 pr-4 text-sm text-white outline-none placeholder:text-castMuted"
                   value={query}
                   placeholder="Media nomi, tag yoki uploader bo'yicha qidirish"
                   onChange={(event) => setQuery(event.target.value)}
@@ -260,13 +260,13 @@ export default function MediaLibraryPage() {
               <button className="flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 font-black text-black" type="button" onClick={() => setUploadOpen(true)}>
                 <Plus className="h-4 w-4" /> Media yuklash
               </button>
-              <button className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white" type="button" onClick={() => setFolderModalOpen(true)}>
+              <button className="flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-sm font-bold text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={() => setFolderModalOpen(true)}>
                 <FolderPlus className="h-4 w-4 text-castGold" /> Yangi papka
               </button>
-              <button className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white" type="button">
+              <button className="flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-sm font-bold text-white backdrop-blur-xl transition hover:border-castGold/35" type="button">
                 <Filter className="h-4 w-4 text-castGold" /> Filter
               </button>
-              <select className="h-11 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none" value={sort} onChange={(event) => setSort(event.target.value as MediaSortOption)}>
+              <select className="glass-input h-11 rounded-xl px-4 text-sm text-white outline-none" value={sort} onChange={(event) => setSort(event.target.value as MediaSortOption)}>
                 <option value="latest">Eng yangi</option>
                 <option value="oldest">Eng eski</option>
                 <option value="name">Nomi A-Z</option>
@@ -274,20 +274,20 @@ export default function MediaLibraryPage() {
                 <option value="usage">Eng ko'p ishlatilgan</option>
                 <option value="lastPlayed">Oxirgi ijro qilingan</option>
               </select>
-              <select className="h-11 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white outline-none" value={role} onChange={(event) => setRole(event.target.value as MediaRole)}>
+              <select className="glass-input h-11 rounded-xl px-4 text-sm text-white outline-none" value={role} onChange={(event) => setRole(event.target.value as MediaRole)}>
                 <option>Super Admin</option>
                 <option>Admin</option>
                 <option>Operator</option>
                 <option>Viewer</option>
               </select>
-              <div className="flex rounded-xl border border-white/10 bg-white/[0.04] p-1">
+              <div className="flex rounded-xl border border-white/15 bg-white/[0.06] p-1 backdrop-blur-xl">
                 <button className={`grid h-9 w-10 place-items-center rounded-lg ${view === "grid" ? "bg-castGold text-black" : "text-castMuted"}`} type="button" onClick={() => setView("grid")}><LayoutGrid className="h-4 w-4" /></button>
                 <button className={`grid h-9 w-10 place-items-center rounded-lg ${view === "list" ? "bg-castGold text-black" : "text-castMuted"}`} type="button" onClick={() => setView("list")}><List className="h-4 w-4" /></button>
               </div>
             </div>
           </header>
 
-          {notice ? <div className="rounded-xl border border-castGold/25 bg-castGold/10 px-4 py-3 text-sm font-bold text-castGold">{notice}</div> : null}
+          {notice ? <div className="glass-panel rounded-xl border-castGold/35 px-4 py-3 text-sm font-bold text-castGold shadow-gold">{notice}</div> : null}
 
           {loading ? (
             <MediaSkeleton />
@@ -333,7 +333,7 @@ export default function MediaLibraryPage() {
                   {selected ? (
                     <MediaDetailDrawer asset={selected} onClose={() => setSelected(null)} onAction={handleAction} onApprove={handleApprove} onReject={handleReject} />
                   ) : (
-                    <div className="rounded-2xl border border-white/10 bg-castCard p-5 text-castMuted">Media tanlang.</div>
+                    <div className="glass-panel rounded-2xl p-5 text-castMuted">Media tanlang.</div>
                   )}
                 </div>
               </section>
@@ -345,7 +345,7 @@ export default function MediaLibraryPage() {
                   ["Auto tag suggestion", "Tavsiya qilinadigan tag yo'q"],
                   ["Warnings", "Ogohlantirish yo'q"],
                 ].map(([title, text]) => (
-                  <article key={title} className="rounded-2xl border border-white/10 bg-castCard p-5">
+                  <article key={title} className="glass-panel hover-3d rounded-2xl p-5">
                     <b className="text-white">{title}</b>
                     <p className="mt-2 text-sm text-castMuted">{text}</p>
                   </article>
@@ -424,47 +424,47 @@ function MetadataEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5">
-      <section className="w-full max-w-2xl rounded-2xl border border-white/10 bg-castCard p-5">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-2xl rounded-2xl p-5 shadow-glass">
         <h2 className="text-xl font-black text-white">Metadata tahrirlash</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <label className="grid gap-2 text-sm text-castMuted">
             Media nomi
-            <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+            <input className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
           </label>
           <label className="grid gap-2 text-sm text-castMuted">
             Papka
-            <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.folder} onChange={(event) => setDraft({ ...draft, folder: event.target.value })}>
+            <select className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.folder} onChange={(event) => setDraft({ ...draft, folder: event.target.value })}>
               {[...new Set([draft.folder, ...folders.map((folder) => folder.name)])].map((folder) => <option key={folder}>{folder}</option>)}
             </select>
           </label>
           <label className="grid gap-2 text-sm text-castMuted">
             Status
-            <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as MediaStatus })}>
+            <select className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as MediaStatus })}>
               {["active", "draft", "approval", "archived", "expired", "processing", "failed"].map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
           </label>
           <label className="grid gap-2 text-sm text-castMuted">
             Orientation
-            <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.orientation} onChange={(event) => setDraft({ ...draft, orientation: event.target.value as MediaOrientation })}>
+            <select className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.orientation} onChange={(event) => setDraft({ ...draft, orientation: event.target.value as MediaOrientation })}>
               {["landscape", "portrait", "square", "responsive"].map((orientation) => <option key={orientation} value={orientation}>{orientation}</option>)}
             </select>
           </label>
           <label className="grid gap-2 text-sm text-castMuted">
             Davomiyligi
-            <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.duration || ""} placeholder="00:00:20" onChange={(event) => setDraft({ ...draft, duration: event.target.value })} />
+            <input className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.duration || ""} placeholder="00:00:20" onChange={(event) => setDraft({ ...draft, duration: event.target.value })} />
           </label>
           <label className="grid gap-2 text-sm text-castMuted">
             Rezolyutsiya
-            <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={draft.resolution || ""} placeholder="1920x1080" onChange={(event) => setDraft({ ...draft, resolution: event.target.value })} />
+            <input className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={draft.resolution || ""} placeholder="1920x1080" onChange={(event) => setDraft({ ...draft, resolution: event.target.value })} />
           </label>
           <label className="grid gap-2 text-sm text-castMuted md:col-span-2">
             Taglar
-            <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={tags} placeholder="Promo, Food" onChange={(event) => setTags(event.target.value)} />
+            <input className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={tags} placeholder="Promo, Food" onChange={(event) => setTags(event.target.value)} />
           </label>
         </div>
         <div className="mt-5 flex justify-end gap-3">
-          <button className="rounded-xl border border-white/10 px-4 py-2 text-white" type="button" onClick={onCancel}>Bekor qilish</button>
+          <button className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={onCancel}>Bekor qilish</button>
           <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-4 py-2 font-black text-black" type="button" onClick={save}>Saqlash</button>
         </div>
       </section>
@@ -528,18 +528,18 @@ function ReplaceFileModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5">
-      <section className="w-full max-w-lg rounded-2xl border border-white/10 bg-castCard p-5">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-lg rounded-2xl p-5 shadow-glass">
         <h2 className="text-xl font-black text-white">Faylni almashtirish</h2>
         <p className="mt-2 text-sm text-castMuted">{asset.name}</p>
         <label className="mt-4 grid gap-2 text-sm text-castMuted">
           Yangi fayl
-          <input className="rounded-xl border border-white/10 bg-[#0D0D0D] p-3 text-white outline-none" type="file" accept="video/*,image/*,.html,.pdf" onChange={(event) => setFile(event.target.files?.[0] || null)} />
+          <input className="glass-input rounded-xl p-3 text-white outline-none" type="file" accept="video/*,image/*,.html,.pdf" onChange={(event) => setFile(event.target.files?.[0] || null)} />
         </label>
         {file ? <p className="mt-3 rounded-xl border border-castGold/20 bg-castGold/10 px-3 py-2 text-sm text-castGold">{file.name} / {formatBytes(file.size)}</p> : null}
         {error ? <p className="mt-3 rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p> : null}
         <div className="mt-5 flex justify-end gap-3">
-          <button className="rounded-xl border border-white/10 px-4 py-2 text-white" type="button" onClick={onCancel} disabled={uploading}>Bekor qilish</button>
+          <button className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={onCancel} disabled={uploading}>Bekor qilish</button>
           <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-4 py-2 font-black text-black disabled:opacity-50" type="button" onClick={submit} disabled={uploading}>
             {uploading ? "Yuklanmoqda..." : "Almashtirish"}
           </button>
@@ -568,15 +568,15 @@ function PlaylistAssignModal({
   const sortedPlaylists = [...playlists].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5">
-      <section className="w-full max-w-2xl rounded-2xl border border-castGold/25 bg-castCard p-5 shadow-2xl shadow-castGold/10">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/78 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-2xl rounded-2xl border-castGold/25 p-5 shadow-gold">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">Playlist tanlash</p>
             <h2 className="mt-1 text-xl font-black text-white">Media qaysi playlistda ko'rsatilsin?</h2>
             <p className="mt-2 text-sm text-castMuted">{asset.name}</p>
           </div>
-          <button className="rounded-xl border border-white/10 px-3 py-2 text-sm font-bold text-white hover:bg-white/10" type="button" onClick={onCancel}>
+          <button className="rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2 text-sm font-bold text-white backdrop-blur-xl hover:bg-white/10" type="button" onClick={onCancel}>
             Yopish
           </button>
         </div>
@@ -588,7 +588,7 @@ function PlaylistAssignModal({
             const branch = playlist.branchId ? branches.find((item) => item.id === playlist.branchId) : null;
 
             return (
-              <article key={playlist.id} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-castGold/30 max-sm:flex-col max-sm:items-start">
+              <article key={playlist.id} className="glass-panel hover-3d flex items-center justify-between gap-4 rounded-2xl p-4 hover:border-castGold/30 max-sm:flex-col max-sm:items-start">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <b className="text-white">{playlist.name}</b>
@@ -614,7 +614,7 @@ function PlaylistAssignModal({
               </article>
             );
           }) : (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
+            <div className="glass-panel rounded-2xl p-5 text-center">
               <b className="text-white">Playlist yo'q</b>
               <p className="mt-2 text-sm text-castMuted">Avval Playlistlar bo'limida playlist yarating, keyin media biriktirasiz.</p>
             </div>
@@ -628,12 +628,12 @@ function PlaylistAssignModal({
 function DeleteConfirm({ asset, onCancel, onConfirm }: { asset: MediaAsset | null; onCancel: () => void; onConfirm: () => void }) {
   if (!asset) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5">
-      <section className="max-w-md rounded-2xl border border-red-400/25 bg-castCard p-5">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel max-w-md rounded-2xl border-red-400/25 p-5 shadow-glass">
         <h2 className="text-xl font-black text-white">Bu media faylni o'chirishni tasdiqlaysizmi?</h2>
         <p className="mt-3 text-castMuted">Bu media {asset.usedInPlaylists} ta playlistda ishlatilmoqda. O'chirish playlistlarga ta'sir qiladi.</p>
         <div className="mt-5 flex justify-end gap-3">
-          <button className="rounded-xl border border-white/10 px-4 py-2 text-white" type="button" onClick={onCancel}>Bekor qilish</button>
+          <button className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={onCancel}>Bekor qilish</button>
           <button className="rounded-xl border border-red-400/25 bg-red-400/10 px-4 py-2 font-bold text-red-300" type="button" onClick={onConfirm}>O'chirish</button>
         </div>
       </section>
@@ -645,13 +645,13 @@ function RejectReason({ asset, onCancel, onConfirm }: { asset: MediaAsset | null
   const [reason, setReason] = useState("");
   if (!asset) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5">
-      <section className="w-full max-w-md rounded-2xl border border-orange-400/25 bg-castCard p-5">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-md rounded-2xl border-orange-400/25 p-5 shadow-glass">
         <h2 className="text-xl font-black text-white">Reject reason</h2>
         <p className="mt-2 text-sm text-castMuted">{asset.name} uchun rad etish sababini yozing.</p>
-        <textarea className="mt-4 min-h-28 w-full rounded-xl border border-white/10 bg-[#0D0D0D] p-3 text-white outline-none" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Masalan: rezolyutsiya juda past." />
+        <textarea className="glass-input mt-4 min-h-28 w-full rounded-xl p-3 text-white outline-none" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Masalan: rezolyutsiya juda past." />
         <div className="mt-5 flex justify-end gap-3">
-          <button className="rounded-xl border border-white/10 px-4 py-2 text-white" type="button" onClick={onCancel}>Bekor qilish</button>
+          <button className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={onCancel}>Bekor qilish</button>
           <button className="rounded-xl border border-orange-400/25 bg-orange-400/10 px-4 py-2 font-bold text-orange-300" type="button" onClick={() => onConfirm(reason || "Standart sifat talabiga javob bermaydi")}>Rad etish</button>
         </div>
       </section>
@@ -674,13 +674,13 @@ function FolderModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5">
-      <section className="w-full max-w-lg rounded-2xl border border-white/10 bg-castCard p-5">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#020617]/72 p-5 backdrop-blur-xl">
+      <section className="glass-panel w-full max-w-lg rounded-2xl p-5 shadow-glass">
         <h2 className="text-xl font-black text-white">Yangi papka yaratish</h2>
         <div className="mt-4 grid gap-3">
-          <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={value.name} placeholder="Folder name" onChange={(event) => onChange({ ...value, name: event.target.value })} />
-          <input className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={value.description} placeholder="Description" onChange={(event) => onChange({ ...value, description: event.target.value })} />
-          <select className="h-11 rounded-xl border border-white/10 bg-[#0D0D0D] px-3 text-white outline-none" value={value.permission} onChange={(event) => onChange({ ...value, permission: event.target.value })}>
+          <input className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={value.name} placeholder="Folder name" onChange={(event) => onChange({ ...value, name: event.target.value })} />
+          <input className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={value.description} placeholder="Description" onChange={(event) => onChange({ ...value, description: event.target.value })} />
+          <select className="glass-input h-11 rounded-xl px-3 text-white outline-none" value={value.permission} onChange={(event) => onChange({ ...value, permission: event.target.value })}>
             <option>Super Admin</option>
             <option>Admin</option>
             <option>Operator</option>
@@ -688,7 +688,7 @@ function FolderModal({
           </select>
         </div>
         <div className="mt-5 flex justify-end gap-3">
-          <button className="rounded-xl border border-white/10 px-4 py-2 text-white" type="button" onClick={onCancel}>Bekor qilish</button>
+          <button className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-white backdrop-blur-xl transition hover:border-castGold/35" type="button" onClick={onCancel}>Bekor qilish</button>
           <button className="rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-4 py-2 font-black text-black" type="button" onClick={onConfirm}>Yaratish</button>
         </div>
       </section>

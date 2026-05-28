@@ -36,7 +36,7 @@ export function DashboardSection() {
         <Reveal className="relative [perspective:1200px]">
           <div className="absolute -inset-4 rounded-[28px] bg-[#D4AF37]/10 blur-3xl" />
           <motion.div
-            className="relative rounded-lg border border-white/[0.10] bg-[#111111]/90 p-4 shadow-[0_0_80px_rgba(212,175,55,0.20)] backdrop-blur lg:[transform:perspective(1200px)_rotateX(4deg)_rotateY(8deg)]"
+            className="glass-panel light-sweep relative rounded-lg p-4 shadow-[0_0_80px_rgba(212,175,55,0.18)] lg:[transform:perspective(1200px)_rotateX(4deg)_rotateY(8deg)]"
             whileHover={{ y: -8 }}
             transition={{ type: "spring", stiffness: 220, damping: 20 }}
           >
@@ -53,10 +53,10 @@ export function DashboardSection() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {screens.map((screen) => (
-                <div className="overflow-hidden rounded-lg border border-white/[0.08] bg-black/40" key={screen.title}>
-                  <div className="relative aspect-video bg-[#070707] p-4">
+                <div className="overflow-hidden rounded-lg border border-white/[0.10] bg-white/[0.055] backdrop-blur" key={screen.title}>
+                  <div className="relative aspect-video bg-[#0F172A]/80 p-4">
                     <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(212,175,55,0.20),transparent_42%),linear-gradient(315deg,rgba(52,211,153,0.12),transparent_40%)]" />
-                    <div className="relative flex h-full flex-col justify-between rounded-md border border-white/10 bg-black/40 p-4">
+                    <div className="relative flex h-full flex-col justify-between rounded-md border border-white/10 bg-white/[0.055] p-4 backdrop-blur">
                       <div className="flex items-center justify-between text-[11px] font-black text-white">
                         <span>CASTMAP PLAYER</span>
                         <span className={`h-2.5 w-2.5 rounded-full ${screen.color}`} />
@@ -84,7 +84,7 @@ export function DashboardSection() {
               <MiniStat icon={PieChart} label="Campaigns" value="24" />
             </div>
           </motion.div>
-          <div className="absolute -bottom-5 -left-3 hidden rounded-lg border border-[#D4AF37]/25 bg-[#111111]/90 px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur md:block">
+          <div className="glass-panel absolute -bottom-5 -left-3 hidden rounded-lg border-[#D4AF37]/25 px-4 py-3 shadow-[0_18px_60px_rgba(2,6,23,0.45)] md:block">
             <div className="flex items-center gap-2 text-sm font-black text-white">
               <ScanSearch className="h-4 w-4 text-[#D4AF37]" />
               Screenshot received
@@ -98,7 +98,7 @@ export function DashboardSection() {
 
 function MiniStat({ icon: Icon, label, value }: { icon: typeof Eye; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/[0.08] bg-black/40 p-3">
+    <div className="rounded-lg border border-white/[0.10] bg-white/[0.055] p-3 backdrop-blur">
       <Icon className="h-4 w-4 text-[#D4AF37]" />
       <p className="mt-3 text-[11px] font-bold text-[#A1A1AA]">{label}</p>
       <p className="mt-1 text-lg font-black text-white">{value}</p>

@@ -19,7 +19,7 @@ export function MediaListView({
   onAction: (asset: MediaAsset, action: MediaAction) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-castCard">
+    <div className="glass-panel overflow-hidden rounded-2xl">
       <div className="grid min-w-[1100px] grid-cols-[90px_1.4fr_110px_110px_130px_110px_130px_180px_120px_140px_110px_70px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-castMuted">
         <span>Preview</span><span>Nomi</span><span>Turi</span><span>Hajmi</span><span>Resolution</span><span>Duration</span><span>Status</span><span>Taglar</span><span>Yuklagan</span><span>Sana</span><span>Playlist</span><span />
       </div>

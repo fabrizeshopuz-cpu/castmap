@@ -16,10 +16,10 @@ export function V2AppShell({
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#080808] text-castText">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-black/80 p-5 xl:block">
+    <main className="gradient-background min-h-screen text-castText">
+      <aside className="glass-panel fixed inset-y-0 left-0 hidden w-72 border-r border-white/15 p-5 xl:block">
         <a className="flex items-center gap-3" href="/uz">
-          <span className="grid h-11 w-11 place-items-center rounded-lg border border-castGold/30 bg-castGold/10 text-castGold">
+          <span className="grid h-11 w-11 place-items-center rounded-lg border border-castGold/35 bg-castGold/12 text-castGold shadow-gold">
             <Command className="h-5 w-5" />
           </span>
           <span>
@@ -34,7 +34,7 @@ export function V2AppShell({
             return (
               <a
                 key={item.label}
-                className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-bold transition ${selected ? "border border-castGold/35 bg-castGold/10 text-castGold" : "text-castMuted hover:bg-white/[0.05] hover:text-white"}`}
+                className={`hover-3d flex min-h-11 items-center gap-3 rounded-lg border px-3 text-sm font-bold transition ${selected ? "border-castGold/40 bg-castGold/12 text-castGold shadow-gold" : "border-transparent text-castMuted hover:border-white/15 hover:bg-white/[0.06] hover:text-white"}`}
                 href={item.href}
               >
                 <Icon className="h-4 w-4" />
@@ -46,7 +46,7 @@ export function V2AppShell({
       </aside>
 
       <section className="min-w-0 xl:pl-72">
-        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-white/10 bg-[#080808]/92 px-5 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-white/15 bg-[#0F172A]/78 px-5 backdrop-blur-2xl md:px-8">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-castGold">
               CASTMAP <ChevronRight className="h-3 w-3" /> {active}
@@ -55,7 +55,7 @@ export function V2AppShell({
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-right text-sm text-castMuted md:block">{subtitle}</span>
-            <button className="grid h-10 w-10 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-castMuted" type="button">
+            <button className="grid h-10 w-10 place-items-center rounded-lg border border-white/15 bg-white/[0.06] text-castMuted backdrop-blur-xl" type="button">
               <LogOut className="h-4 w-4" />
             </button>
           </div>
@@ -74,7 +74,7 @@ export function V2MetricCard({ label, value, detail, tone }: { label: string; va
     red: "text-red-300 border-red-400/25 bg-red-400/10",
   }[tone];
   return (
-    <article className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <article className="glass-panel hover-3d rounded-lg p-4">
       <span className="text-sm text-castMuted">{label}</span>
       <strong className="mt-2 block text-3xl text-white">{value}</strong>
       <span className={`mt-4 inline-flex rounded-md border px-2 py-1 text-xs font-bold ${toneClass}`}>{detail}</span>

@@ -14,7 +14,7 @@ interface DeviceTableProps {
 
 function DevicePreview({ device }: { device: Device }) {
   return (
-    <div className="grid h-16 w-24 content-center rounded-xl border border-castGold/25 bg-[radial-gradient(circle_at_75%_35%,rgba(212,175,55,0.35),transparent_26%),linear-gradient(135deg,#3A2208,#0D0D0D)] p-3">
+    <div className="grid h-16 w-24 content-center rounded-xl border border-castGold/25 bg-[radial-gradient(circle_at_75%_35%,rgba(212,175,55,0.30),transparent_26%),linear-gradient(135deg,rgba(59,130,246,0.18),rgba(15,23,42,0.92))] p-3 shadow-gold">
       <small className="text-[9px] uppercase text-white/60">{device.type}</small>
       <b className="truncate text-xs text-white">{device.playlist}</b>
     </div>
@@ -23,7 +23,7 @@ function DevicePreview({ device }: { device: Device }) {
 
 export function DeviceTable({ devices, selectedId, openActionId, onSelect, onToggleActions, onAction }: DeviceTableProps) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-castCard">
+    <div className="glass-panel overflow-x-auto rounded-2xl">
       <div className="grid min-w-[1380px] grid-cols-[300px_180px_140px_120px_110px_110px_170px_130px_100px_100px] gap-4 border-b border-white/10 px-5 py-4 text-xs font-black uppercase text-castMuted">
         <span>Qurilma</span><span>Filial</span><span>Turi</span><span>Holat</span><span>Signal</span><span>Storage</span><span>Playlist</span><span>Last seen</span><span>APK</span><span>Actions</span>
       </div>

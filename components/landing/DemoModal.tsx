@@ -8,9 +8,9 @@ export function DemoModal({ open, onClose, onSubmit }: { open: boolean; onClose:
   return (
     <AnimatePresence>
       {open ? (
-        <motion.div className="fixed inset-0 z-[110] grid place-items-center bg-black/70 px-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-[110] grid place-items-center bg-[#020617]/68 px-4 backdrop-blur-xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <motion.form
-            className="w-full max-w-xl rounded-lg border border-white/10 bg-[#111111] p-5 shadow-[0_0_80px_rgba(212,175,55,0.20)]"
+            className="glass-panel w-full max-w-xl rounded-lg p-5 shadow-[0_0_80px_rgba(212,175,55,0.18)]"
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -36,7 +36,7 @@ export function DemoModal({ open, onClose, onSubmit }: { open: boolean; onClose:
               <Field label="Ekranlar soni" name="screens" placeholder="Masalan: 25" />
               <label className="sm:col-span-2">
                 <span className="text-xs font-bold text-[#A1A1AA]">Izoh</span>
-                <textarea className="mt-2 min-h-28 w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none transition focus:border-[#D4AF37]/60" name="message" placeholder="Qaysi turdagi ekranlar va filiallar bor?" />
+                <textarea className="glass-input mt-2 min-h-28 w-full rounded-lg px-4 py-3 text-sm outline-none transition focus:border-[#D4AF37]/60" name="message" placeholder="Qaysi turdagi ekranlar va filiallar bor?" />
               </label>
             </div>
             <Button className="mt-5 w-full" variant="gold" type="submit">So'rov yuborish</Button>
@@ -51,7 +51,7 @@ function Field({ label, name, placeholder }: { label: string; name: string; plac
   return (
     <label>
       <span className="text-xs font-bold text-[#A1A1AA]">{label}</span>
-      <input className="mt-2 h-12 w-full rounded-lg border border-white/10 bg-black/40 px-4 text-sm text-white outline-none transition focus:border-[#D4AF37]/60" name={name} placeholder={placeholder} required />
+      <input className="glass-input mt-2 h-12 w-full rounded-lg px-4 text-sm outline-none transition focus:border-[#D4AF37]/60" name={name} placeholder={placeholder} required />
     </label>
   );
 }

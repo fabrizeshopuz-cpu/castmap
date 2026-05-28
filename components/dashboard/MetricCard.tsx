@@ -10,17 +10,17 @@ interface MetricCardProps {
 }
 
 const toneClass: Record<MetricCardProps["tone"], string> = {
-  violet: "from-violet-500/70 to-violet-950/70",
-  green: "from-emerald-500/70 to-emerald-950/70",
-  gold: "from-castGold/85 to-castDeepGold/70 text-black",
-  blue: "from-blue-500/70 to-blue-950/70",
-  red: "from-red-500/70 to-red-950/70",
+  violet: "from-violet-400/65 to-violet-900/55 text-violet-100",
+  green: "from-[#22C55E]/70 to-emerald-950/55 text-green-50",
+  gold: "from-[#FACC15]/90 to-castGold/75 text-[#0F172A]",
+  blue: "from-[#3B82F6]/72 to-sky-950/55 text-sky-50",
+  red: "from-[#EF4444]/75 to-red-950/55 text-red-50",
 };
 
 export function MetricCard({ title, value, trend, helper, icon: Icon, tone }: MetricCardProps) {
   return (
-    <article className="group grid min-h-32 grid-cols-[58px_1fr] items-center gap-4 rounded-2xl border border-white/10 bg-castCard p-5 shadow-black/30 transition hover:border-castGold/30 hover:shadow-gold">
-      <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br ${toneClass[tone]}`}>
+    <article className="glass-panel hover-3d group grid min-h-32 grid-cols-[58px_1fr] items-center gap-4 rounded-2xl p-5">
+      <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br shadow-blue ${toneClass[tone]}`}>
         <Icon className="h-7 w-7" />
       </div>
       <div className="min-w-0">

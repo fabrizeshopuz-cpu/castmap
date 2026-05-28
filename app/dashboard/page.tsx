@@ -119,7 +119,7 @@ export default function DashboardPage() {
   }, [store.branches, store.devices]);
 
   return (
-    <main className="flex min-h-screen bg-castBg text-castText max-lg:flex-col">
+    <main className="gradient-background flex min-h-screen text-castText max-lg:flex-col">
       <Sidebar activeLabel="Dashboard" />
       <section className="min-w-0 flex-1">
         <Topbar />
@@ -129,7 +129,7 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-black text-white">Dashboard</h1>
               <p className="mt-1 text-sm text-castMuted">Platforma holati va umumiy statistika</p>
             </div>
-            <button className="min-h-11 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white hover:border-castGold/35" type="button">
+            <button className="min-h-11 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-sm font-bold text-white backdrop-blur-xl hover:border-castGold/35" type="button">
               Hisobotni eksport qilish
             </button>
           </section>

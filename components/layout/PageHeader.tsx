@@ -11,9 +11,9 @@ interface PageHeaderProps {
 
 export function PageHeader({ kicker, title, subtitle, icon: Icon, actionLabel, onAction }: PageHeaderProps) {
   return (
-    <header className="flex items-start justify-between gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 max-xl:flex-col">
+    <header className="glass-panel light-sweep flex items-start justify-between gap-5 rounded-2xl p-5 max-xl:flex-col">
       <div className="flex items-center gap-4">
-        <div className="grid h-14 w-14 place-items-center rounded-2xl border border-castGold/20 bg-castGold/10 text-castGold">
+        <div className="grid h-14 w-14 place-items-center rounded-2xl border border-castGold/30 bg-castGold/12 text-castGold shadow-gold">
           <Icon className="h-7 w-7" />
         </div>
         <div>
@@ -24,7 +24,7 @@ export function PageHeader({ kicker, title, subtitle, icon: Icon, actionLabel, o
       </div>
       {actionLabel ? (
         <button
-          className="min-h-11 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 font-black text-black shadow-gold transition hover:scale-[1.01]"
+          className="min-h-11 rounded-xl border border-castGold/40 bg-gradient-to-r from-[#FACC15] to-castGold px-5 font-black text-[#0F172A] shadow-gold transition hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-px active:scale-[0.98]"
           type="button"
           onClick={onAction}
         >

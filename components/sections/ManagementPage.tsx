@@ -100,7 +100,7 @@ export function ManagementPage({ section }: { section: SectionKey }) {
   };
 
   return (
-    <main className="flex min-h-screen bg-castBg text-castText max-lg:flex-col">
+    <main className="gradient-background flex min-h-screen text-castText max-lg:flex-col">
       <Sidebar activeLabel={config.active} />
       <section className="min-w-0 flex-1">
         <Topbar />
@@ -449,7 +449,7 @@ function Checklist({ title, empty, items, selected, onToggle }: { title: string;
       <b className="text-sm text-white">{title}</b>
       <div className="mt-3 grid max-h-48 gap-2 overflow-auto pr-1">
         {items.length ? items.map((item) => (
-          <label key={item.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 p-2 text-sm hover:border-castGold/30">
+          <label key={item.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-white/[0.055] p-2 text-sm backdrop-blur hover:border-castGold/30">
             <input type="checkbox" checked={selected.includes(item.id)} onChange={() => onToggle(item.id)} />
             <span className="min-w-0">
               <span className="block truncate font-bold text-white">{item.label}</span>
@@ -617,7 +617,7 @@ function CampaignCard({ campaign, openDrawer }: { campaign: Campaign; openDrawer
           const devices = campaignDevices.filter((device) => device.branchId === branch.id);
           const online = devices.filter((device) => device.status === "online").length;
           return (
-            <div key={branch.id} className="rounded-lg border border-white/10 bg-black/20 p-2">
+            <div key={branch.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-2 backdrop-blur">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-white">{branch.name}</span>
                 <StatusSummary onlineCount={online} deviceCount={devices.length} />
@@ -690,7 +690,7 @@ function MonitoringContent({ query, openDrawer }: { query: string; openDrawer: (
         const previewUrl = device.screenshotUrl;
         return (
         <Card key={device.id} className="p-3">
-          <div className="aspect-video overflow-hidden rounded-xl border border-white/10 bg-black">
+          <div className="aspect-video overflow-hidden rounded-xl border border-white/10 bg-[#020617]/82">
             <LivePreview device={device} media={current} source={previewUrl} waitingClassName="text-castMuted" />
           </div>
           <div className="mt-3 flex items-start justify-between gap-3">

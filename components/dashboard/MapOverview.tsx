@@ -26,14 +26,14 @@ export function MapOverview({ markers }: MapOverviewProps) {
   const selectedCount = useMemo(() => visibleMarkers.reduce((sum, marker) => sum + marker.value, 0), [visibleMarkers]);
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-castCard p-5 shadow-black/30 lg:col-span-2">
+    <article className="glass-panel hover-3d rounded-2xl p-5 lg:col-span-2">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-black text-white">O'zbekiston bo'yicha ekranlar</h2>
           <p className="mt-1 text-sm text-castMuted">{selectedCity === "all" ? "Barcha shaharlar" : selectedCity}: {selectedCount} ta TV</p>
         </div>
         <select
-          className="h-10 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm font-bold text-white outline-none"
+          className="glass-input h-10 rounded-xl px-3 text-sm font-bold outline-none"
           value={selectedCity}
           onChange={(event) => setSelectedCity(event.target.value)}
         >
@@ -42,7 +42,7 @@ export function MapOverview({ markers }: MapOverviewProps) {
         </select>
       </div>
 
-      <div className="relative rounded-2xl border border-white/10 bg-[#0D0D0D] p-2">
+      <div className="relative rounded-2xl border border-white/10 bg-white/[0.055] p-2 backdrop-blur">
         <div className="relative aspect-[660/382] w-full rounded-xl bg-[#b7ccd8]">
           <img
             src="/uzbekistan-map.png"
@@ -60,16 +60,16 @@ export function MapOverview({ markers }: MapOverviewProps) {
               title={`${marker.city}: ${marker.value} TV`}
             >
               {marker.value}
-              <span className="absolute left-10 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-black/75 px-2 py-1 text-xs font-semibold text-white drop-shadow md:left-14 md:text-sm">{marker.city}</span>
+              <span className="absolute left-10 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-[#0F172A]/80 px-2 py-1 text-xs font-semibold text-white drop-shadow backdrop-blur-xl md:left-14 md:text-sm">{marker.city}</span>
             </button>
           ))}
 
-          {!markers.length ? <div className="absolute inset-0 grid place-items-center bg-black/45 text-sm text-white">Xarita ma'lumotlari tozalangan</div> : null}
+          {!markers.length ? <div className="absolute inset-0 grid place-items-center bg-[#0F172A]/55 text-sm text-white backdrop-blur">Xarita ma'lumotlari tozalangan</div> : null}
         </div>
       </div>
 
       <button
-        className="mt-5 min-h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-left text-sm text-white"
+        className="mt-5 min-h-10 w-full rounded-xl border border-white/15 bg-white/[0.06] px-4 text-left text-sm text-white backdrop-blur-xl"
         type="button"
         onClick={() => setSelectedCity("all")}
       >

@@ -18,7 +18,7 @@ const tones = {
 export function MediaMetricCard({ title, value, subtext, tone, progress }: MediaMetric) {
   const Icon = icons[tone];
   return (
-    <article className="rounded-2xl border border-white/10 bg-castCard p-5 shadow-[0_0_32px_rgba(0,0,0,0.24)] transition hover:border-castGold/35 hover:bg-castPanel">
+    <article className="glass-panel hover-3d rounded-2xl p-5 transition hover:border-castGold/35">
       <div className="flex items-start gap-4">
         <div className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tones[tone]}`}>
           <Icon className="h-6 w-6" />

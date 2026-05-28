@@ -14,7 +14,7 @@ const toneClass: Record<DeviceMetricCardProps["tone"], string> = {
 
 export function DeviceMetricCard({ title, value, subtext, tone }: DeviceMetricCardProps) {
   return (
-    <article className="grid min-h-32 grid-cols-[56px_1fr] items-center gap-4 rounded-2xl border border-white/10 bg-castCard p-5 transition hover:border-castGold/35 hover:bg-[#171717] hover:shadow-gold">
+    <article className="glass-panel hover-3d grid min-h-32 grid-cols-[56px_1fr] items-center gap-4 rounded-2xl p-5 transition hover:border-castGold/35 hover:shadow-gold">
       <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br text-xs font-black ${toneClass[tone]}`}>{tone === "green" ? "ON" : tone === "red" ? "OFF" : tone === "orange" ? "!" : "TV"}</div>
       <div>
         <span className="text-sm text-castMuted">{title}</span>

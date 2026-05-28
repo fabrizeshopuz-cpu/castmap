@@ -2,7 +2,7 @@ import { UploadCloud } from "lucide-react";
 
 export function MediaEmptyState({ onUpload }: { onUpload: () => void }) {
   return (
-    <div className="grid min-h-[420px] place-items-center rounded-2xl border border-white/10 bg-castCard p-8 text-center">
+    <div className="glass-panel grid min-h-[420px] place-items-center rounded-2xl p-8 text-center">
       <div>
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-castGold/10 text-castGold">
           <UploadCloud className="h-8 w-8" />

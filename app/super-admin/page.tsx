@@ -15,13 +15,13 @@ export default function SuperAdminPage() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="rounded-lg border border-white/10 bg-[#111]">
+        <div className="glass-panel rounded-lg">
           <div className="flex items-center justify-between border-b border-white/10 p-4">
             <div>
               <h2 className="text-xl font-black text-white">Tenants</h2>
               <p className="mt-1 text-sm text-castMuted">Mijozlar, tariflar, ekran limitlari va platform holati</p>
             </div>
-            <button className="rounded-lg bg-castGold px-4 py-2 text-sm font-black text-black" type="button">Tenant yaratish</button>
+            <button className="rounded-lg bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-4 py-2 text-sm font-black text-[#0F172A] shadow-gold transition hover:-translate-y-0.5" type="button">Tenant yaratish</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
@@ -50,11 +50,11 @@ export default function SuperAdminPage() {
         </div>
 
         <aside className="grid content-start gap-4">
-          <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+          <section className="glass-panel rounded-lg p-4">
             <h2 className="text-lg font-black text-white">Player fleet</h2>
             <div className="mt-4 grid gap-3">
               {v2Devices.map((device) => (
-                <article key={device.id} className="rounded-lg border border-white/10 bg-black/35 p-3">
+                <article key={device.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
                   <div className="flex items-center justify-between gap-3">
                     <b className="text-white">{device.name}</b>
                     <V2Status value={device.status} />
@@ -66,11 +66,11 @@ export default function SuperAdminPage() {
             </div>
           </section>
 
-          <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+          <section className="glass-panel rounded-lg p-4">
             <h2 className="text-lg font-black text-white">Audit log</h2>
             <div className="mt-4 grid gap-3">
               {auditRows.map(([time, actor, action, detail]) => (
-                <article key={`${time}-${action}`} className="rounded-lg border border-white/10 bg-black/35 p-3">
+                <article key={`${time}-${action}`} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <b className="text-white">{action}</b>
                     <span className="text-castMuted">{time}</span>

@@ -21,15 +21,15 @@ const iconMap = {
 };
 
 const toneClass: Record<ActivityItem["tone"], string> = {
-  green: "from-emerald-500/70 to-emerald-950/70",
-  blue: "from-blue-500/70 to-blue-950/70",
+  green: "from-[#22C55E]/70 to-emerald-950/60",
+  blue: "from-[#3B82F6]/70 to-sky-950/60",
   violet: "from-violet-500/70 to-violet-950/70",
   red: "from-red-500/70 to-red-950/70",
 };
 
 export function ActivityFeed({ data }: ActivityFeedProps) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-castCard p-5 shadow-black/30">
+    <article className="glass-panel hover-3d rounded-2xl p-5">
       <h2 className="text-lg font-black text-white">So'nggi faoliyatlar</h2>
       <div className="mt-4 grid">
         {!data.length ? <p className="py-4 text-sm text-castMuted">Faoliyatlar tarixi tozalangan.</p> : null}
@@ -52,7 +52,7 @@ export function ActivityFeed({ data }: ActivityFeedProps) {
           );
         })}
       </div>
-      <button className="mt-5 min-h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-left text-sm text-white" type="button">
+      <button className="mt-5 min-h-10 w-full rounded-xl border border-white/15 bg-white/[0.06] px-4 text-left text-sm text-white backdrop-blur-xl" type="button">
         Barcha faoliyatlar
       </button>
     </article>

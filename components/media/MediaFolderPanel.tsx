@@ -13,7 +13,7 @@ export function MediaFolderPanel({
   onCreate: () => void;
 }) {
   return (
-    <aside className="rounded-2xl border border-white/10 bg-castCard p-4">
+    <aside className="glass-panel rounded-2xl p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-castMuted">Papkalar</h3>
         <button className="grid h-8 w-8 place-items-center rounded-lg border border-castGold/25 text-castGold hover:bg-castGold/10" type="button" onClick={onCreate}>

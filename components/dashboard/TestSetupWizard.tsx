@@ -34,7 +34,7 @@ export function TestSetupWizard() {
   const latestCampaign = store.campaigns[0];
 
   return (
-    <section className="mt-4 rounded-2xl border border-castGold/20 bg-[linear-gradient(135deg,rgba(212,175,55,0.12),rgba(255,255,255,0.03))] p-5 shadow-gold">
+    <section className="glass-panel light-sweep mt-4 rounded-2xl border-castGold/20 bg-[linear-gradient(135deg,rgba(212,175,55,0.12),rgba(255,255,255,0.04),rgba(59,130,246,0.08))] p-5 shadow-gold">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">TEST SETUP</p>
@@ -42,7 +42,7 @@ export function TestSetupWizard() {
           <p className="mt-1 text-sm text-castMuted">APK player ekranida chiqqan kodni kiriting. Qurilma shu kod orqali adashmasdan lokatsiyaga bog'lanadi.</p>
         </div>
         <button
-          className="flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-5 font-black text-black"
+          className="flex min-h-11 items-center gap-2 rounded-xl border border-castGold/40 bg-gradient-to-r from-[#FACC15] to-castGold px-5 font-black text-[#0F172A] shadow-gold"
           type="button"
           onClick={create}
         >
@@ -56,7 +56,7 @@ export function TestSetupWizard() {
         <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.16em] text-castMuted">
           Viloyat
           <select
-            className="h-11 rounded-xl border border-white/10 bg-black/30 px-3 text-sm font-bold normal-case tracking-normal text-white outline-none transition hover:border-castGold/30 focus:border-castGold/60"
+            className="glass-input h-11 rounded-xl px-3 text-sm font-bold normal-case tracking-normal outline-none transition hover:border-castGold/30 focus:border-castGold/60"
             value={form.city}
             onChange={(event) => update("city", event.target.value)}
           >
@@ -87,7 +87,7 @@ function Field({ label, value, type = "text", onChange }: { label: string; value
     <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.16em] text-castMuted">
       {label}
       <input
-        className="h-11 rounded-xl border border-white/10 bg-black/30 px-3 text-sm font-bold normal-case tracking-normal text-white outline-none transition hover:border-castGold/30 focus:border-castGold/60"
+        className="glass-input h-11 rounded-xl px-3 text-sm font-bold normal-case tracking-normal outline-none transition hover:border-castGold/30 focus:border-castGold/60"
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -98,7 +98,7 @@ function Field({ label, value, type = "text", onChange }: { label: string; value
 
 function SummaryCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <article className="rounded-xl border border-white/10 bg-black/25 p-4">
+    <article className="rounded-xl border border-white/10 bg-white/[0.055] p-4 backdrop-blur">
       <div className="flex items-center gap-2 text-castGold">{icon}<span className="text-sm font-black text-white">{title}</span></div>
       <p className="mt-2 text-sm text-castMuted">{text}</p>
     </article>

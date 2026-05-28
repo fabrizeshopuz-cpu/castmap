@@ -25,7 +25,7 @@ export function DeviceRowActions({ deviceId, open, onToggle, onAction }: DeviceR
         <MoreHorizontal className="h-4 w-4" />
       </button>
       {open ? (
-        <div className="absolute right-0 top-11 z-20 grid min-w-52 rounded-xl border border-white/10 bg-[#151515] p-2 shadow-2xl">
+        <div className="glass-panel absolute right-0 top-11 z-20 grid min-w-52 rounded-xl p-2 shadow-glass">
           {actions.map(([id, label]) => (
             <button
               key={id}

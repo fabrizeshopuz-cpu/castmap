@@ -25,10 +25,10 @@ export function StatsChart({ data }: StatsChartProps) {
   const areaPoints = `${padX},${height - padY} ${points} ${width - padX},${height - padY}`;
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-castCard p-5 shadow-black/30 lg:col-span-2">
+    <article className="glass-panel hover-3d rounded-2xl p-5 lg:col-span-2">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-lg font-black text-white">Ko'rsatishlar statistikasi</h2>
-        <button className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white" type="button">7 kunlik</button>
+        <button className="rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2 text-sm text-white backdrop-blur-xl" type="button">7 kunlik</button>
       </div>
       <svg className="h-[250px] w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="7 kunlik ko'rsatishlar statistikasi">
         {[0, 200, 400, 600, 800].map((value) => {
@@ -43,7 +43,7 @@ export function StatsChart({ data }: StatsChartProps) {
           return (
             <g key={item.day}>
               <circle cx={x} cy={y} r="4" fill="#D4AF37" />
-              <text x={x} y={height - 7} fill="#A1A1AA" fontSize="12" textAnchor="middle">{item.day}</text>
+              <text x={x} y={height - 7} fill="#94A3B8" fontSize="12" textAnchor="middle">{item.day}</text>
             </g>
           );
         })}

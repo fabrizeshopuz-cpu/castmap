@@ -10,7 +10,7 @@ export function StorageAnalytics({ assets }: { assets: MediaAsset[] }) {
   const expired = assets.filter((asset) => asset.status === "expired").length;
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-castCard p-5">
+    <section className="glass-panel rounded-2xl p-5">
       <h3 className="text-lg font-black text-white">Storage tahlili</h3>
       <div className="mt-4 grid gap-4">
         <StorageBar label="Total storage" value="1 TB" percent={100} color="bg-white/20" />
@@ -52,7 +52,7 @@ function StorageBar({ label, value, percent, color }: { label: string; value: st
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <div className="rounded-xl border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
       <b className="block text-xl text-white">{value}</b>
       <span className="text-xs text-castMuted">{label}</span>
     </div>

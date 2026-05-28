@@ -10,7 +10,7 @@ export function Navbar({ onDemo }: { onDemo: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#0A0A0A]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/[0.12] bg-[#0F172A]/72 backdrop-blur-2xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a className="flex items-center gap-3" href="#" aria-label="CASTMAP bosh sahifa">
           <span className="grid h-11 w-11 place-items-center rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-sm font-black text-[#D4AF37] shadow-[0_0_34px_rgba(212,175,55,0.22)]">
@@ -52,7 +52,7 @@ export function Navbar({ onDemo }: { onDemo: () => void }) {
       </div>
 
       {open ? (
-        <div className="border-t border-white/[0.08] bg-[#0A0A0A]/95 px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.48)] lg:hidden">
+        <div className="glass-panel border-t border-white/[0.12] px-4 py-4 shadow-[0_24px_80px_rgba(2,6,23,0.48)] lg:hidden">
           <nav className="mx-auto grid max-w-7xl gap-2 text-sm font-bold text-[#A1A1AA]" aria-label="Mobil menyu">
             {navItems.map((item) => (
               <a className="rounded-lg px-3 py-3 transition hover:bg-white/[0.04] hover:text-[#D4AF37]" href={`#${slug(item)}`} key={item} onClick={() => setOpen(false)}>

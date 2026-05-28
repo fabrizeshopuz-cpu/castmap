@@ -54,7 +54,7 @@ export function AppearanceControls() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[90] flex max-w-[calc(100vw-32px)] flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/75 p-2 text-xs font-black text-white shadow-gold backdrop-blur-xl">
+    <div className="glass-panel fixed bottom-4 right-4 z-[90] flex max-w-[calc(100vw-32px)] flex-wrap items-center gap-2 rounded-xl p-2 text-xs font-black text-white shadow-gold">
       <span className="hidden px-2 text-castMuted sm:inline">{text.theme}</span>
       <button
         className={`flex min-h-9 items-center gap-2 rounded-lg px-3 ${theme === "light" ? "bg-castGold text-black" : "border border-white/10 bg-white/[0.04] text-castMuted"}`}
@@ -77,7 +77,7 @@ export function AppearanceControls() {
         <span className="hidden sm:inline">{text.lang}</span>
         <select
           aria-label={text.lang}
-          className="h-7 rounded-md border border-white/10 bg-[#0D0D0D] px-2 text-xs font-black text-white outline-none"
+          className="h-7 rounded-md border border-white/15 bg-white/[0.06] px-2 text-xs font-black text-white outline-none"
           value={language}
           onChange={(event) => updateLanguage(event.target.value as UiLanguage)}
         >

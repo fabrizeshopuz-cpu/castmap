@@ -20,7 +20,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export function DeviceDetailDrawer({ device, onClose, onAction }: DeviceDetailDrawerProps) {
   return (
-    <aside className="sticky top-5 rounded-2xl border border-white/10 bg-castCard p-5 shadow-2xl max-xl:fixed max-xl:inset-0 max-xl:z-50 max-xl:overflow-auto max-xl:rounded-none">
+    <aside className="glass-panel sticky top-5 rounded-2xl p-5 shadow-glass max-xl:fixed max-xl:inset-0 max-xl:z-50 max-xl:overflow-auto max-xl:rounded-none">
       <header className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-white">{device.name}</h2>
@@ -31,7 +31,7 @@ export function DeviceDetailDrawer({ device, onClose, onAction }: DeviceDetailDr
         </button>
       </header>
 
-      <div className="mb-5 grid min-h-44 content-center rounded-2xl border border-castGold/25 bg-[radial-gradient(circle_at_72%_32%,rgba(212,175,55,0.35),transparent_28%),linear-gradient(135deg,#3A2208,#0D0D0D)] p-5">
+      <div className="mb-5 grid min-h-44 content-center rounded-2xl border border-castGold/25 bg-[radial-gradient(circle_at_72%_32%,rgba(212,175,55,0.30),transparent_28%),linear-gradient(135deg,rgba(59,130,246,0.18),rgba(15,23,42,0.92))] p-5 shadow-gold">
         <small className="uppercase tracking-[0.2em] text-white/60">Screenshot preview</small>
         <b className="mt-2 text-3xl text-white">{device.playlist}</b>
         <span className="mt-2 text-castGold">{device.branch}</span>

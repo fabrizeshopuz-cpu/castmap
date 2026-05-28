@@ -56,12 +56,12 @@ export function ClientCabinet() {
         {metrics.map((metric) => <V2MetricCard key={metric.label} {...metric} />)}
       </section>
 
-      <section className="rounded-lg border border-white/10 bg-[#111] p-3">
+      <section className="glass-panel rounded-lg p-3">
         <div className="flex flex-wrap items-center gap-2">
           {(Object.keys(tabLabels) as CabinetTab[]).map((item) => (
             <button
               key={item}
-              className={`min-h-10 rounded-lg px-3 text-sm font-black transition ${tab === item ? "bg-castGold text-black" : "border border-white/10 bg-white/[0.04] text-castMuted hover:text-white"}`}
+              className={`min-h-10 rounded-lg px-3 text-sm font-black transition ${tab === item ? "border border-castGold/45 bg-castGold/85 text-[#0F172A] shadow-gold" : "border border-white/15 bg-white/[0.06] text-castMuted backdrop-blur-xl hover:border-castGold/30 hover:text-white"}`}
               type="button"
               onClick={() => setTab(item)}
             >
@@ -96,7 +96,7 @@ function OverviewPanel({ query, setTab }: { query: string; setTab: (tab: Cabinet
       <div className="grid gap-5">
         <QuickSetup />
         <WorkflowGrid setTab={setTab} />
-        <section className="rounded-lg border border-white/10 bg-[#111]">
+        <section className="glass-panel rounded-lg">
           <PanelHeader icon={Monitor} title="TV qurilmalar" action="TV ulash" onAction={() => setTab("devices")} />
           <DeviceRows devices={filteredDevices.slice(0, 5)} />
         </section>
@@ -121,7 +121,7 @@ function WorkflowGrid({ setTab }: { setTab: (tab: CabinetTab) => void }) {
       {items.map((item) => {
         const Icon = item.icon;
         return (
-          <button key={item.title} className="rounded-lg border border-white/10 bg-[#111] p-4 text-left transition hover:border-castGold/35" type="button" onClick={() => setTab(item.tab)}>
+          <button key={item.title} className="glass-panel hover-3d rounded-lg p-4 text-left transition hover:border-castGold/35" type="button" onClick={() => setTab(item.tab)}>
             <Icon className="h-6 w-6 text-castGold" />
             <b className="mt-4 block text-white">{item.title}</b>
             <span className="mt-2 block text-sm text-castMuted">{item.detail}</span>
@@ -147,7 +147,7 @@ function QuickSetup() {
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <section className="rounded-lg border border-castGold/25 bg-castGold/10 p-4">
+    <section className="glass-panel rounded-lg border-castGold/25 bg-castGold/10 p-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-60 flex-1">
           <div className="flex items-center gap-2 text-castGold">
@@ -214,7 +214,7 @@ function CampaignForm() {
   };
 
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <section className="glass-panel hover-3d rounded-lg p-4">
       <FormTitle icon={Activity} title="Kampaniya yaratish" />
       <div className="mt-4 grid gap-3">
         <Input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Kampaniya nomi" />
@@ -243,7 +243,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
   const devices = store.devices.filter((device) => campaign.targetBranches.includes(device.branchId));
   const playlists = campaign.assignedPlaylists.map((id) => store.playlists.find((playlist) => playlist.id === id)).filter(Boolean) as Playlist[];
   return (
-    <article className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <article className="glass-panel hover-3d rounded-lg p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-black text-white">{campaign.name}</h3>
@@ -271,7 +271,7 @@ function LocationsPanel({ query }: { query: string }) {
   return (
     <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
       <LocationForm />
-      <div className="rounded-lg border border-white/10 bg-[#111]">
+      <div className="glass-panel rounded-lg">
         <PanelHeader icon={MapPin} title="Lokatsiyalar" />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
@@ -306,7 +306,7 @@ function LocationForm() {
   const [form, setForm] = useState({ name: "Yangi lokatsiya", city: "Toshkent", address: "Toshkent", campaignId: "", workStart: "09:00", workEnd: "22:00" });
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <section className="glass-panel hover-3d rounded-lg p-4">
       <FormTitle icon={MapPin} title="Lokatsiya qo'shish" />
       <div className="mt-4 grid gap-3">
         <Input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Lokatsiya nomi" />
@@ -332,7 +332,7 @@ function DevicesPanel({ query }: { query: string }) {
   return (
     <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
       <PairDeviceForm />
-      <section className="rounded-lg border border-white/10 bg-[#111]">
+      <section className="glass-panel rounded-lg">
         <PanelHeader icon={Monitor} title="TV qurilmalar" />
         <DeviceRows devices={devices} />
       </section>
@@ -348,7 +348,7 @@ function PairDeviceForm() {
   }, [store.branches]);
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <section className="glass-panel hover-3d rounded-lg p-4">
       <FormTitle icon={Monitor} title="TV qurilma ulash" />
       <div className="mt-4 grid gap-3">
         <Input value={form.code} onChange={(event) => update("code", event.target.value)} placeholder="TV pairing code" />
@@ -436,7 +436,7 @@ function PlaylistForm() {
     store.publishPlaylist(playlist.id);
   };
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <section className="glass-panel hover-3d rounded-lg p-4">
       <FormTitle icon={GalleryVerticalEnd} title="Playlist yaratish" />
       <div className="mt-4 grid gap-3">
         <Input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Playlist nomi" />
@@ -467,7 +467,7 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
   const branch = store.branches.find((item) => item.id === playlist.branchId);
   const devices = store.devices.filter((device) => playlist.deviceIds?.includes(device.id));
   return (
-    <article className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <article className="glass-panel hover-3d rounded-lg p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-black text-white">{playlist.name}</h3>
@@ -478,7 +478,7 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
       <ol className="mt-4 grid gap-2 text-sm text-white">
         {playlist.items.map((item, index) => {
           const media = store.media.find((asset) => asset.id === item.mediaId);
-          return <li key={item.id} className="rounded-lg border border-white/10 bg-black/25 p-2">{index + 1}. {media?.name || item.mediaId}</li>;
+          return <li key={item.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-2 backdrop-blur">{index + 1}. {media?.name || item.mediaId}</li>;
         })}
       </ol>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -512,7 +512,7 @@ function MediaPanel({ query }: { query: string }) {
           ["Rasm", "JPG, PNG, WEBP, SVG", "file"],
           ["Stream URL", "HLS, DASH, RTSP yoki MP4 live URL", "stream"],
         ].map(([title, detail, mode]) => (
-          <button key={title} className="rounded-lg border border-white/10 bg-[#111] p-4 text-left transition hover:border-castGold/35" type="button" onClick={() => openUpload(mode as "file" | "stream")}>
+          <button key={title} className="glass-panel hover-3d rounded-lg p-4 text-left transition hover:border-castGold/35" type="button" onClick={() => openUpload(mode as "file" | "stream")}>
             <Clapperboard className="h-5 w-5 text-castGold" />
             <b className="mt-4 block text-white">{title}</b>
             <span className="mt-2 block text-sm text-castMuted">{detail}</span>
@@ -520,7 +520,7 @@ function MediaPanel({ query }: { query: string }) {
         ))}
       </section>
 
-      <section className="rounded-lg border border-white/10 bg-[#111]">
+      <section className="glass-panel rounded-lg">
         <PanelHeader icon={Clapperboard} title="Media kutubxona" action="Media qo'shish" onAction={() => openUpload("file")} />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
@@ -563,7 +563,7 @@ function BillingPanel() {
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {store.billingPlans.map((plan) => (
-        <article key={plan.id} className={`rounded-lg border bg-[#111] p-4 ${plan.current ? "border-castGold/40" : "border-white/10"}`}>
+        <article key={plan.id} className={`glass-panel hover-3d rounded-lg p-4 ${plan.current ? "border-castGold/40" : "border-white/10"}`}>
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-lg font-black text-white">{plan.name}</h3>
             {plan.current ? <V2Status value="current" /> : null}
@@ -586,7 +586,7 @@ function LivePanel({ query }: { query: string }) {
         const current = findCurrentMedia(device, store.media, store.playlists);
         const source = device.screenshotUrl;
         return (
-          <article key={device.id} className="rounded-lg border border-white/10 bg-[#111] p-4">
+          <article key={device.id} className="glass-panel hover-3d rounded-lg p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="font-black text-white">{device.name}</h3>
@@ -594,7 +594,7 @@ function LivePanel({ query }: { query: string }) {
               </div>
               <V2Status value={device.status} />
             </div>
-            <div className="mt-4 aspect-video overflow-hidden rounded-lg border border-white/10 bg-black">
+            <div className="mt-4 aspect-video overflow-hidden rounded-lg border border-white/10 bg-[#020617]/80">
               <LivePreview device={device} media={current} source={source} />
             </div>
             <div className="mt-4 grid gap-2 text-sm">
@@ -628,7 +628,7 @@ function ApkPanel() {
   const latest = store.apkVersions.find((version) => version.status === "latest") || store.apkVersions[0];
   return (
     <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <section className="rounded-lg border border-white/10 bg-[#111]">
+      <section className="glass-panel rounded-lg">
         <PanelHeader icon={Smartphone} title="APK versiyalar" action={latest ? "Barcha TVga update" : undefined} onAction={() => latest && store.rolloutApk(latest.id)} />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
@@ -656,11 +656,11 @@ function ApkPanel() {
         </div>
       </section>
       <aside className="grid content-start gap-4">
-        <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+        <section className="glass-panel hover-3d rounded-lg p-4">
           <h2 className="text-lg font-black text-white">TV APK holati</h2>
           <div className="mt-4 grid gap-3">
             {store.devices.map((device) => (
-              <div key={device.id} className="rounded-lg border border-white/10 bg-black/25 p-3">
+              <div key={device.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
                 <div className="flex items-center justify-between gap-3">
                   <b className="text-white">{device.name}</b>
                   <V2Status value={device.apkVersion === latest?.version ? "latest" : "update"} />
@@ -671,11 +671,11 @@ function ApkPanel() {
             ))}
           </div>
         </section>
-        <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+        <section className="glass-panel hover-3d rounded-lg p-4">
           <h2 className="text-lg font-black text-white">Update commandlar</h2>
           <div className="mt-4 grid gap-2">
             {store.commands.filter((command) => command.type === "UPDATE_APK").slice(0, 6).map((command) => (
-              <div key={command.id} className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm">
+              <div key={command.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 text-sm backdrop-blur">
                 <b className="text-white">{command.status}</b>
                 <p className="mt-1 text-castMuted">{command.message}</p>
               </div>
@@ -692,7 +692,7 @@ function PublishedPlaylistCard() {
   const playlist = store.playlists.find((item) => item.status === "published") || store.playlists[0];
   if (!playlist) return null;
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <section className="glass-panel hover-3d rounded-lg p-4">
       <h2 className="text-lg font-black text-white">Published playlist</h2>
       <p className="mt-2 text-sm text-castMuted">{playlist.name}</p>
       <ol className="mt-4 grid gap-2 text-sm text-white">
@@ -708,11 +708,11 @@ function PublishedPlaylistCard() {
 function CampaignHealth() {
   const store = useCastmapStore();
   return (
-    <section className="rounded-lg border border-white/10 bg-[#111] p-4">
+    <section className="glass-panel hover-3d rounded-lg p-4">
       <h2 className="text-lg font-black text-white">Kampaniya holati</h2>
       <div className="mt-4 grid gap-3">
         {store.campaigns.slice(0, 4).map((campaign) => (
-          <div key={campaign.id} className="rounded-lg border border-white/10 bg-black/25 p-3">
+          <div key={campaign.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
             <div className="flex items-center justify-between gap-3">
               <b className="text-white">{campaign.name}</b>
               <V2Status value={campaign.status} />
@@ -748,7 +748,7 @@ function FormTitle({ icon: Icon, title }: { icon: typeof Monitor; title: string 
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/25 p-3">
+    <div className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
       <span className="text-xs text-castMuted">{label}</span>
       <b className="mt-1 block truncate text-white">{value}</b>
     </div>

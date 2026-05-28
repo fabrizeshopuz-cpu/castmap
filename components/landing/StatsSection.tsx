@@ -19,7 +19,7 @@ export function StatsSection() {
           const Icon = stat.icon;
           return (
             <Reveal delay={index * 0.05} key={stat.label}>
-              <TiltCard className="rounded-lg border border-white/[0.08] bg-[#111111]/80 p-5 text-center shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur">
+              <TiltCard className="glass-panel rounded-lg p-5 text-center shadow-[0_18px_60px_rgba(2,6,23,0.22)]">
                 <div className="mx-auto grid h-11 w-11 place-items-center rounded-lg border border-[#D4AF37]/25 bg-[#D4AF37]/10 text-[#D4AF37]">
                   <Icon className="h-5 w-5" />
                 </div>

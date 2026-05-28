@@ -28,11 +28,11 @@ export function MediaActionMenu({
 }) {
   return (
     <div className="relative shrink-0">
-      <button className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-black/45 text-white hover:border-castGold/35" type="button" onClick={(event) => { event.stopPropagation(); onToggle(); }}>
+      <button className="grid h-9 w-9 place-items-center rounded-xl border border-white/15 bg-white/[0.06] text-white backdrop-blur-xl hover:border-castGold/35" type="button" onClick={(event) => { event.stopPropagation(); onToggle(); }}>
         <MoreVertical className="h-4 w-4" />
       </button>
       {open ? (
-        <div className="absolute right-0 top-11 z-50 max-h-80 w-56 overflow-y-auto rounded-xl border border-white/10 bg-[#101010] p-1 shadow-2xl shadow-black/60">
+        <div className="glass-panel absolute right-0 top-11 z-50 max-h-80 w-56 overflow-y-auto rounded-xl p-1 shadow-glass">
           {asset.status === "approval" ? (
             <>
               <MenuButton label="Tasdiqlash" onClick={() => onAction(asset, "approve")} />

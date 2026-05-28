@@ -29,7 +29,7 @@ export function SolutionSection() {
             const Icon = feature.icon;
             return (
               <Reveal delay={index * 0.04} key={feature.title}>
-                <TiltCard className="group h-full rounded-lg border border-white/[0.08] bg-[#111111]/80 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur transition hover:border-[#D4AF37]/40 hover:shadow-[0_0_44px_rgba(212,175,55,0.14)]">
+                <TiltCard className="glass-panel group h-full rounded-lg p-5 shadow-[0_18px_60px_rgba(2,6,23,0.22)] transition hover:border-[#D4AF37]/40 hover:shadow-[0_0_44px_rgba(212,175,55,0.14)]">
                   <div className="grid h-11 w-11 place-items-center rounded-lg border border-[#D4AF37]/25 bg-[#D4AF37]/10 text-[#D4AF37]">
                     <Icon className="h-5 w-5" />
                   </div>
