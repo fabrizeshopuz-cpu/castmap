@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { V2AppShell, V2MetricCard, V2Status } from "@/components/v2/V2Shell";
 import { clientNav } from "@/lib/castmap-v2";
 import { useCastmapStore } from "@/lib/store";
-import type { Branch, Campaign, Device, Playlist } from "@/types";
+import type { Branch, Campaign, Device, MediaAsset, Playlist } from "@/types";
 
 type CabinetTab = "overview" | "campaigns" | "locations" | "devices" | "playlists" | "media" | "live" | "apk" | "billing";
 
@@ -582,7 +582,7 @@ function LivePanel({ query }: { query: string }) {
   return (
     <section className="grid gap-4 xl:grid-cols-3 md:grid-cols-2">
       {devices.map((device) => {
-        const current = store.media.find((asset) => asset.id === device.currentMediaId);
+        const current = findCurrentMedia(device, store.media, store.playlists);
         const source = current?.fileUrl || current?.cdnUrl || device.screenshotUrl;
         const isVideo = current?.type === "video";
         return (
@@ -618,6 +618,14 @@ function LivePanel({ query }: { query: string }) {
       })}
     </section>
   );
+}
+
+function findCurrentMedia(device: Device, media: MediaAsset[], playlists: Playlist[]) {
+  const direct = media.find((asset) => asset.id === device.currentMediaId);
+  if (direct) return direct;
+
+  const playlistItem = playlists.flatMap((playlist) => playlist.items).find((item) => item.id === device.currentMediaId);
+  return media.find((asset) => asset.id === playlistItem?.mediaId);
 }
 
 function ApkPanel() {

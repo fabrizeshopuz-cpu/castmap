@@ -684,7 +684,8 @@ function MonitoringContent({ query, openDrawer }: { query: string; openDrawer: (
   return (
     <section className="grid gap-4 2xl:grid-cols-4 xl:grid-cols-3 md:grid-cols-2">
       {devices.map((device) => {
-        const current = store.media.find((media) => media.id === device.currentMediaId);
+        const playlistItem = store.playlists.flatMap((playlist) => playlist.items).find((item) => item.id === device.currentMediaId);
+        const current = store.media.find((media) => media.id === device.currentMediaId || media.id === playlistItem?.mediaId);
         const previewUrl = current?.fileUrl || current?.cdnUrl || device.screenshotUrl;
         return (
         <Card key={device.id} className="p-3">
