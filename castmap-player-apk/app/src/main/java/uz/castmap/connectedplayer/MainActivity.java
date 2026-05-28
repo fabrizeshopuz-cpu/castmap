@@ -59,7 +59,8 @@ public class MainActivity extends Activity {
     private static final String PREFS = "castmap-player";
     private static final String KEY_CODE = "device_code";
     private static final String KEY_LAST_PAYLOAD = "last_payload";
-    private static final String APP_VERSION = "1.1.0";
+    private static final String KEY_LANGUAGE = "player_language";
+    private static final String APP_VERSION = "1.2.0";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -73,6 +74,7 @@ public class MainActivity extends Activity {
     private boolean stoppedBySchedule = false;
     private JSONObject currentDevice;
     private JSONObject weather;
+    private String language = "uz";
     private long centerDownAt = 0L;
     private ExoPlayer activeVideoPlayer;
 
@@ -99,10 +101,11 @@ public class MainActivity extends Activity {
         hideSystemUi();
 
         deviceCode = loadOrCreateDeviceCode();
+        language = loadLanguage();
         buildRoot();
         showSplashScreen();
         handler.postDelayed(() -> {
-            showPairingScreen("Admin panelda shu kod bilan lokatsiya yarating.");
+            showPairingScreen(t("pairMessage"));
             handler.post(clockRunnable);
             handler.post(pollRunnable);
         }, 1800);
@@ -124,6 +127,12 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_UP
+                && (event.getKeyCode() == KeyEvent.KEYCODE_MENU
+                || event.getKeyCode() == KeyEvent.KEYCODE_LANGUAGE_SWITCH)) {
+            cycleLanguage();
+            return true;
+        }
         if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
             if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 centerDownAt = System.currentTimeMillis();
@@ -132,7 +141,7 @@ public class MainActivity extends Activity {
                 long held = System.currentTimeMillis() - centerDownAt;
                 centerDownAt = 0;
                 if (held > 5000) {
-                    showPairingScreen("Qurilma kodi. Kod o'zgarmaydi, admin panelda shu kod ishlatiladi.");
+                    showPairingScreen(t("stableCode"));
                     return true;
                 }
             }
@@ -201,7 +210,7 @@ public class MainActivity extends Activity {
         taglineParams.setMargins(0, dp(10), 0, dp(28));
         screen.addView(tagline, taglineParams);
 
-        TextView loading = text("Ulanish tayyorlanmoqda...", 17, 0xFFA1A1AA, false);
+        TextView loading = text(t("loading"), 17, 0xFFA1A1AA, false);
         screen.addView(loading);
 
         contentLayer.addView(screen, match());
@@ -231,10 +240,10 @@ public class MainActivity extends Activity {
         logoParams.setMargins(0, 0, 0, dp(12));
         screen.addView(logo, logoParams);
 
-        TextView title = text("Qurilmani ulash", 34, 0xFFF5F5F5, true);
+        TextView title = text(t("pairTitle"), 34, 0xFFF5F5F5, true);
         screen.addView(title);
 
-        TextView subtitle = text("Admin panelda ushbu kodni lokatsiyaga kiriting", 18, 0xFFA1A1AA, false);
+        TextView subtitle = text(t("pairSubtitle"), 18, 0xFFA1A1AA, false);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(wrap(), wrap());
         subtitleParams.setMargins(0, dp(8), 0, dp(22));
         screen.addView(subtitle, subtitleParams);
@@ -258,12 +267,15 @@ public class MainActivity extends Activity {
         middle.addView(code, codeParams);
         screen.addView(middle);
 
-        TextView status = text("Ulanishni kutmoqda...", 18, 0xFFD4AF37, true);
+        TextView status = text(t("waiting"), 18, 0xFFD4AF37, true);
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(wrap(), wrap());
         statusParams.setMargins(0, dp(22), 0, dp(8));
         screen.addView(status, statusParams);
 
-        TextView info = text(message + "\n\nDevice code: " + deviceCode + "   |   App: " + APP_VERSION + "   |   Server: " + BuildConfig.SERVER_BASE_URL, 15, 0xFFC7C7C7, false);
+        TextView info = text(message + "\n\n" + t("deviceCode") + ": " + deviceCode
+                + "   |   " + t("app") + ": " + APP_VERSION
+                + "   |   " + t("server") + ": " + BuildConfig.SERVER_BASE_URL
+                + "   |   " + t("language") + ": " + languageLabel(), 15, 0xFFC7C7C7, false);
         info.setGravity(Gravity.CENTER);
         info.setLineSpacing(dp(4), 1);
         info.setPadding(dp(22), dp(16), dp(22), dp(16));
@@ -271,6 +283,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, wrap());
         infoParams.setMargins(dp(80), dp(18), dp(80), 0);
         screen.addView(info, infoParams);
+
+        TextView languageHint = text("UZ  |  RU  |  EN    " + t("languageHint"), 14, 0xFFD4AF37, true);
+        LinearLayout.LayoutParams languageParams = new LinearLayout.LayoutParams(wrap(), wrap());
+        languageParams.setMargins(0, dp(14), 0, 0);
+        screen.addView(languageHint, languageParams);
 
         contentLayer.addView(screen, match());
     }
@@ -294,9 +311,9 @@ public class MainActivity extends Activity {
                     try {
                         String cached = getPrefs().getString(KEY_LAST_PAYLOAD, "");
                         if (!cached.isEmpty()) handlePayload(new JSONObject(cached), false);
-                        else runOnUiThread(() -> showPairingScreen("Internet yo'q. Admin panelga ulanish kutilmoqda."));
+                        else runOnUiThread(() -> showPairingScreen(t("noInternet")));
                     } catch (Exception ignored) {
-                        runOnUiThread(() -> showPairingScreen("Internet yo'q. Cache kontent topilmadi."));
+                        runOnUiThread(() -> showPairingScreen(t("noCache")));
                     }
                 }
             }
@@ -306,7 +323,7 @@ public class MainActivity extends Activity {
     private void handlePayload(JSONObject payload, boolean online) throws Exception {
         paired = payload.optBoolean("paired", payload.has("device"));
         if (!paired) {
-            String message = payload.optString("message", "Bu kod hali admin panelda lokatsiyaga ulanmagan.");
+            String message = payload.optString("message", t("unpaired"));
             runOnUiThread(() -> showPairingScreen(message));
             return;
         }
@@ -332,13 +349,13 @@ public class MainActivity extends Activity {
             updateOverlay();
             if (!isInsideWorkSchedule(currentDevice)) {
                 stoppedBySchedule = true;
-                showBlackScreen("Ish vaqti tugagan");
+                showBlackScreen(t("workEnded"));
                 return;
             }
             stoppedBySchedule = false;
             boolean changed = replacePlaylist(next);
             if (playlist.isEmpty()) {
-                showBlackScreen("Kontent mavjud emas");
+                showBlackScreen(t("noContent"));
             } else if (changed || contentLayer.getChildCount() == 0 || !paired) {
                 currentIndex = 0;
                 playCurrent();
@@ -403,7 +420,11 @@ public class MainActivity extends Activity {
             }
         });
         contentLayer.addView(playerView, match());
-        player.setMediaItem(androidx.media3.common.MediaItem.fromUri(Uri.parse(playablePath)));
+        androidx.media3.common.MediaItem.Builder mediaBuilder = new androidx.media3.common.MediaItem.Builder()
+                .setUri(Uri.parse(playablePath));
+        String media3MimeType = item.media3MimeType();
+        if (!media3MimeType.isEmpty()) mediaBuilder.setMimeType(media3MimeType);
+        player.setMediaItem(mediaBuilder.build());
         player.prepare();
         player.play();
     }
@@ -470,7 +491,7 @@ public class MainActivity extends Activity {
         overlay.setVisibility(View.VISIBLE);
         String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
         String date = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date());
-        String internet = isOnline() ? "Online" : "Offline";
+        String internet = isOnline() ? t("online") : t("offline");
         String weatherText = "";
         if (weather != null) {
             String city = weather.optString("city", "");
@@ -566,6 +587,7 @@ public class MainActivity extends Activity {
 
     private void cacheMedia(ArrayList<MediaItem> items) {
         for (MediaItem item : items) {
+            if (!item.cacheable || item.isStream) continue;
             if (!item.isVideo() && !item.isImage() && !item.isAudio()) continue;
             try {
                 File file = cacheFileFor(item);
@@ -577,6 +599,7 @@ public class MainActivity extends Activity {
     }
 
     private String resolvePlayablePath(MediaItem item) {
+        if (item.isStream || !item.cacheable) return item.url;
         if (item.localPath != null && new File(item.localPath).exists()) return item.localPath;
         File file = cacheFileFor(item);
         return file.exists() ? file.getAbsolutePath() : item.url;
@@ -734,6 +757,94 @@ public class MainActivity extends Activity {
         return getSharedPreferences(PREFS, MODE_PRIVATE);
     }
 
+    private String loadLanguage() {
+        String saved = getPrefs().getString(KEY_LANGUAGE, "uz");
+        if ("ru".equals(saved) || "en".equals(saved)) return saved;
+        return "uz";
+    }
+
+    private void cycleLanguage() {
+        if ("uz".equals(language)) language = "ru";
+        else if ("ru".equals(language)) language = "en";
+        else language = "uz";
+        getPrefs().edit().putString(KEY_LANGUAGE, language).apply();
+        updateOverlay();
+        if (!paired || contentLayer.getChildCount() == 0) showPairingScreen(t("pairMessage"));
+    }
+
+    private String languageLabel() {
+        if ("ru".equals(language)) return "RU";
+        if ("en".equals(language)) return "EN";
+        return "UZ";
+    }
+
+    private String t(String key) {
+        if ("ru".equals(language)) {
+            switch (key) {
+                case "loading": return "Подготовка подключения...";
+                case "pairMessage": return "Создайте локацию в админ-панели с этим кодом.";
+                case "stableCode": return "Код устройства не меняется. Используйте этот код в админ-панели.";
+                case "pairTitle": return "Подключение устройства";
+                case "pairSubtitle": return "Введите этот код в локации админ-панели";
+                case "waiting": return "Ожидание подключения...";
+                case "deviceCode": return "Код устройства";
+                case "app": return "Приложение";
+                case "server": return "Сервер";
+                case "language": return "Язык";
+                case "languageHint": return "MENU: сменить язык";
+                case "noInternet": return "Нет интернета. Ожидается подключение к админ-панели.";
+                case "noCache": return "Нет интернета. Кэш не найден.";
+                case "unpaired": return "Этот код еще не привязан к локации в админ-панели.";
+                case "workEnded": return "Рабочее время завершено";
+                case "noContent": return "Контент отсутствует";
+                case "online": return "Онлайн";
+                case "offline": return "Офлайн";
+            }
+        } else if ("en".equals(language)) {
+            switch (key) {
+                case "loading": return "Preparing connection...";
+                case "pairMessage": return "Create a location in the admin panel with this code.";
+                case "stableCode": return "Device code is stable. Use this code in the admin panel.";
+                case "pairTitle": return "Connect device";
+                case "pairSubtitle": return "Enter this code in the admin panel location";
+                case "waiting": return "Waiting for connection...";
+                case "deviceCode": return "Device code";
+                case "app": return "App";
+                case "server": return "Server";
+                case "language": return "Language";
+                case "languageHint": return "MENU: change language";
+                case "noInternet": return "No internet. Waiting for admin panel connection.";
+                case "noCache": return "No internet. Cached content not found.";
+                case "unpaired": return "This code is not linked to an admin panel location yet.";
+                case "workEnded": return "Work time ended";
+                case "noContent": return "No content";
+                case "online": return "Online";
+                case "offline": return "Offline";
+            }
+        }
+        switch (key) {
+            case "loading": return "Ulanish tayyorlanmoqda...";
+            case "pairMessage": return "Admin panelda shu kod bilan lokatsiya yarating.";
+            case "stableCode": return "Qurilma kodi. Kod o'zgarmaydi, admin panelda shu kod ishlatiladi.";
+            case "pairTitle": return "Qurilmani ulash";
+            case "pairSubtitle": return "Admin panelda ushbu kodni lokatsiyaga kiriting";
+            case "waiting": return "Ulanishni kutmoqda...";
+            case "deviceCode": return "Qurilma kodi";
+            case "app": return "Ilova";
+            case "server": return "Server";
+            case "language": return "Til";
+            case "languageHint": return "MENU: tilni almashtirish";
+            case "noInternet": return "Internet yo'q. Admin panelga ulanish kutilmoqda.";
+            case "noCache": return "Internet yo'q. Cache kontent topilmadi.";
+            case "unpaired": return "Bu kod hali admin panelda lokatsiyaga ulanmagan.";
+            case "workEnded": return "Ish vaqti tugagan";
+            case "noContent": return "Kontent mavjud emas";
+            case "online": return "Online";
+            case "offline": return "Offline";
+        }
+        return key;
+    }
+
     private String absoluteUrl(String url) {
         if (url == null || url.isEmpty()) return "";
         if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -789,6 +900,9 @@ public class MainActivity extends Activity {
         String mime;
         String url;
         String localPath;
+        boolean isStream;
+        boolean cacheable = true;
+        String streamType;
         long durationMs;
 
         static MediaItem from(JSONObject json) {
@@ -798,15 +912,29 @@ public class MainActivity extends Activity {
             item.type = json.optString("type", "");
             item.mime = json.optString("mime", "");
             item.url = json.optString("url", "");
+            item.isStream = json.optBoolean("isStream", false);
+            item.streamType = json.optString("streamType", "");
+            item.cacheable = json.has("cacheable") ? json.optBoolean("cacheable", true) : !item.isStream;
             item.durationMs = json.has("durationMs")
                     ? Math.max(5_000, json.optLong("durationMs", 10_000))
                     : parseDuration(json.optString("duration", "00:00:10"));
-            if (!item.url.startsWith("http")) item.url = new MainActivityUrlHelper().absolute(item.url);
+            item.detectStreamType();
+            if (!isAbsoluteMediaUrl(item.url)) item.url = new MainActivityUrlHelper().absolute(item.url);
             return item;
         }
 
         boolean isVideo() {
-            return "Video".equalsIgnoreCase(type) || "VIDEO".equalsIgnoreCase(type) || mime.startsWith("video/");
+            String lowerUrl = url == null ? "" : url.toLowerCase(Locale.US);
+            String lowerMime = mime == null ? "" : mime.toLowerCase(Locale.US);
+            return "Video".equalsIgnoreCase(type)
+                    || "VIDEO".equalsIgnoreCase(type)
+                    || isStream
+                    || lowerMime.startsWith("video/")
+                    || lowerMime.contains("mpegurl")
+                    || lowerMime.contains("dash")
+                    || lowerUrl.contains(".m3u8")
+                    || lowerUrl.contains(".mpd")
+                    || lowerUrl.startsWith("rtsp://");
         }
 
         boolean isImage() {
@@ -815,6 +943,41 @@ public class MainActivity extends Activity {
 
         boolean isAudio() {
             return "MP3".equalsIgnoreCase(type) || mime.startsWith("audio/");
+        }
+
+        String media3MimeType() {
+            if ("hls".equals(streamType)) return "application/x-mpegURL";
+            if ("dash".equals(streamType)) return "application/dash+xml";
+            if ("rtsp".equals(streamType)) return "application/x-rtsp";
+            String lowerMime = mime == null ? "" : mime.toLowerCase(Locale.US);
+            if (lowerMime.contains("mpegurl")) return "application/x-mpegURL";
+            if (lowerMime.contains("dash")) return "application/dash+xml";
+            return "";
+        }
+
+        void detectStreamType() {
+            String lower = url == null ? "" : url.toLowerCase(Locale.US);
+            String lowerMime = mime == null ? "" : mime.toLowerCase(Locale.US);
+            if (lower.startsWith("rtsp://")) {
+                streamType = "rtsp";
+                isStream = true;
+            } else if (lower.contains(".m3u8") || lowerMime.contains("mpegurl")) {
+                streamType = "hls";
+                isStream = true;
+            } else if (lower.contains(".mpd") || lowerMime.contains("dash")) {
+                streamType = "dash";
+                isStream = true;
+            }
+            if (isStream) cacheable = false;
+        }
+
+        static boolean isAbsoluteMediaUrl(String value) {
+            if (value == null) return false;
+            String lower = value.toLowerCase(Locale.US);
+            return lower.startsWith("http://")
+                    || lower.startsWith("https://")
+                    || lower.startsWith("rtsp://")
+                    || lower.startsWith("//");
         }
 
         static long parseDuration(String value) {

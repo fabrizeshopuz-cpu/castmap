@@ -18,7 +18,8 @@ export function publicRequestOrigin(request: Request) {
 export function mediaPublicUrl(asset: MediaAsset | undefined, origin: string) {
   const url = asset?.fileUrl || asset?.cdnUrl || "";
   if (!url) return "";
-  if (/^(https?:|data:|about:)/i.test(url)) return url;
+  if (/^\/\//.test(url)) return `https:${url}`;
+  if (/^(https?:|rtsp:|data:|about:)/i.test(url)) return url;
   return `${origin.replace(/\/$/, "")}/${url.replace(/^\/+/, "")}`;
 }
 
@@ -37,9 +38,32 @@ export function tvMediaKind(asset: MediaAsset | undefined) {
 }
 
 export function mediaMime(asset: MediaAsset | undefined) {
+  const url = asset?.fileUrl || asset?.cdnUrl || "";
+  if (/^rtsp:\/\//i.test(url)) return "application/x-rtsp";
+  if (/\.m3u8($|\?)/i.test(url)) return "application/vnd.apple.mpegurl";
+  if (/\.mpd($|\?)/i.test(url)) return "application/dash+xml";
   if (asset?.type === "image") return "image/jpeg";
   if (asset?.type === "web" || asset?.type === "html") return "text/html";
   return "video/mp4";
+}
+
+export function mediaStreamKind(asset: MediaAsset | undefined) {
+  const url = asset?.fileUrl || asset?.cdnUrl || "";
+  if (/^rtsp:\/\//i.test(url)) return "rtsp";
+  if (/\.m3u8($|\?)/i.test(url)) return "hls";
+  if (/\.mpd($|\?)/i.test(url)) return "dash";
+  if (/^(https?:)?\/\//i.test(url) && asset?.format === "URL" && asset?.type === "video") return "progressive";
+  return "";
+}
+
+export function isStreamMedia(asset: MediaAsset | undefined) {
+  return Boolean(mediaStreamKind(asset));
+}
+
+export function isCacheableMedia(asset: MediaAsset | undefined) {
+  if (!asset) return false;
+  if (isStreamMedia(asset)) return false;
+  return asset.type === "video" || asset.type === "image";
 }
 
 export function playlistDurationMs(durationSeconds: number | undefined) {

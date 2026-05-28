@@ -182,7 +182,7 @@ export function MediaUploadModal({ open, onClose, onUpload }: { open: boolean; o
             <Field label="Expire date" value={draft.expireDate} onChange={(value) => setDraft({ ...draft, expireDate: value })} placeholder="2026-06-01" />
             {!selectedFile ? (
               <div className="md:col-span-2">
-                <Field label="URL / stream" type="url" value={draft.webUrl || ""} onChange={(value) => { setError(""); setDraft({ ...draft, webUrl: value }); }} placeholder="https://example.com/video.mp4 yoki https://example.com/live.m3u8" />
+                <Field label="URL / stream" type="url" value={draft.webUrl || ""} onChange={(value) => { setError(""); setDraft({ ...draft, webUrl: value }); }} placeholder="https://example.com/live.m3u8 yoki rtsp://camera/live" />
               </div>
             ) : null}
           </div>
@@ -252,7 +252,7 @@ function normalizeWebUrl(value?: string) {
   try {
     const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     const url = new URL(withProtocol);
-    if (!["http:", "https:"].includes(url.protocol)) return "";
+    if (!["http:", "https:", "rtsp:"].includes(url.protocol)) return "";
     return url.toString();
   } catch {
     return "";

@@ -301,7 +301,7 @@ function normalizeWebUrl(value?: string) {
   try {
     const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     const url = new URL(withProtocol);
-    if (!["http:", "https:"].includes(url.protocol)) return "";
+    if (!["http:", "https:", "rtsp:"].includes(url.protocol)) return "";
     return url.toString();
   } catch {
     return "";

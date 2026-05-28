@@ -1,4 +1,4 @@
-import { fallbackDurationSeconds, mediaMime, mediaPublicUrl, playableMediaAssets, playerMediaType, playlistDurationMs } from "@/lib/playerMedia";
+import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaMime, mediaPublicUrl, mediaStreamKind, playableMediaAssets, playerMediaType, playlistDurationMs } from "@/lib/playerMedia";
 import type { PersistedCastmapState } from "@/lib/serverState";
 import type { Device, Playlist } from "@/types";
 import type { MediaAsset } from "@/types/media";
@@ -45,6 +45,9 @@ function playlistAssetItem(media: MediaAsset | undefined, origin: string, item: 
     type: playerMediaType(media),
     mime: mediaMime(media),
     url,
+    isStream: isStreamMedia(media),
+    streamType: mediaStreamKind(media),
+    cacheable: isCacheableMedia(media),
     duration,
     durationMs: duration,
     order: Number.isFinite(item.order) ? item.order : index + 1,
@@ -63,6 +66,9 @@ function fallbackAssetItem(media: MediaAsset, origin: string, index: number, upd
     type: playerMediaType(media),
     mime: mediaMime(media),
     url: mediaPublicUrl(media, origin),
+    isStream: isStreamMedia(media),
+    streamType: mediaStreamKind(media),
+    cacheable: isCacheableMedia(media),
     duration,
     durationMs: duration,
     order: index + 1,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fallbackDurationSeconds, mediaPublicUrl, playableMediaAssets, playerMediaType, playlistDurationMs, publicRequestOrigin } from "@/lib/playerMedia";
+import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaPublicUrl, mediaStreamKind, playableMediaAssets, playerMediaType, playlistDurationMs, publicRequestOrigin } from "@/lib/playerMedia";
 import { readCastmapState } from "@/lib/serverState";
 
 export async function GET(request: Request, { params }: { params: Promise<{ deviceId: string }> }) {
@@ -20,6 +20,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ devi
       mediaId: media?.id || item.mediaId,
       type: playerMediaType(media),
       url: mediaPublicUrl(media, origin),
+      isStream: isStreamMedia(media),
+      streamType: mediaStreamKind(media),
+      cacheable: isCacheableMedia(media),
       localPath: null,
       duration: playlistDurationMs(item.duration),
       priority: item.priority,
@@ -35,6 +38,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ devi
     mediaId: media.id,
     type: playerMediaType(media),
     url: mediaPublicUrl(media, origin),
+    isStream: isStreamMedia(media),
+    streamType: mediaStreamKind(media),
+    cacheable: isCacheableMedia(media),
     localPath: null,
     duration: playlistDurationMs(fallbackDurationSeconds(media)),
     priority: Math.max(1, 100 - index),

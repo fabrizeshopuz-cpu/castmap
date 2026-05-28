@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { AppearanceControls } from "@/components/settings/AppearanceControls";
 import { CastmapProvider } from "@/lib/store";
 import "./globals.css";
 
@@ -10,8 +11,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="uz">
-      <body><CastmapProvider>{children}</CastmapProvider></body>
+    <html lang="uz" suppressHydrationWarning>
+      <body>
+        <CastmapProvider>
+          {children}
+          <AppearanceControls />
+        </CastmapProvider>
+      </body>
     </html>
   );
 }

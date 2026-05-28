@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readCastmapState } from "@/lib/serverState";
-import { fallbackDurationSeconds, mediaMime, mediaPublicUrl, playableMediaAssets, publicRequestOrigin, tvDuration, tvMediaKind } from "@/lib/playerMedia";
+import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaMime, mediaPublicUrl, mediaStreamKind, playableMediaAssets, publicRequestOrigin, tvDuration, tvMediaKind } from "@/lib/playerMedia";
 import type { CommandType, DeviceCommand } from "@/types";
 
 function cleanCode(value: string) {
@@ -63,6 +63,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
       type: tvMediaKind(asset),
       mime: mediaMime(asset),
       url: mediaPublicUrl(asset, origin),
+      isStream: isStreamMedia(asset),
+      streamType: mediaStreamKind(asset),
+      cacheable: isCacheableMedia(asset),
       duration: tvDuration(item.duration),
     };
   }).filter((item) => item.url) : [];
@@ -72,6 +75,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
     type: tvMediaKind(asset),
     mime: mediaMime(asset),
     url: mediaPublicUrl(asset, origin),
+    isStream: isStreamMedia(asset),
+    streamType: mediaStreamKind(asset),
+    cacheable: isCacheableMedia(asset),
     duration: tvDuration(fallbackDurationSeconds(asset)),
   }));
 

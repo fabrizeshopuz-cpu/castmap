@@ -651,6 +651,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       return;
     }
     const source = devices[0];
+    const latestApkVersion = apkVersions.find((version) => version.status === "latest")?.version || source?.apkVersion || "v1.2.0";
     const cleanCode = code.trim().toUpperCase().replace(/^CM-PAIR-/i, "").replace(/^CMPAIR/i, "").replace(/[^A-Z0-9]/g, "");
     setDevices((current) => [{
       id: uid("device"),
@@ -667,7 +668,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       cpu: source?.cpu || 9,
       playlist: playlists[0]?.name || "Playlist biriktirilmagan",
       lastSeen: "Hozir",
-      apkVersion: source?.apkVersion || "v1.1.0",
+      apkVersion: latestApkVersion,
       ipAddress: source?.ipAddress || "192.168.0.120",
       macAddress: source?.macAddress || "00:CM:48:29:13:00",
       uptime: "0 kun 0 soat",
@@ -676,7 +677,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       screenshotUrl: source?.screenshotUrl || "",
     }, ...current]);
     pushToast("Qurilma muvaffaqiyatli ulandi.");
-  }, [branches, devices, playlists, pushToast]);
+  }, [apkVersions, branches, devices, playlists, pushToast]);
 
   const updateDevice = useCallback((id: string, patch: Partial<Device>) => {
     setDevices((current) => current.map((device) => {
@@ -1034,7 +1035,7 @@ function normalizeWebUrl(value?: string) {
   try {
     const withProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     const url = new URL(withProtocol);
-    if (!["http:", "https:"].includes(url.protocol)) return "";
+    if (!["http:", "https:", "rtsp:"].includes(url.protocol)) return "";
     return url.toString();
   } catch {
     return "";

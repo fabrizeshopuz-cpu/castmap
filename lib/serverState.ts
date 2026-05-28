@@ -40,15 +40,15 @@ const dataDir = path.join(process.cwd(), "data");
 const statePath = path.join(dataDir, "castmap-state.json");
 
 const defaultApkVersions: ApkVersion[] = [{
-  id: "apk-1-1-0-20260527",
-  version: "v1.1.0",
-  changelog: "Castmap v2 playlist endpoint, heartbeat va eski tv-code fallback",
-  fileName: "castmap-player-1.1.0.apk",
-  size: "6.0 MB",
+  id: "apk-1-2-0-20260528",
+  version: "v1.2.0",
+  changelog: "Day/night panel UI, UZ/RU/EN player language va HLS/DASH/RTSP stream playback",
+  fileName: "castmap-player-1.2.0.apk",
+  size: "6.2 MB",
   status: "latest",
   installedDevices: 0,
   failedDevices: 0,
-  uploadedAt: "2026-05-27 20:36",
+  uploadedAt: "2026-05-28 00:00",
 }];
 
 const defaultBranches: Branch[] = [{
@@ -101,7 +101,7 @@ const defaultDevices: Device[] = [{
   playlist: "Start playlist",
   lastSeen: "Hozir",
   lastHeartbeat: "2026-05-27T15:00:00.000Z",
-  apkVersion: "v1.1.0",
+  apkVersion: "v1.2.0",
   ipAddress: "192.168.0.101",
   macAddress: "00:00:00:00:00:00",
   uptime: "0d 0h",

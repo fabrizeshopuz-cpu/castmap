@@ -38,13 +38,18 @@ html[data-theme="light"] body {
 
 html[data-theme="light"] [class~="bg-castBg"],
 html[data-theme="light"] [class~="bg-black/60"],
-html[data-theme="light"] [class~="bg-black/35"] {
+html[data-theme="light"] [class~="bg-black/35"],
+html[data-theme="light"] [class~="bg-black/75"],
+html[data-theme="light"] [class~="bg-black/80"],
+html[data-theme="light"] [class~="bg-[#080808]"] {
   background-color: rgba(247, 244, 234, 0.92) !important;
 }
 
 html[data-theme="light"] [class~="bg-castCard"],
 html[data-theme="light"] [class~="bg-castPanel"],
-html[data-theme="light"] [class~="bg-[#0D0D0D]"] {
+html[data-theme="light"] [class~="bg-[#0D0D0D]"],
+html[data-theme="light"] [class~="bg-[#111]"],
+html[data-theme="light"] [class~="bg-[#0E0E0E]"] {
   background-color: #FFFFFF !important;
 }
 

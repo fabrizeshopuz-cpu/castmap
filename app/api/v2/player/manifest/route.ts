@@ -30,8 +30,8 @@ export async function GET(request: Request) {
       downloadUrl: `${origin}/downloads/${latestApk.fileName}`,
     } : null,
     playback: {
-      supportedTypes: ["VIDEO", "IMAGE", "WEB_URL", "HTML"],
-      cache: "offline-first",
+      supportedTypes: ["VIDEO", "IMAGE", "WEB_URL", "HTML", "HLS", "DASH", "RTSP"],
+      cache: "offline-first for files, direct playback for streams",
       heartbeatSeconds: 30,
     },
   });
