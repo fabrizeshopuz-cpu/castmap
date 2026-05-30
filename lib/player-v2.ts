@@ -1,5 +1,6 @@
 import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaMime, mediaPublicUrl, mediaStreamKind, playableMediaAssets, playerMediaType, playlistDurationMs } from "@/lib/playerMedia";
 import { toPlayerWidget } from "@/lib/integrations/server";
+import { integrationWidgetMime, integrationWidgetPlaybackUrl } from "@/lib/playerWidgetPlayback";
 import type { PersistedCastmapState } from "@/lib/serverState";
 import type { CommandType, Device, DeviceCommand, Playlist } from "@/types";
 import type { MediaAsset } from "@/types/media";
@@ -120,14 +121,26 @@ export function buildV2PlaylistPayload(state: PersistedCastmapState, origin: str
       if (item.type === "integration_widget" || item.integrationWidgetId) {
         const widget = state.integrationWidgets.find((entry) => entry.id === item.integrationWidgetId);
         if (!widget || widget.status !== "active") return null;
+        const duration = playlistDurationMs(item.duration);
+        const payload = toPlayerWidget(widget);
         return {
-          ...toPlayerWidget(widget),
+          ...payload,
           id: item.id,
+          mediaId: widget.id,
           integrationWidgetId: widget.id,
+          title: widget.name,
+          type: "WEB_URL",
+          mime: integrationWidgetMime(widget),
+          url: integrationWidgetPlaybackUrl(widget, origin),
+          isStream: false,
+          streamType: "",
+          cacheable: false,
           order: Number.isFinite(item.order) ? item.order : index + 1,
           priority: item.priority,
-          duration: playlistDurationMs(item.duration),
-          durationMs: playlistDurationMs(item.duration),
+          duration,
+          durationMs: duration,
+          checksum: `castmap-v2-${widget.id}-${state.updatedAt}`,
+          cacheKey: `castmap-v2-${widget.id}`,
         };
       }
       return playlistAssetItem(state.media.find((asset) => asset.id === item.mediaId), origin, item, index, state.updatedAt);

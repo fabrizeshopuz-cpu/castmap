@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { toPlayerWidget } from "@/lib/integrations/server";
 import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaPublicUrl, mediaStreamKind, playableMediaAssets, playerMediaType, playlistDurationMs, publicRequestOrigin } from "@/lib/playerMedia";
+import { integrationWidgetMime, integrationWidgetPlaybackUrl } from "@/lib/playerWidgetPlayback";
 import { readCastmapState } from "@/lib/serverState";
 
 function tokenDeviceId(request: Request) {
@@ -28,11 +29,15 @@ export async function GET(request: Request) {
       const widget = state.integrationWidgets.find((entry) => entry.id === item.integrationWidgetId);
       if (!widget || widget.status !== "active") return null;
       const payload = toPlayerWidget(widget);
+      const url = integrationWidgetPlaybackUrl(widget, origin);
       return {
         id: item.id,
         mediaId: widget.id,
-        type: "INTEGRATION_WIDGET",
-        url: "about:blank",
+        name: widget.name,
+        title: widget.name,
+        type: "WEB_URL",
+        mime: integrationWidgetMime(widget),
+        url,
         isStream: false,
         streamType: "",
         cacheable: false,

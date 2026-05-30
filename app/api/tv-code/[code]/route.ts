@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readCastmapState } from "@/lib/serverState";
 import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaMime, mediaPublicUrl, mediaStreamKind, playableMediaAssets, publicRequestOrigin, tvDuration, tvMediaKind } from "@/lib/playerMedia";
+import { integrationWidgetMime, integrationWidgetPlaybackUrl } from "@/lib/playerWidgetPlayback";
 import type { CommandType, DeviceCommand } from "@/types";
 
 function cleanCode(value: string) {
@@ -56,6 +57,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   );
   const latestApk = state.apkVersions.find((version) => version.status === "latest") || state.apkVersions[0];
   const playlistMedia = playlist ? playlist.items.map((item) => {
+    if (item.type === "integration_widget" || item.integrationWidgetId) {
+      const widget = state.integrationWidgets.find((entry) => entry.id === item.integrationWidgetId);
+      if (!widget || widget.status !== "active") return null;
+      return {
+        id: widget.id,
+        name: widget.name,
+        type: "Web",
+        mime: integrationWidgetMime(widget),
+        url: integrationWidgetPlaybackUrl(widget, origin),
+        isStream: false,
+        streamType: "",
+        cacheable: false,
+        duration: tvDuration(item.duration),
+        widgetType: widget.type,
+      };
+    }
     const asset = state.media.find((mediaItem) => mediaItem.id === item.mediaId);
     return {
       id: asset?.id || item.mediaId,
@@ -68,7 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
       cacheable: isCacheableMedia(asset),
       duration: tvDuration(item.duration),
     };
-  }).filter((item) => item.url) : [];
+  }).filter((item) => item?.url) : [];
   const fallbackMedia = playlistMedia.length ? [] : playableMediaAssets(state.media).map((asset) => ({
     id: asset.id,
     name: asset.name,
