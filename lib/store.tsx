@@ -17,6 +17,7 @@ import {
   users as userSeed,
   widgets as widgetSeed,
 } from "@/lib/mockData";
+import { integrationCatalog, mockIntegrationLogs, mockIntegrationWidgets, mockIntegrations, mockRemoteSessions } from "@/lib/integrations/mockData";
 import { STATE_SCHEMA_VERSION } from "@/lib/stateSchema";
 import { formatDateTime, uid } from "@/lib/utils";
 import type {
@@ -36,6 +37,7 @@ import type {
   Widget,
   BillingPlan,
 } from "@/types";
+import type { Integration, IntegrationLog, IntegrationStatus, IntegrationType, IntegrationWidget, RemoteSession, WidgetLayout } from "@/types/integrations";
 import type { UploadDraft } from "@/types/media";
 
 export interface ToastMessage {
@@ -77,6 +79,7 @@ interface CreatePlaylistInput {
   branchId?: string;
   deviceIds?: string[];
   mediaIds?: string[];
+  integrationWidgetIds?: string[];
 }
 
 interface CastmapState {
@@ -92,6 +95,10 @@ interface CastmapState {
   invoices: Invoice[];
   apkVersions: ApkVersion[];
   widgets: Widget[];
+  integrations: Integration[];
+  integrationWidgets: IntegrationWidget[];
+  integrationLogs: IntegrationLog[];
+  remoteSessions: RemoteSession[];
   playbackLogs: PlaybackLog[];
   commands: DeviceCommand[];
   toasts: ToastMessage[];
@@ -139,6 +146,16 @@ interface CastmapState {
   deleteApkVersion: (versionId: string) => void;
   addWidgetToPlaylist: (widgetId: string) => void;
   deleteWidget: (widgetId: string) => void;
+  connectIntegration: (input: Partial<Integration> & { type: IntegrationType }) => Integration;
+  updateIntegration: (id: string, patch: Partial<Integration>) => void;
+  disconnectIntegration: (id: string) => void;
+  testIntegration: (id: string) => void;
+  syncIntegration: (id: string) => void;
+  createIntegrationWidget: (input: { integrationId: string; name?: string; type?: string; config?: Record<string, unknown> }) => IntegrationWidget | null;
+  updateIntegrationWidget: (id: string, patch: Partial<IntegrationWidget>) => void;
+  deleteIntegrationWidget: (id: string) => void;
+  addIntegrationWidgetToPlaylist: (widgetId: string, playlistId: string, options?: { duration?: number; layout?: WidgetLayout }) => void;
+  openRemoteSession: (deviceId: string, remoteAddress?: string) => RemoteSession;
 }
 
 interface PersistedCastmapState {
@@ -155,6 +172,10 @@ interface PersistedCastmapState {
   billingPlans: BillingPlan[];
   apkVersions: ApkVersion[];
   widgets: Widget[];
+  integrations: Integration[];
+  integrationWidgets: IntegrationWidget[];
+  integrationLogs: IntegrationLog[];
+  remoteSessions: RemoteSession[];
   playbackLogs: PlaybackLog[];
   commands: DeviceCommand[];
 }
@@ -175,6 +196,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const [billingPlans, setBillingPlans] = useState<BillingPlan[]>(billingSeed);
   const [apkVersions, setApkVersions] = useState<ApkVersion[]>(apkSeed);
   const [widgets, setWidgets] = useState<Widget[]>(widgetSeed);
+  const [integrations, setIntegrations] = useState<Integration[]>(mockIntegrations);
+  const [integrationWidgets, setIntegrationWidgets] = useState<IntegrationWidget[]>(mockIntegrationWidgets);
+  const [integrationLogs, setIntegrationLogs] = useState<IntegrationLog[]>(mockIntegrationLogs);
+  const [remoteSessions, setRemoteSessions] = useState<RemoteSession[]>(mockRemoteSessions);
   const [playbackLogs, setPlaybackLogs] = useState<PlaybackLog[]>(playbackSeed);
   const [commands, setCommands] = useState<DeviceCommand[]>(initialCommands);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -201,6 +226,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     if (Array.isArray(saved.billingPlans)) setBillingPlans(saved.billingPlans);
     if (Array.isArray(saved.apkVersions)) setApkVersions(saved.apkVersions);
     if (Array.isArray(saved.widgets)) setWidgets(saved.widgets);
+    if (Array.isArray(saved.integrations)) setIntegrations(saved.integrations);
+    if (Array.isArray(saved.integrationWidgets)) setIntegrationWidgets(saved.integrationWidgets);
+    if (Array.isArray(saved.integrationLogs)) setIntegrationLogs(saved.integrationLogs);
+    if (Array.isArray(saved.remoteSessions)) setRemoteSessions(saved.remoteSessions);
     if (Array.isArray(saved.playbackLogs)) setPlaybackLogs(saved.playbackLogs);
     if (Array.isArray(saved.commands)) setCommands(saved.commands);
   }, []);
@@ -254,6 +283,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       billingPlans,
       apkVersions,
       widgets,
+      integrations,
+      integrationWidgets,
+      integrationLogs,
+      remoteSessions,
       playbackLogs,
       commands,
     };
@@ -269,7 +302,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }).catch(() => undefined);
-  }, [alerts, apkVersions, billingPlans, branches, campaigns, commands, devices, isHydrated, media, playbackLogs, playlists, schedules, users, widgets]);
+  }, [alerts, apkVersions, billingPlans, branches, campaigns, commands, devices, integrationLogs, integrationWidgets, integrations, isHydrated, media, playbackLogs, playlists, remoteSessions, schedules, users, widgets]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -328,9 +361,36 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
 
   const createPlaylist = useCallback((input: CreatePlaylistInput) => {
     const branch = branches.find((item) => item.id === input.branchId);
+    const selectedWidgetIds = input.integrationWidgetIds || [];
     const selectedMedia = input.mediaIds?.length
       ? media.filter((item) => input.mediaIds?.includes(item.id))
+      : selectedWidgetIds.length
+        ? []
       : media.slice(0, 1);
+    const mediaItems: Playlist["items"] = selectedMedia.map((item, index) => ({
+      id: uid("item"),
+      type: "media",
+      mediaId: item.id,
+      duration: item.type === "video" ? 20 : 10,
+      transition: "fade",
+      order: index + 1,
+      priority: 1,
+      status: "active",
+    }));
+    const integrationItems: Playlist["items"] = integrationWidgets
+      .filter((widget) => selectedWidgetIds.includes(widget.id))
+      .map((widget, index) => ({
+        id: uid("item"),
+        type: "integration_widget",
+        mediaId: "",
+        integrationWidgetId: widget.id,
+        duration: Number(widget.config.duration || 20),
+        layout: widget.config.layout as WidgetLayout || "fullscreen",
+        transition: "fade",
+        order: mediaItems.length + index + 1,
+        priority: 1,
+        status: "active",
+      }));
     const playlist: Playlist = {
       id: uid("playlist"),
       name: input.name.trim() || `Yangi playlist ${playlists.length + 1}`,
@@ -341,15 +401,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
       deviceIds: input.deviceIds || [],
       status: "draft",
       loop: true,
-      items: selectedMedia.map((item, index) => ({
-        id: uid("item"),
-        mediaId: item.id,
-        duration: item.type === "video" ? 20 : 10,
-        transition: "fade",
-        order: index + 1,
-        priority: 1,
-        status: "active",
-      })),
+      items: [...mediaItems, ...integrationItems],
       updatedAt: formatDateTime(),
     };
     setPlaylists((current) => [playlist, ...current]);
@@ -358,7 +410,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     }
     pushToast("Playlist yaratildi va tanlangan TV/lokatsiyaga biriktirildi.");
     return playlist;
-  }, [branches, media, playlists.length, pushToast]);
+  }, [branches, integrationWidgets, media, playlists.length, pushToast]);
 
   const updatePlaylist = useCallback((id: string, patch: Partial<Playlist>) => {
     setPlaylists((current) => current.map((playlist) => playlist.id === id ? { ...playlist, ...patch, updatedAt: formatDateTime() } : playlist));
@@ -897,6 +949,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     setBranches([]);
     setApkVersions([]);
     setWidgets([]);
+    setIntegrations([]);
+    setIntegrationWidgets([]);
+    setIntegrationLogs([]);
+    setRemoteSessions([]);
     setPlaybackLogs([]);
     setCommands([]);
     pushToast("Barcha test va operatsion ma'lumotlar tozalandi.", "warning");
@@ -992,6 +1048,155 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     pushToast("Widget o'chirildi.", "warning");
   }, [pushToast]);
 
+  const appendIntegrationLog = useCallback((integrationId: string, level: IntegrationLog["level"], message: string, payload?: unknown) => {
+    setIntegrationLogs((current) => [{
+      id: uid("ilog"),
+      integrationId,
+      level,
+      message,
+      payload,
+      createdAt: new Date().toISOString(),
+    }, ...current].slice(0, 200));
+  }, []);
+
+  const connectIntegration = useCallback((input: Partial<Integration> & { type: IntegrationType }) => {
+    const catalogItem = integrationCatalog.find((item) => item.type === input.type);
+    const now = new Date().toISOString();
+    const integration: Integration = {
+      id: input.id || uid("int"),
+      organizationId: input.organizationId || "org-castmap-demo",
+      type: input.type,
+      name: input.name?.trim() || catalogItem?.name || "Yangi integratsiya",
+      status: input.status || "connected",
+      description: input.description || catalogItem?.description || "CASTMAP integratsiyasi",
+      category: input.category || catalogItem?.category,
+      config: input.config || defaultIntegrationConfig(input.type),
+      credentials: maskCredentials(input.credentials),
+      lastSyncAt: "Hozir",
+      lastError: undefined,
+      createdAt: input.createdAt || now,
+      updatedAt: now,
+    };
+    setIntegrations((current) => {
+      const exists = current.some((item) => item.id === integration.id);
+      return exists ? current.map((item) => item.id === integration.id ? integration : item) : [integration, ...current];
+    });
+    appendIntegrationLog(integration.id, "success", `${integration.name} ulandi`, integration.config);
+    pushToast(`${integration.name} ulandi.`);
+    return integration;
+  }, [appendIntegrationLog, pushToast]);
+
+  const updateIntegration = useCallback((id: string, patch: Partial<Integration>) => {
+    setIntegrations((current) => current.map((integration) => integration.id === id ? { ...integration, ...patch, credentials: maskCredentials(patch.credentials) || integration.credentials, updatedAt: new Date().toISOString() } : integration));
+    appendIntegrationLog(id, "info", "Integratsiya sozlamalari yangilandi", patch.config);
+    pushToast("Integratsiya sozlandi.");
+  }, [appendIntegrationLog, pushToast]);
+
+  const disconnectIntegration = useCallback((id: string) => {
+    setIntegrations((current) => current.map((integration) => integration.id === id ? { ...integration, status: "disconnected", updatedAt: new Date().toISOString() } : integration));
+    setIntegrationWidgets((current) => current.map((widget) => widget.integrationId === id ? { ...widget, status: "inactive" } : widget));
+    appendIntegrationLog(id, "warning", "Integratsiya uzildi");
+    pushToast("Integratsiya uzildi.", "warning");
+  }, [appendIntegrationLog, pushToast]);
+
+  const testIntegration = useCallback((id: string) => {
+    const integration = integrations.find((item) => item.id === id);
+    const hasError = integration?.status === "error";
+    setIntegrations((current) => current.map((item) => item.id === id ? { ...item, status: hasError ? "error" : "connected", lastError: hasError ? item.lastError || "Mock test error" : undefined } : item));
+    appendIntegrationLog(id, hasError ? "error" : "success", hasError ? "Test xatolik bilan tugadi" : "Mock API test muvaffaqiyatli");
+    pushToast(hasError ? "Test xatolik qaytardi." : "Test muvaffaqiyatli.", hasError ? "danger" : "success");
+  }, [appendIntegrationLog, integrations, pushToast]);
+
+  const syncIntegration = useCallback((id: string) => {
+    const integration = integrations.find((item) => item.id === id);
+    if (!integration) return;
+    setIntegrations((current) => current.map((item) => item.id === id ? { ...item, status: "connected", lastSyncAt: "Hozir", lastError: undefined, updatedAt: new Date().toISOString() } : item));
+    setIntegrationWidgets((current) => current.map((widget) => widget.integrationId === id ? { ...widget, previewData: previewForIntegration(integration.type, widget.config), updatedAt: new Date().toISOString() } : widget));
+    appendIntegrationLog(id, "success", "Sync now bajarildi", { type: integration.type });
+    pushToast("Integratsiya ma'lumotlari yangilandi.");
+  }, [appendIntegrationLog, integrations, pushToast]);
+
+  const createIntegrationWidget = useCallback((input: { integrationId: string; name?: string; type?: string; config?: Record<string, unknown> }) => {
+    const integration = integrations.find((item) => item.id === input.integrationId);
+    if (!integration) {
+      pushToast("Integratsiya topilmadi.", "warning");
+      return null;
+    }
+    const now = new Date().toISOString();
+    const widget: IntegrationWidget = {
+      id: uid("iwidget"),
+      organizationId: integration.organizationId || "org-castmap-demo",
+      integrationId: integration.id,
+      name: input.name?.trim() || `${integration.name} widget`,
+      type: input.type || integration.type,
+      config: { layout: "fullscreen", duration: 20, refreshInterval: 300, ...(input.config || {}) },
+      previewData: previewForIntegration(integration.type, input.config || integration.config),
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    };
+    setIntegrationWidgets((current) => [widget, ...current]);
+    appendIntegrationLog(integration.id, "success", `${widget.name} widget yaratildi`);
+    pushToast("Integration widget yaratildi.");
+    return widget;
+  }, [appendIntegrationLog, integrations, pushToast]);
+
+  const updateIntegrationWidget = useCallback((id: string, patch: Partial<IntegrationWidget>) => {
+    setIntegrationWidgets((current) => current.map((widget) => widget.id === id ? { ...widget, ...patch, updatedAt: new Date().toISOString() } : widget));
+    pushToast("Widget tahrirlandi.");
+  }, [pushToast]);
+
+  const deleteIntegrationWidget = useCallback((id: string) => {
+    setIntegrationWidgets((current) => current.filter((widget) => widget.id !== id));
+    setPlaylists((current) => current.map((playlist) => ({ ...playlist, items: playlist.items.filter((item) => item.integrationWidgetId !== id) })));
+    pushToast("Integration widget o'chirildi.", "warning");
+  }, [pushToast]);
+
+  const addIntegrationWidgetToPlaylist = useCallback((widgetId: string, playlistId: string, options?: { duration?: number; layout?: WidgetLayout }) => {
+    const widget = integrationWidgets.find((item) => item.id === widgetId);
+    const playlist = playlists.find((item) => item.id === playlistId);
+    if (!widget || !playlist) {
+      pushToast("Widget yoki playlist topilmadi.", "warning");
+      return;
+    }
+    if (playlist.items.some((item) => item.integrationWidgetId === widgetId)) {
+      pushToast("Bu widget playlistda allaqachon bor.", "info");
+      return;
+    }
+    setPlaylists((current) => current.map((item) => item.id === playlistId ? {
+      ...item,
+      items: [...item.items, {
+        id: uid("item"),
+        type: "integration_widget",
+        mediaId: "",
+        integrationWidgetId: widgetId,
+        duration: options?.duration || Number(widget.config.duration || 20),
+        layout: options?.layout || widget.config.layout as WidgetLayout || "fullscreen",
+        transition: "fade",
+        order: item.items.length + 1,
+        priority: 1,
+        status: "active",
+      }],
+      updatedAt: formatDateTime(),
+    } : item));
+    pushToast(`${widget.name} "${playlist.name}" playlistiga qo'shildi.`);
+  }, [integrationWidgets, playlists, pushToast]);
+
+  const openRemoteSession = useCallback((deviceId: string, remoteAddress = "123 456 789") => {
+    const session: RemoteSession = {
+      id: uid("remote"),
+      deviceId,
+      provider: "anydesk",
+      remoteAddress,
+      sessionUrl: `anydesk:${remoteAddress.replace(/\s+/g, "")}`,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    setRemoteSessions((current) => [session, ...current]);
+    pushToast("AnyDesk remote session tayyorlandi.");
+    return session;
+  }, [pushToast]);
+
   const value = useMemo<CastmapState>(() => ({
     devices,
     media,
@@ -1005,6 +1210,10 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     invoices: invoiceSeed,
     apkVersions,
     widgets,
+    integrations,
+    integrationWidgets,
+    integrationLogs,
+    remoteSessions,
     playbackLogs,
     commands,
     toasts,
@@ -1052,7 +1261,17 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     deleteApkVersion,
     addWidgetToPlaylist,
     deleteWidget,
-  }), [addBranch, addCampaign, addMediaAsset, addMediaToPlaylist, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearOperationalData, clearTemplates, clearTestBranches, commands, createCampaign, createMediaFromDraft, createPlaylist, createTestChain, deleteAlert, deleteApkVersion, deleteBranch, deleteCampaign, deleteDevice, deleteMediaAsset, deletePlaylist, deleteSchedule, deleteUser, deleteWidget, devices, duplicatePlaylist, ignoreAlert, media, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, toasts, toggleSchedule, toggleUserStatus, updateBranch, updateCampaign, updateDevice, updateMediaAsset, updatePlan, updatePlaylist, uploadApk, users, widgets]);
+    connectIntegration,
+    updateIntegration,
+    disconnectIntegration,
+    testIntegration,
+    syncIntegration,
+    createIntegrationWidget,
+    updateIntegrationWidget,
+    deleteIntegrationWidget,
+    addIntegrationWidgetToPlaylist,
+    openRemoteSession,
+  }), [addBranch, addCampaign, addIntegrationWidgetToPlaylist, addMediaAsset, addMediaToPlaylist, addPlaylist, addSchedule, addUser, addWidgetToPlaylist, alerts, apkVersions, billingPlans, branches, campaigns, clearOperationalData, clearTemplates, clearTestBranches, commands, connectIntegration, createCampaign, createIntegrationWidget, createMediaFromDraft, createPlaylist, createTestChain, deleteAlert, deleteApkVersion, deleteBranch, deleteCampaign, deleteDevice, deleteIntegrationWidget, deleteMediaAsset, deletePlaylist, deleteSchedule, deleteUser, deleteWidget, devices, disconnectIntegration, duplicatePlaylist, ignoreAlert, integrationLogs, integrationWidgets, integrations, media, openRemoteSession, pairDevice, playbackLogs, playlists, publishPlaylist, pushToast, remoteSessions, resolveAlert, rollbackApk, rolloutApk, schedules, sendCommand, setCampaignStatus, syncIntegration, testIntegration, toasts, toggleSchedule, toggleUserStatus, updateBranch, updateCampaign, updateDevice, updateIntegration, updateIntegrationWidget, updateMediaAsset, updatePlan, updatePlaylist, uploadApk, users, widgets]);
 
   return (
     <CastmapContext.Provider value={value}>
@@ -1113,6 +1332,43 @@ function webUrlToName(value: string) {
   } catch {
     return "";
   }
+}
+
+function maskCredentials(credentials?: Record<string, unknown>) {
+  if (!credentials) return credentials;
+  return Object.fromEntries(Object.entries(credentials).map(([key, value]) => {
+    if (!value) return [key, value];
+    if (/token|secret|password|key|json/i.test(key)) return [key, "********"];
+    return [key, value];
+  }));
+}
+
+function defaultIntegrationConfig(type: IntegrationType): Record<string, unknown> {
+  if (type === "google_sheets") return { spreadsheetId: "1CASTMAPMOCKSHEET", sheetName: "Menu", range: "A1:D20", refreshInterval: 300, displayStyle: "table", authType: "public_csv" };
+  if (type === "telegram") return { channel: "@castmap_demo", contentType: "announcement", refreshMode: "webhook", moderation: "auto_publish" };
+  if (type === "instagram") return { accountId: "", displayStyle: "feed_grid", oauthReady: true };
+  if (type === "youtube") return { url: "https://www.youtube.com/@castmap/live", autoplay: true, mute: true };
+  if (type === "weather") return { city: "Toshkent", language: "uz", unit: "celsius", displayStyle: "card", refreshInterval: 900 };
+  if (type === "rss") return { url: "https://example.com/rss.xml", count: 5, displayStyle: "ticker", refreshInterval: 900 };
+  if (type === "web_url") return { url: "https://castmap.uz", displayMode: "fullscreen", refreshInterval: 600, zoom: 1 };
+  if (type === "anydesk") return { licenseId: "AD-CASTMAP-DEMO", namespace: "castmap", deviceMappings: [{ deviceId: "device-kj8aha-mpgpx88j", address: "123 456 789" }] };
+  if (type === "custom_api") return { endpoint: "https://api.example.com/castmap", method: "GET", displayStyle: "table", refreshInterval: 300 };
+  if (type === "pos_webhook") return { webhookUrl: "https://castmap.uz/api/webhooks/pos", secret: "generated-secret", events: ["new_discount", "price_update"] };
+  return { refreshInterval: 600, displayStyle: "card" };
+}
+
+function previewForIntegration(type: IntegrationType, config: Record<string, unknown> = {}) {
+  if (type === "google_sheets") {
+    return { columns: ["Product", "Price", "Discount", "Status"], rows: [["Burger Menu", "45000", "20%", "Active"], ["Lavash Set", "39000", "10%", "Active"]] };
+  }
+  if (type === "telegram") return { messages: ["Bugun barcha filiallarda yangi aksiya", "Image post preview tayyor"] };
+  if (type === "instagram") return { items: Array.from({ length: 6 }).map((_, index) => ({ id: `ig-${index + 1}`, caption: `CASTMAP post ${index + 1}`, mediaType: index % 2 ? "IMAGE" : "REELS" })) };
+  if (type === "youtube") return { embedUrl: String(config.url || "https://www.youtube.com/@castmap/live"), autoplay: true, mute: true };
+  if (type === "weather") return { city: String(config.city || "Toshkent"), temp: 27, condition: "Quyoshli", humidity: 34 };
+  if (type === "rss") return { items: [{ title: "CASTMAP retail media yangiliklari" }, { title: "Yangi aksiya boshlandi" }] };
+  if (type === "web_url") return { url: String(config.url || "https://castmap.uz"), displayMode: config.displayMode || "fullscreen" };
+  if (type === "anydesk") return { address: "123 456 789", status: "online", sessionUrl: "anydesk:123456789" };
+  return { columns: ["Metric", "Value"], rows: [["Screens", "1248"], ["Uptime", "98.7%"]] };
 }
 
 export function useCastmapStore() {

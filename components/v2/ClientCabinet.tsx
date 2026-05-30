@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, CheckCircle2, Clapperboard, Eye, GalleryVerticalEnd, MapPin, Monitor, Pause, Play, Plus, RefreshCw, Search, Smartphone, Trash2, Zap } from "lucide-react";
+import { Activity, CheckCircle2, Clapperboard, Eye, GalleryVerticalEnd, MapPin, Monitor, Pause, Play, PlugZap, Plus, RefreshCw, Search, Smartphone, Trash2, Zap } from "lucide-react";
 import { LivePreview } from "@/components/live/LivePreview";
 import { MediaUploadModal } from "@/components/media/MediaUploadModal";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,7 @@ import { clientNav } from "@/lib/castmap-v2";
 import { useCastmapStore } from "@/lib/store";
 import type { Branch, Campaign, Device, MediaAsset, Playlist } from "@/types";
 
-type CabinetTab = "overview" | "campaigns" | "locations" | "devices" | "playlists" | "media" | "live" | "apk" | "billing";
+type CabinetTab = "overview" | "campaigns" | "locations" | "devices" | "playlists" | "media" | "integrations" | "live" | "apk" | "billing";
 
 const tabLabels: Record<CabinetTab, string> = {
   overview: "Overview",
@@ -21,6 +21,7 @@ const tabLabels: Record<CabinetTab, string> = {
   devices: "TV qurilmalar",
   playlists: "Playlistlar",
   media: "Media",
+  integrations: "Integratsiyalar",
   live: "Live",
   apk: "APK",
   billing: "Billing",
@@ -45,14 +46,15 @@ export function ClientCabinet() {
       { label: "Lokatsiyalar", value: String(store.branches.length), detail: "Filial va ekran nuqtalari", tone: "blue" as const },
       { label: "Kampaniyalar", value: String(store.campaigns.length), detail: `${activeCampaigns} active`, tone: activeCampaigns ? "green" as const : "gold" as const },
       { label: "Playlistlar", value: String(store.playlists.length), detail: `${published} published`, tone: published ? "green" as const : "gold" as const },
+      { label: "Integratsiyalar", value: String(store.integrationWidgets.length), detail: `${store.integrations.filter((integration) => integration.status === "connected").length} connected`, tone: store.integrationWidgets.length ? "blue" as const : "gold" as const },
     ];
-  }, [store.branches.length, store.campaigns, store.devices, store.playlists]);
+  }, [store.branches.length, store.campaigns, store.devices, store.integrationWidgets.length, store.integrations, store.playlists]);
 
   const visibleTab = tabLabels[tab];
 
   return (
     <V2AppShell title="Client cabinet" subtitle="Fabrize workspace" active={visibleTab} nav={clientNav}>
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {metrics.map((metric) => <V2MetricCard key={metric.label} {...metric} />)}
       </section>
 
@@ -81,6 +83,7 @@ export function ClientCabinet() {
       {tab === "devices" && <DevicesPanel query={query} />}
       {tab === "playlists" && <PlaylistsPanel query={query} />}
       {tab === "media" && <MediaPanel query={query} />}
+      {tab === "integrations" && <IntegrationsPanel query={query} />}
       {tab === "live" && <LivePanel query={query} />}
       {tab === "apk" && <ApkPanel />}
       {tab === "billing" && <BillingPanel />}
@@ -115,9 +118,10 @@ function WorkflowGrid({ setTab }: { setTab: (tab: CabinetTab) => void }) {
     { title: "Lokatsiya", detail: "Filial, shahar, ish vaqti", icon: MapPin, tab: "locations" as CabinetTab },
     { title: "TV ulash", detail: "Pairing code, filial, APK status", icon: Monitor, tab: "devices" as CabinetTab },
     { title: "Playlist", detail: "Media tartibi va publish", icon: GalleryVerticalEnd, tab: "playlists" as CabinetTab },
+    { title: "Integratsiya", detail: "Google Sheet, Web URL va live widgetlar", icon: PlugZap, tab: "integrations" as CabinetTab },
   ];
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       {items.map((item) => {
         const Icon = item.icon;
         return (
@@ -414,6 +418,7 @@ function PlaylistForm() {
     branchId: store.branches[0]?.id || "",
     deviceId: store.devices[0]?.id || "",
     mediaId: store.media[0]?.id || "",
+    integrationWidgetId: store.integrationWidgets[0]?.id || "",
   });
   useEffect(() => {
     setForm((current) => ({
@@ -422,8 +427,9 @@ function PlaylistForm() {
       branchId: current.branchId || store.branches[0]?.id || "",
       deviceId: current.deviceId || store.devices[0]?.id || "",
       mediaId: current.mediaId || store.media[0]?.id || "",
+      integrationWidgetId: current.integrationWidgetId || store.integrationWidgets[0]?.id || "",
     }));
-  }, [store.branches, store.campaigns, store.devices, store.media]);
+  }, [store.branches, store.campaigns, store.devices, store.integrationWidgets, store.media]);
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
   const create = () => {
     const playlist = store.createPlaylist({
@@ -432,6 +438,7 @@ function PlaylistForm() {
       branchId: form.branchId || undefined,
       deviceIds: form.deviceId ? [form.deviceId] : [],
       mediaIds: form.mediaId ? [form.mediaId] : [],
+      integrationWidgetIds: form.integrationWidgetId ? [form.integrationWidgetId] : [],
     });
     store.publishPlaylist(playlist.id);
   };
@@ -443,6 +450,10 @@ function PlaylistForm() {
         <Select value={form.mediaId} onChange={(event) => update("mediaId", event.target.value)}>
           <option value="">Media tanlanmagan</option>
           {store.media.map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}
+        </Select>
+        <Select value={form.integrationWidgetId} onChange={(event) => update("integrationWidgetId", event.target.value)}>
+          <option value="">Integration widget tanlanmagan</option>
+          {store.integrationWidgets.map((widget) => <option key={widget.id} value={widget.id}>{widget.name}</option>)}
         </Select>
         <Select value={form.branchId} onChange={(event) => update("branchId", event.target.value)}>
           <option value="">Lokatsiya tanlanmagan</option>
@@ -466,6 +477,7 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
   const store = useCastmapStore();
   const branch = store.branches.find((item) => item.id === playlist.branchId);
   const devices = store.devices.filter((device) => playlist.deviceIds?.includes(device.id));
+  const integrationCount = playlist.items.filter((item) => item.type === "integration_widget" || item.integrationWidgetId).length;
   return (
     <article className="glass-panel hover-3d rounded-lg p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -477,13 +489,12 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
       </div>
       <ol className="mt-4 grid gap-2 text-sm text-white">
         {playlist.items.map((item, index) => {
-          const media = store.media.find((asset) => asset.id === item.mediaId);
-          return <li key={item.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-2 backdrop-blur">{index + 1}. {media?.name || item.mediaId}</li>;
+          return <li key={item.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-2 backdrop-blur">{index + 1}. {playlistItemName(item, store)}</li>;
         })}
       </ol>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <MiniStat label="TV" value={devices.map((device) => device.name).join(", ") || "Barcha TV"} />
-        <MiniStat label="Loop" value={playlist.loop ? "Yoqilgan" : "O'chirilgan"} />
+        <MiniStat label="Integration" value={integrationCount ? `${integrationCount} widget` : "Yo'q"} />
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="gold" onClick={() => store.publishPlaylist(playlist.id)}>Publish</Button>
@@ -548,6 +559,23 @@ function MediaPanel({ query }: { query: string }) {
           </table>
         </div>
       </section>
+      <section className="glass-panel rounded-lg">
+        <PanelHeader icon={PlugZap} title="Integration widgetlar" action="Integratsiyalar" onAction={() => { window.location.href = "/browse?tab=integrations"; }} />
+        <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+          {store.integrationWidgets.map((widget) => (
+            <article key={widget.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <b className="block truncate text-white">{widget.name}</b>
+                  <span className="mt-1 block text-xs text-castMuted">{widget.type} / {String(widget.config.layout || "fullscreen")}</span>
+                </div>
+                <V2Status value={widget.status} />
+              </div>
+              <Button className="mt-3 w-full" disabled={!targetPlaylist} onClick={() => targetPlaylist && store.addIntegrationWidgetToPlaylist(widget.id, targetPlaylist.id, { duration: Number(widget.config.duration || 30), layout: "fullscreen" })}>Playlistga qo'shish</Button>
+            </article>
+          ))}
+        </div>
+      </section>
       <MediaUploadModal
         open={uploadOpen}
         mode={uploadMode}
@@ -555,6 +583,80 @@ function MediaPanel({ query }: { query: string }) {
         onUpload={async (draft) => store.createMediaFromDraft({ ...draft, approvalRequired: false })}
       />
     </>
+  );
+}
+
+function IntegrationsPanel({ query }: { query: string }) {
+  const store = useCastmapStore();
+  const integrations = store.integrations.filter((integration) => includes(query, integration.name, integration.type, integration.status));
+  const widgets = store.integrationWidgets.filter((widget) => includes(query, widget.name, widget.type, widget.status));
+  const targetPlaylist = store.playlists.find((playlist) => playlist.status === "published") || store.playlists[0];
+  return (
+    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <section className="grid content-start gap-4">
+        <div className="glass-panel rounded-lg p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-castGold">
+                <PlugZap className="h-5 w-5" />
+                <h2 className="text-xl font-black text-white">Integratsiyalar</h2>
+              </div>
+              <p className="mt-1 text-sm text-castMuted">Google Sheets, Web URL va live widgetlar shu cabinet ichida ham ko'rinadi.</p>
+            </div>
+            <a className="rounded-lg border border-castGold/30 bg-castGold/10 px-4 py-2 text-sm font-black text-castGold transition hover:border-castGold/50" href="/integrations">
+              Full sozlash paneli
+            </a>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {integrations.map((integration) => (
+            <article key={integration.id} className="glass-panel hover-3d rounded-lg p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-lg font-black text-white">{integration.name}</h3>
+                  <p className="mt-1 text-sm text-castMuted">{integration.type} / {integration.description}</p>
+                </div>
+                <V2Status value={integration.status} />
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <MiniStat label="Last sync" value={integration.lastSyncAt || "Kutilmoqda"} />
+                <MiniStat label="Widget" value={String(store.integrationWidgets.filter((widget) => widget.integrationId === integration.id).length)} />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={() => store.testIntegration(integration.id)}>Test qilish</Button>
+                <Button onClick={() => store.syncIntegration(integration.id)}>Sync now</Button>
+                <Button variant="gold" onClick={() => store.createIntegrationWidget({ integrationId: integration.id })}>Widget yaratish</Button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <aside className="grid content-start gap-4">
+        <section className="glass-panel rounded-lg">
+          <PanelHeader icon={GalleryVerticalEnd} title="TV playlistdagi widgetlar" />
+          <div className="grid gap-3 p-4">
+            {widgets.map((widget) => {
+              const inPlaylist = targetPlaylist?.items.some((item) => item.integrationWidgetId === widget.id);
+              return (
+                <article key={widget.id} className="rounded-lg border border-white/10 bg-white/[0.055] p-3 backdrop-blur">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <b className="block truncate text-white">{widget.name}</b>
+                      <span className="mt-1 block text-xs text-castMuted">{widget.type} / {String(widget.config.layout || "fullscreen")}</span>
+                    </div>
+                    <V2Status value={inPlaylist ? "published" : widget.status} />
+                  </div>
+                  <Button className="mt-3 w-full" disabled={!targetPlaylist || inPlaylist} onClick={() => targetPlaylist && store.addIntegrationWidgetToPlaylist(widget.id, targetPlaylist.id, { duration: Number(widget.config.duration || 30), layout: "fullscreen" })}>
+                    {inPlaylist ? "Playlistda bor" : "TV playlistga qo'shish"}
+                  </Button>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+        <PublishedPlaylistCard />
+      </aside>
+    </section>
   );
 }
 
@@ -598,7 +700,7 @@ function LivePanel({ query }: { query: string }) {
               <LivePreview device={device} media={current} source={source} />
             </div>
             <div className="mt-4 grid gap-2 text-sm">
-              <MiniStat label="Hozir ko'rsatyapti" value={current?.name || device.playlist || "Ma'lumot yo'q"} />
+              <MiniStat label="Hozir ko'rsatyapti" value={current?.name || currentPlaybackName(device, store)} />
               <MiniStat label="Screenshot" value={device.screenshotUrl ? "Oxirgi kadr olindi" : "Screenshot tugmasini bosing"} />
               <MiniStat label="Heartbeat" value={device.lastHeartbeat || device.lastSeen || "Kutilmoqda"} />
               <MiniStat label="APK" value={device.apkVersion} />
@@ -621,6 +723,14 @@ function findCurrentMedia(device: Device, media: MediaAsset[], playlists: Playli
 
   const playlistItem = playlists.flatMap((playlist) => playlist.items).find((item) => item.id === device.currentMediaId);
   return media.find((asset) => asset.id === playlistItem?.mediaId);
+}
+
+function currentPlaybackName(device: Device, store: ReturnType<typeof useCastmapStore>) {
+  const direct = store.media.find((asset) => asset.id === device.currentMediaId);
+  if (direct) return direct.name;
+  const playlist = store.playlists.find((item) => item.deviceIds?.includes(device.id) || item.name === device.playlist) || store.playlists[0];
+  const item = playlist?.items[0];
+  return item ? playlistItemName(item, store) : device.playlist || "Ma'lumot yo'q";
 }
 
 function ApkPanel() {
@@ -697,8 +807,7 @@ function PublishedPlaylistCard() {
       <p className="mt-2 text-sm text-castMuted">{playlist.name}</p>
       <ol className="mt-4 grid gap-2 text-sm text-white">
         {playlist.items.slice(0, 5).map((item, index) => {
-          const asset = store.media.find((media) => media.id === item.mediaId);
-          return <li key={item.id}>{index + 1}. {asset?.name || item.mediaId}</li>;
+          return <li key={item.id}>{index + 1}. {playlistItemName(item, store)}</li>;
         })}
       </ol>
     </section>
@@ -753,6 +862,15 @@ function MiniStat({ label, value }: { label: string; value: string }) {
       <b className="mt-1 block truncate text-white">{value}</b>
     </div>
   );
+}
+
+function playlistItemName(item: Playlist["items"][number], store: ReturnType<typeof useCastmapStore>) {
+  if (item.type === "integration_widget" || item.integrationWidgetId) {
+    const widget = store.integrationWidgets.find((entry) => entry.id === item.integrationWidgetId);
+    return widget ? `${widget.name} (${widget.type})` : item.integrationWidgetId || "Integration widget";
+  }
+  const asset = store.media.find((entry) => entry.id === item.mediaId);
+  return asset?.name || item.mediaId || "Kontent";
 }
 
 function includes(query: string, ...values: Array<string | undefined>) {

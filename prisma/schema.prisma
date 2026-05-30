@@ -14,6 +14,8 @@ model Organization {
   branches  Branch[]
   users     User[]
   media     MediaAsset[]
+  integrations Integration[]
+  integrationWidgets IntegrationWidget[]
   billing   BillingPlan? @relation(fields: [billingPlanId], references: [id])
   billingPlanId String?
 }
@@ -100,11 +102,70 @@ model PlaylistItem {
   id         String     @id @default(cuid())
   playlistId String
   playlist   Playlist   @relation(fields: [playlistId], references: [id])
-  mediaId    String
-  media      MediaAsset @relation(fields: [mediaId], references: [id])
+  type       String     @default("media")
+  mediaId    String?
+  media      MediaAsset? @relation(fields: [mediaId], references: [id])
+  integrationWidgetId String?
+  integrationWidget IntegrationWidget? @relation(fields: [integrationWidgetId], references: [id])
+  layout     String?
   duration   Int
   order      Int
   priority   Int        @default(1)
+}
+
+model Integration {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  type           String
+  name           String
+  status         String   @default("disconnected")
+  config         Json
+  credentials    Json?
+  lastSyncAt     DateTime?
+  lastError      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  widgets        IntegrationWidget[]
+  logs           IntegrationLog[]
+}
+
+model IntegrationWidget {
+  id             String   @id @default(cuid())
+  integrationId  String
+  integration    Integration @relation(fields: [integrationId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  type           String
+  config         Json
+  status         String   @default("active")
+  previewData    Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  playlistItems  PlaylistItem[]
+}
+
+model IntegrationLog {
+  id             String   @id @default(cuid())
+  integrationId  String
+  integration    Integration @relation(fields: [integrationId], references: [id])
+  level          String
+  message        String
+  payload        Json?
+  createdAt      DateTime @default(now())
+}
+
+model RemoteSession {
+  id             String   @id @default(cuid())
+  deviceId       String
+  provider       String
+  remoteAddress  String?
+  sessionUrl     String?
+  status         String   @default("pending")
+  startedAt      DateTime?
+  endedAt        DateTime?
+  createdAt      DateTime @default(now())
 }
 
 model Schedule {

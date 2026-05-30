@@ -37,7 +37,16 @@ class PlaylistEngine @Inject constructor(
 
     suspend fun latestCached(): PlaylistResponse? = withContext(Dispatchers.IO) {
         val entity = playlistDao.latestPlaylist() ?: return@withContext null
+        val adapter = moshi.adapter(PlaylistResponse::class.java)
         val cached = cachedMediaDao.all().associateBy { it.mediaId }
+        val cachedResponse = adapter.fromJson(entity.json)
+        if (cachedResponse != null) {
+            return@withContext cachedResponse.copy(
+                items = cachedResponse.items.map { item ->
+                    item.copy(localPath = cached[item.id]?.localPath ?: item.localPath)
+                }
+            )
+        }
         val items = playlistDao.playlistItems(entity.id).map { it.toDto(cached[it.id]?.localPath) }
         PlaylistResponse(entity.id, entity.version, items)
     }

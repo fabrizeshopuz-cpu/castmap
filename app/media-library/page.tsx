@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Filter, FolderPlus, LayoutGrid, List, Plus, Search } from "lucide-react";
+import { Filter, FolderPlus, LayoutGrid, List, PlugZap, Plus, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import type { MediaAction } from "@/components/media/MediaActionMenu";
@@ -62,6 +62,7 @@ export default function MediaLibraryPage() {
 
   const tags = useMemo(() => [...new Set([...defaultTags, ...assets.flatMap((asset) => asset.tags)])].sort(), [assets]);
   const uploaders = useMemo(() => [...new Set(assets.map((asset) => asset.uploadedBy))].sort(), [assets]);
+  const activeIntegrationWidgets = useMemo(() => store.integrationWidgets.filter((widget) => widget.status === "active"), [store.integrationWidgets]);
 
   const filteredAssets = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -235,6 +236,16 @@ export default function MediaLibraryPage() {
     showNotice(count ? `${count} ta shablon o'chirildi.` : "Shablon fayl topilmadi.");
   };
 
+  const addIntegrationWidgetToDefaultPlaylist = (widgetId: string) => {
+    const playlist = store.playlists[0];
+    if (!playlist) {
+      showNotice("Avval playlist yarating.");
+      return;
+    }
+    store.addIntegrationWidgetToPlaylist(widgetId, playlist.id, { duration: 20, layout: "fullscreen" });
+    showNotice("Integration widget playlistga biriktirildi.");
+  };
+
   return (
     <main className="gradient-background flex min-h-screen text-castText max-lg:flex-col">
       <Sidebar activeLabel="Media kutubxona" />
@@ -300,6 +311,44 @@ export default function MediaLibraryPage() {
               <MediaCategoryTabs active={tab} assets={assets} onChange={setTab} />
 
               <MediaFilters filters={filters} tags={tags} uploaders={uploaders} onChange={setFilters} onReset={() => setFilters(emptyFilters)} />
+
+              <section className="glass-panel rounded-2xl p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">LIVE SOURCES</p>
+                    <h2 className="mt-1 text-xl font-black text-white">Integration widgetlar</h2>
+                    <p className="mt-1 text-sm text-castMuted">Google Sheets, Telegram, Weather, RSS va boshqa live kontentlar media library oqimida ko'rinadi.</p>
+                  </div>
+                  <a className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-castGold/25 bg-castGold/10 px-4 text-sm font-black text-castGold transition hover:-translate-y-0.5 hover:border-castGold/50" href="/integrations">
+                    <PlugZap className="h-4 w-4" /> Integratsiyalar
+                  </a>
+                </div>
+                <div className="mt-4 grid gap-3 xl:grid-cols-3 md:grid-cols-2">
+                  {activeIntegrationWidgets.length ? activeIntegrationWidgets.slice(0, 6).map((widget) => (
+                    <article key={widget.id} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-glass backdrop-blur-xl transition hover:-translate-y-1 hover:border-castGold/35">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <b className="block truncate text-white">{widget.name}</b>
+                          <span className="mt-1 block text-xs uppercase tracking-[0.18em] text-castMuted">{widget.type}</span>
+                        </div>
+                        <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-black uppercase text-emerald-200">{widget.status}</span>
+                      </div>
+                      <div className="mt-3 rounded-xl border border-white/10 bg-[#020617]/45 p-3 text-xs text-castMuted">
+                        Layout: <span className="font-bold text-white">{String(widget.config.layout || "fullscreen")}</span> / Refresh: <span className="font-bold text-white">{String(widget.config.refreshInterval || 300)}s</span>
+                      </div>
+                      <button
+                        className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FFE18A] to-castDeepGold px-4 text-sm font-black text-black transition hover:-translate-y-0.5 active:translate-y-px"
+                        type="button"
+                        onClick={() => addIntegrationWidgetToDefaultPlaylist(widget.id)}
+                      >
+                        <Plus className="h-4 w-4" /> Playlistga qo'shish
+                      </button>
+                    </article>
+                  )) : (
+                    <div className="rounded-2xl border border-dashed border-white/15 p-5 text-sm text-castMuted">Hali integration widget yaratilmagan.</div>
+                  )}
+                </div>
+              </section>
 
               <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-400/20 bg-orange-500/10 p-4">
                 <div>

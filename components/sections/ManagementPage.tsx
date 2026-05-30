@@ -402,6 +402,7 @@ function PlaylistCreateCard() {
   const branchDevices = store.devices.filter((device) => !form.branchId || device.branchId === form.branchId);
   const [deviceIds, setDeviceIds] = useState<string[]>([]);
   const [mediaIds, setMediaIds] = useState<string[]>([]);
+  const [integrationWidgetIds, setIntegrationWidgetIds] = useState<string[]>([]);
   const toggle = (list: string[], id: string, setter: (next: string[]) => void) => setter(list.includes(id) ? list.filter((item) => item !== id) : [...list, id]);
 
   return (
@@ -414,10 +415,11 @@ function PlaylistCreateCard() {
         <Button
           variant="gold"
           onClick={() => {
-            store.createPlaylist({ ...form, deviceIds, mediaIds });
+            store.createPlaylist({ ...form, deviceIds, mediaIds, integrationWidgetIds });
             setForm({ ...form, name: "", description: "" });
             setDeviceIds([]);
             setMediaIds([]);
+            setIntegrationWidgetIds([]);
           }}
         >
           Playlist yaratish
@@ -435,9 +437,10 @@ function PlaylistCreateCard() {
           {store.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name} - {branch.city}</option>)}
         </Select>
       </div>
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-4 xl:grid-cols-3">
         <Checklist title="TV qurilmalar" empty="Bu lokatsiyada TV yo'q" items={branchDevices.map((device) => ({ id: device.id, label: `${device.name} - ${device.branch}`, sub: `${device.deviceId} / ${device.status}` }))} selected={deviceIds} onToggle={(id) => toggle(deviceIds, id, setDeviceIds)} />
         <Checklist title="Media fayllar" empty="Media kutubxona bo'sh" items={store.media.map((asset) => ({ id: asset.id, label: asset.name, sub: `${asset.type} / ${asset.status}` }))} selected={mediaIds} onToggle={(id) => toggle(mediaIds, id, setMediaIds)} />
+        <Checklist title="Integration widgetlar" empty="Widget hali yaratilmagan" items={store.integrationWidgets.map((widget) => ({ id: widget.id, label: widget.name, sub: `${widget.type} / ${widget.status}` }))} selected={integrationWidgetIds} onToggle={(id) => toggle(integrationWidgetIds, id, setIntegrationWidgetIds)} />
       </div>
     </Card>
   );
@@ -468,6 +471,14 @@ function PlaylistCard({ playlist, editing, onEdit, onCancel, openDrawer }: { pla
   const campaignName = playlist.campaignId ? store.campaigns.find((campaign) => campaign.id === playlist.campaignId)?.name : "";
   const branchName = playlist.branchId ? store.branches.find((branch) => branch.id === playlist.branchId)?.name : "";
   const tvNames = playlist.deviceIds?.map((id) => store.devices.find((device) => device.id === id)?.name || id) || [];
+  const contentRows = playlist.items.map((item) => {
+    if (item.type === "integration_widget" || item.integrationWidgetId) {
+      const widget = store.integrationWidgets.find((entry) => entry.id === item.integrationWidgetId);
+      return `${item.order}. ${widget?.name || item.integrationWidgetId || "Integration widget"} - ${item.duration}s / ${item.layout || "fullscreen"}`;
+    }
+    const asset = store.media.find((entry) => entry.id === item.mediaId);
+    return `${item.order}. ${asset?.name || item.mediaId} - ${item.duration}s`;
+  });
   return (
     <Card className="grid gap-4">
       <div className="flex items-start justify-between gap-3">
@@ -496,7 +507,7 @@ function PlaylistCard({ playlist, editing, onEdit, onCancel, openDrawer }: { pla
       <div className="text-sm text-castMuted">Target: {playlist.target}</div>
       <div className="text-sm text-castMuted">Kampaniya: {campaignName || "tanlanmagan"} / Lokatsiya: {branchName || "barcha"}</div>
       <div className="text-sm text-castMuted">TVlar: {tvNames.length ? tvNames.join(", ") : "barcha yoki keyin tanlanadi"}</div>
-      <div className="text-sm text-castMuted">Media: {playlist.items.length} ta, loop: {playlist.loop ? "yoqilgan" : "o'chirilgan"}</div>
+      <div className="text-sm text-castMuted">Kontent: {playlist.items.length} ta, loop: {playlist.loop ? "yoqilgan" : "o'chirilgan"}</div>
       <div className="flex flex-wrap gap-2">
         {editing ? (
           <>
@@ -507,7 +518,7 @@ function PlaylistCard({ playlist, editing, onEdit, onCancel, openDrawer }: { pla
           <Button onClick={onEdit}>Tahrirlash</Button>
         )}
         <Button variant="gold" onClick={() => store.publishPlaylist(playlist.id)}>Publish</Button>
-        <Button onClick={() => openDrawer(playlist.name, playlist.items.length ? playlist.items.map((item) => `${item.order}. ${item.mediaId} - ${item.duration}s`) : ["Media biriktirilmagan"])}>Preview</Button>
+        <Button onClick={() => openDrawer(playlist.name, contentRows.length ? contentRows : ["Kontent biriktirilmagan"])}>Preview</Button>
         <Button onClick={() => store.duplicatePlaylist(playlist.id)}>Nusxalash</Button>
         <Button variant="danger" onClick={() => store.deletePlaylist(playlist.id)}>O'chirish</Button>
       </div>

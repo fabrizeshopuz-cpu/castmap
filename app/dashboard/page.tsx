@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { ExternalLink, PlugZap, RefreshCw } from "lucide-react";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { DeviceStatusChart } from "@/components/dashboard/DeviceStatusChart";
 import { MapOverview } from "@/components/dashboard/MapOverview";
@@ -14,6 +15,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { activityItems, deviceStatuses, impressions, mapMarkers, metrics, topBranches } from "@/lib/dashboard-data";
 import { useCastmapStore } from "@/lib/store";
+import type { IntegrationWidget } from "@/types/integrations";
 
 export default function DashboardPage() {
   const store = useCastmapStore();
@@ -118,6 +120,11 @@ export default function DashboardPage() {
     return rows.length ? rows : mapMarkers;
   }, [store.branches, store.devices]);
 
+  const activeIntegrationWidgets = useMemo(() => store.integrationWidgets.filter((widget) => widget.status === "active").slice(0, 4), [store.integrationWidgets]);
+  const connectedIntegrations = useMemo(() => store.integrations.filter((integration) => integration.status === "connected").length, [store.integrations]);
+  const integrationErrors = useMemo(() => store.integrations.filter((integration) => integration.status === "error").length, [store.integrations]);
+  const lastIntegrationSync = useMemo(() => store.integrations.find((integration) => integration.lastSyncAt)?.lastSyncAt || "Sync kutilmoqda", [store.integrations]);
+
   return (
     <main className="gradient-background flex min-h-screen text-castText max-lg:flex-col">
       <Sidebar activeLabel="Dashboard" />
@@ -146,6 +153,13 @@ export default function DashboardPage() {
 
               <TestSetupWizard />
 
+              <IntegrationDashboardPanel
+                connected={connectedIntegrations}
+                errors={integrationErrors}
+                lastSync={lastIntegrationSync}
+                widgets={activeIntegrationWidgets}
+              />
+
               <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.95fr)]">
                 <StatsChart data={dynamicImpressions} />
                 <DeviceStatusChart data={dynamicDeviceStatuses.length ? dynamicDeviceStatuses : deviceStatuses} />
@@ -165,5 +179,70 @@ export default function DashboardPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function IntegrationDashboardPanel({
+  connected,
+  errors,
+  lastSync,
+  widgets,
+}: {
+  connected: number;
+  errors: number;
+  lastSync: string;
+  widgets: IntegrationWidget[];
+}) {
+  return (
+    <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <article className="glass-panel hover-3d rounded-2xl p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-castGold">INTEGRATIONS</p>
+            <h2 className="mt-1 text-xl font-black text-white">Live kontent statusi</h2>
+            <p className="mt-1 text-sm text-castMuted">Ulangan servislar dashboard widgetlar, playlist va APK playerga uzatiladi.</p>
+          </div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl border border-castGold/25 bg-castGold/10 text-castGold">
+            <PlugZap className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <MiniStat title="Ulangan" value={String(connected)} tone="text-emerald-200" />
+          <MiniStat title="Xatolik" value={String(errors)} tone={errors ? "text-red-200" : "text-castMuted"} />
+          <MiniStat title="Oxirgi sync" value={lastSync} tone="text-blue-200" />
+        </div>
+        <a className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-castGold/25 bg-castGold/10 px-4 text-sm font-black text-castGold transition hover:-translate-y-0.5 hover:border-castGold/50" href="/integrations">
+          Integratsiyalarni boshqarish <ExternalLink className="h-4 w-4" />
+        </a>
+      </article>
+      <article className="glass-panel rounded-2xl p-5">
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="font-black text-white">Faol dashboard widgetlar</h3>
+          <RefreshCw className="h-4 w-4 text-castMuted" />
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {widgets.length ? widgets.map((widget) => (
+            <div key={widget.id} className="rounded-xl border border-white/10 bg-white/[0.045] p-3">
+              <div className="flex items-start justify-between gap-2">
+                <b className="truncate text-sm text-white">{widget.name}</b>
+                <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-black uppercase text-emerald-200">{widget.status}</span>
+              </div>
+              <p className="mt-2 text-xs text-castMuted">{widget.type} / {String(widget.config.layout || "fullscreen")}</p>
+            </div>
+          )) : (
+            <div className="rounded-xl border border-dashed border-white/15 p-4 text-sm text-castMuted">Hali faol integration widget yo'q.</div>
+          )}
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function MiniStat({ title, value, tone }: { title: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.045] p-3">
+      <span className="text-xs text-castMuted">{title}</span>
+      <strong className={`mt-1 block truncate text-lg ${tone}`}>{value}</strong>
+    </div>
   );
 }

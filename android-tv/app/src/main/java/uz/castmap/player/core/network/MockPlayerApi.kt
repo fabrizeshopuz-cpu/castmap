@@ -58,6 +58,22 @@ class MockPlayerApi : PlayerApi {
                     url = "about:blank",
                     duration = 10_000,
                     html = "<html><body style='margin:0;background:#0A0A0A;color:#D4AF37;font-family:sans-serif;display:grid;place-items:center;height:100vh'><h1>CASTMAP reklama oqimi faol</h1></body></html>"
+                ),
+                PlaylistItemDto(
+                    id = "widget-price-list",
+                    type = MediaType.INTEGRATION_WIDGET,
+                    url = "about:blank",
+                    duration = 12_000,
+                    widgetType = "google_sheets",
+                    layout = "fullscreen",
+                    data = mapOf(
+                        "columns" to listOf("Product", "Price", "Discount", "Status"),
+                        "rows" to listOf(
+                            listOf("Burger Menu", "45000", "20%", "Active"),
+                            listOf("Lavash Set", "39000", "10%", "Active")
+                        )
+                    ),
+                    refreshInterval = 300
                 )
             )
         )

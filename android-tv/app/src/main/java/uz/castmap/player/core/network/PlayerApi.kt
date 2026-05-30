@@ -76,7 +76,11 @@ data class PlaylistItemDto(
     val scheduleRules: List<String> = emptyList(),
     val checksum: String? = null,
     val version: Int = 1,
-    val html: String? = null
+    val html: String? = null,
+    val widgetType: String? = null,
+    val layout: String? = null,
+    val data: Map<String, Any?> = emptyMap(),
+    val refreshInterval: Long = 300
 )
 
 enum class MediaType {
@@ -84,7 +88,8 @@ enum class MediaType {
     IMAGE,
     WEB_URL,
     HTML,
-    EMERGENCY
+    EMERGENCY,
+    INTEGRATION_WIDGET
 }
 
 data class HeartbeatPayload(

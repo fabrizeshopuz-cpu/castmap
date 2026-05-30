@@ -15,6 +15,8 @@ import type {
   PlatformUser,
 } from "@/types";
 import type { MediaAsset } from "@/types/media";
+import type { Integration, IntegrationLog, IntegrationWidget, RemoteSession } from "@/types/integrations";
+import { mockIntegrationLogs, mockIntegrationWidgets, mockIntegrations, mockRemoteSessions } from "@/lib/integrations/mockData";
 import { readStateFromDb, writeStateToDb } from "@/lib/serverDb";
 import { STATE_SCHEMA_VERSION } from "@/lib/stateSchema";
 
@@ -32,6 +34,10 @@ export interface PersistedCastmapState {
   billingPlans: BillingPlan[];
   apkVersions: ApkVersion[];
   widgets: Widget[];
+  integrations: Integration[];
+  integrationWidgets: IntegrationWidget[];
+  integrationLogs: IntegrationLog[];
+  remoteSessions: RemoteSession[];
   playbackLogs: PlaybackLog[];
   commands: DeviceCommand[];
 }
@@ -173,6 +179,10 @@ export function createEmptyState(): PersistedCastmapState {
     ],
     apkVersions: defaultApkVersions,
     widgets: [],
+    integrations: mockIntegrations,
+    integrationWidgets: mockIntegrationWidgets,
+    integrationLogs: mockIntegrationLogs,
+    remoteSessions: mockRemoteSessions,
     playbackLogs: [],
     commands: [],
   };
@@ -202,6 +212,10 @@ export function normalizeState(input: Partial<PersistedCastmapState> | null | un
     billingPlans: Array.isArray(input.billingPlans) ? input.billingPlans : fallback.billingPlans,
     apkVersions: normalizeApkVersions(input.apkVersions),
     widgets: Array.isArray(input.widgets) ? input.widgets : [],
+    integrations: Array.isArray(input.integrations) ? input.integrations : fallback.integrations,
+    integrationWidgets: Array.isArray(input.integrationWidgets) ? input.integrationWidgets : fallback.integrationWidgets,
+    integrationLogs: Array.isArray(input.integrationLogs) ? input.integrationLogs : fallback.integrationLogs,
+    remoteSessions: Array.isArray(input.remoteSessions) ? input.remoteSessions : fallback.remoteSessions,
     playbackLogs: Array.isArray(input.playbackLogs) ? input.playbackLogs : [],
     commands: Array.isArray(input.commands) ? input.commands : [],
   };

@@ -36,8 +36,11 @@ export interface Device extends DeviceBase {
 
 export interface PlaylistItem {
   id: string;
+  type?: "media" | "integration_widget";
   mediaId: string;
+  integrationWidgetId?: string;
   duration: number;
+  layout?: "fullscreen" | "ticker" | "split" | "card" | "bottom_ticker" | "right_panel";
   transition: "fade" | "cut" | "slide";
   order: number;
   priority: number;
@@ -161,3 +164,4 @@ export interface DeviceCommand {
 }
 
 export type { MediaAsset };
+export type { Integration, IntegrationWidget, IntegrationLog, RemoteSession } from "@/types/integrations";

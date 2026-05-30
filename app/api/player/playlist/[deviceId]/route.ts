@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { toPlayerWidget } from "@/lib/integrations/server";
 import { fallbackDurationSeconds, isCacheableMedia, isStreamMedia, mediaPublicUrl, mediaStreamKind, playableMediaAssets, playerMediaType, playlistDurationMs, publicRequestOrigin } from "@/lib/playerMedia";
 import { readCastmapState } from "@/lib/serverState";
 
@@ -14,6 +15,32 @@ export async function GET(request: Request, { params }: { params: Promise<{ devi
     || state.playlists.find((item) => item.status === "published")
     || state.playlists[0];
   const items = playlist ? playlist.items.map((item) => {
+    if (item.type === "integration_widget" || item.integrationWidgetId) {
+      const widget = state.integrationWidgets.find((entry) => entry.id === item.integrationWidgetId);
+      if (!widget || widget.status !== "active") return null;
+      const payload = toPlayerWidget(widget);
+      return {
+        id: item.id,
+        mediaId: widget.id,
+        type: "INTEGRATION_WIDGET",
+        url: "about:blank",
+        isStream: false,
+        streamType: "",
+        cacheable: false,
+        localPath: null,
+        duration: playlistDurationMs(item.duration || payload.duration),
+        priority: item.priority,
+        startAt: null,
+        endAt: null,
+        scheduleRules: [],
+        checksum: `castmap-${widget.id}-${state.updatedAt}`,
+        version: 1,
+        widgetType: payload.widgetType,
+        layout: item.layout || payload.layout,
+        data: payload.data,
+        refreshInterval: payload.refreshInterval,
+      };
+    }
     const media = state.media.find((asset) => asset.id === item.mediaId);
     return {
       id: item.id,
@@ -32,7 +59,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ devi
       checksum: `castmap-${media?.id || item.mediaId}-${state.updatedAt}`,
       version: 1,
     };
-  }).filter((item) => item.url) : [];
+  }).filter((item) => item?.url) : [];
   const fallbackItems = items.length ? [] : playableMediaAssets(state.media).map((media, index) => ({
     id: `fallback-${media.id}`,
     mediaId: media.id,

@@ -192,5 +192,10 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun isTimedMedia(type: MediaType): Boolean = type == MediaType.IMAGE || type == MediaType.HTML || type == MediaType.WEB_URL || type == MediaType.EMERGENCY
+    fun isTimedMedia(type: MediaType): Boolean =
+        type == MediaType.IMAGE
+            || type == MediaType.HTML
+            || type == MediaType.WEB_URL
+            || type == MediaType.EMERGENCY
+            || type == MediaType.INTEGRATION_WIDGET
 }

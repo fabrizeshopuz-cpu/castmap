@@ -1,4 +1,4 @@
-import { Activity, Building2, Clapperboard, Cloud, CreditCard, Eye, GalleryVerticalEnd, LayoutDashboard, Monitor, PlayCircle, RadioTower, ShieldCheck, Smartphone, UsersRound } from "lucide-react";
+import { Activity, Building2, Clapperboard, Cloud, CreditCard, Eye, GalleryVerticalEnd, LayoutDashboard, Monitor, PlayCircle, PlugZap, RadioTower, ShieldCheck, Smartphone, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type V2MediaType = "video" | "image" | "web";
@@ -55,6 +55,7 @@ export const clientNav: V2NavItem[] = [
   { label: "TV qurilmalar", href: "/browse?tab=devices", icon: Monitor },
   { label: "Playlistlar", href: "/browse?tab=playlists", icon: GalleryVerticalEnd },
   { label: "Media", href: "/browse?tab=media", icon: Clapperboard },
+  { label: "Integratsiyalar", href: "/browse?tab=integrations", icon: PlugZap },
   { label: "Live", href: "/browse?tab=live", icon: Eye },
   { label: "APK", href: "/browse?tab=apk", icon: Smartphone },
   { label: "Billing", href: "/browse?tab=billing", icon: CreditCard },
