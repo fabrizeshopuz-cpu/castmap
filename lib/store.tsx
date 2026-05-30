@@ -161,6 +161,7 @@ interface CastmapState {
 interface PersistedCastmapState {
   schemaVersion: number;
   updatedAt: string;
+  baseUpdatedAt?: string;
   devices: Device[];
   media: MediaAsset[];
   playlists: Playlist[];
@@ -205,6 +206,8 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const skipNextPersist = useRef(false);
+  const suppressPersistUntil = useRef(0);
+  const lastRemoteUpdatedAt = useRef<string | null>(null);
 
   const pushToast = useCallback((text: string, tone: ToastMessage["tone"] = "success") => {
     const toast = { id: uid("toast"), text, tone };
@@ -214,7 +217,11 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
 
   const applySavedState = useCallback((saved: Partial<PersistedCastmapState>, options?: { remote?: boolean }) => {
     if (saved.schemaVersion !== STATE_SCHEMA_VERSION) return;
-    if (options?.remote) skipNextPersist.current = true;
+    if (options?.remote) {
+      skipNextPersist.current = true;
+      suppressPersistUntil.current = Date.now() + 500;
+      if (saved.updatedAt) lastRemoteUpdatedAt.current = saved.updatedAt;
+    }
     if (Array.isArray(saved.devices)) setDevices(saved.devices);
     if (Array.isArray(saved.media)) setMedia(saved.media);
     if (Array.isArray(saved.playlists)) setPlaylists(saved.playlists);
@@ -272,6 +279,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     const payload: PersistedCastmapState = {
       schemaVersion: STATE_SCHEMA_VERSION,
       updatedAt: new Date().toISOString(),
+      baseUpdatedAt: lastRemoteUpdatedAt.current || undefined,
       devices,
       media,
       playlists,
@@ -292,7 +300,7 @@ export function CastmapProvider({ children }: { children: ReactNode }) {
     };
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    if (skipNextPersist.current) {
+    if (skipNextPersist.current || Date.now() < suppressPersistUntil.current) {
       skipNextPersist.current = false;
       return;
     }
